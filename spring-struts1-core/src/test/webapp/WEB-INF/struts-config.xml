@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<struts-config>
+
+    <form-beans>
+        <form-bean name="personForm" type="org.apache.struts.spring.it.PersonForm"/>
+        <form-bean name="validatingForm" type="org.apache.struts.spring.it.ValidatingForm"/>
+        <form-bean name="diForm" type="org.apache.struts.spring.it.AnnotatedForm"/>
+    </form-beans>
+
+    <global-exceptions>
+        <exception type="org.apache.struts.spring.it.TestException"
+                   path="/error.jsp"
+                   key="boom.global"/>
+    </global-exceptions>
+
+    <global-forwards>
+        <forward name="done" path="/done.jsp"/>
+    </global-forwards>
+
+    <action-mappings>
+        <action path="/Welcome" forward="/Welcome.jsp"/>
+
+        <action path="/Plain" type="org.apache.struts.spring.it.PlainAction"/>
+
+        <action path="/FormRequest" type="org.apache.struts.spring.it.FormAction"
+                name="personForm" scope="request" validate="false"/>
+
+        <action path="/FormSession" type="org.apache.struts.spring.it.FormAction"
+                name="personForm" scope="session" validate="false"/>
+
+        <action path="/Validated" type="org.apache.struts.spring.it.FormAction"
+                name="validatingForm" scope="request" validate="true"
+                input="/input.jsp"/>
+
+        <action path="/NoValidate" type="org.apache.struts.spring.it.FormAction"
+                name="validatingForm" scope="request" validate="false"/>
+
+        <action path="/LocalForward" type="org.apache.struts.spring.it.ForwardAction">
+            <forward name="done" path="/local-done.jsp"/>
+        </action>
+
+        <action path="/GlobalForward" type="org.apache.struts.spring.it.ForwardAction"/>
+
+        <action path="/Redirect" type="org.apache.struts.spring.it.RedirectAction"/>
+
+        <action path="/Boom" type="org.apache.struts.spring.it.BoomAction"/>
+
+        <action path="/LocalBoom" type="org.apache.struts.spring.it.BoomAction">
+            <exception type="org.apache.struts.spring.it.TestException"
+                       path="/local-error.jsp"
+                       key="boom.local"/>
+        </action>
+
+        <action path="/SubBoom" type="org.apache.struts.spring.it.SubBoomAction"/>
+
+        <action path="/Uncaught" type="org.apache.struts.spring.it.UncaughtAction"/>
+
+        <action path="/Annotated" type="org.apache.struts.spring.it.AnnotatedAction"/>
+
+        <action path="/AnnotatedForm" type="org.apache.struts.spring.it.AnnotatedFormAction"
+                name="diForm" scope="request" validate="false"/>
+
+        <action path="/ServletCheck" type="org.apache.struts.spring.it.ServletCheckAction"/>
+
+        <action path="/Msg" type="org.apache.struts.spring.it.MsgAction"/>
+    </action-mappings>
+
+    <message-resources parameter="it-messages"/>
+
+    <plug-in className="org.apache.struts.spring.it.DirectPlugin">
+        <set-property property="label" value="direct"/>
+    </plug-in>
+
+    <plug-in className="org.apache.struts.spring.it.SpringPlugin"/>
+
+</struts-config>

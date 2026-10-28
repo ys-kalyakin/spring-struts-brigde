@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<struts-config>
+
+    <controller contentType="text/plain" nocache="true"/>
+
+    <form-beans>
+        <form-bean name="testForm" type="org.apache.struts.fixtures.FixtureForm"/>
+    </form-beans>
+
+    <global-exceptions>
+        <exception type="java.lang.IllegalStateException"
+                   path="/global-error.jsp"
+                   key="global.error.key"/>
+    </global-exceptions>
+
+    <global-forwards>
+        <forward name="welcome" path="/Welcome.do"/>
+    </global-forwards>
+
+    <action-mappings>
+        <action path="/Welcome" forward="/pages/Welcome.jsp"/>
+
+        <action path="/Input"
+                type="org.apache.struts.fixtures.FixtureAction"
+                name="testForm"
+                scope="request"
+                validate="true"
+                input="/input.jsp">
+            <forward name="done" path="/done.jsp"/>
+            <exception type="java.lang.RuntimeException"
+                       path="/local-error.jsp"
+                       key="local.error.key"/>
+            <set-property key="extraProperty" value="extraValue"/>
+        </action>
+    </action-mappings>
+
+    <message-resources parameter="test-messages"/>
+    <message-resources key="alternate" parameter="alternate-messages"/>
+
+    <plug-in className="org.apache.struts.fixtures.FixturePlugin">
+        <set-property property="message" value="hello"/>
+    </plug-in>
+
+</struts-config>

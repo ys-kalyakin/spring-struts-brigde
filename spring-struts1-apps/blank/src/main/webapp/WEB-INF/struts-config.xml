@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<!--
+     Ported from weblegacy apps/blank (WEB-INF/struts-config.xml).
+     Adaptations for phase 1 of spring-struts-bridge:
+     - the ValidatorPlugIn (phase 3) is replaced by a simple lifecycle test
+       plugin (app.TestPlugin);
+     - everything else keeps the structure of the reference application.
+-->
+
+<struts-config>
+
+<!-- =========================================== Global Forward Definitions -->
+
+    <global-forwards>
+        <!-- Default forward to "Welcome" action -->
+        <!-- Demonstrates using index.jsp to forward -->
+        <forward
+            name="welcome"
+            path="/Welcome.do"/>
+    </global-forwards>
+
+<!-- =========================================== Action Mapping Definitions -->
+
+    <action-mappings>
+            <!-- Default "Welcome" action -->
+            <!-- Forwards to Welcome.jsp -->
+        <action
+            path="/Welcome"
+            forward="/pages/Welcome.jsp"/>
+    </action-mappings>
+
+<!-- ======================================== Message Resources Definitions -->
+
+    <message-resources parameter="MessageResources" />
+
+<!-- =============================================== Plug Ins Configuration -->
+
+  <plug-in className="app.TestPlugin"/>
+
+</struts-config>
