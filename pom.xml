@@ -14,6 +14,7 @@
 
   <modules>
     <module>spring-struts1-core</module>
+    <module>spring-struts1-taglib</module>
     <module>spring-struts1-apps</module>
   </modules>
 
@@ -24,10 +25,12 @@
     <spring.version>7.0.10</spring.version>
     <tomcat.version>11.0.27</tomcat.version>
     <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
+    <jakarta.servlet.jsp-api.version>4.0.0</jakarta.servlet.jsp-api.version>
     <commons-digester.version>2.1</commons-digester.version>
     <commons-beanutils.version>1.11.0</commons-beanutils.version>
     <junit.version>6.1.3</junit.version>
     <surefire.version>3.5.4</surefire.version>
+    <slf4j.version>2.0.17</slf4j.version>
   </properties>
 
   <dependencyManagement>
@@ -41,6 +44,16 @@
         <groupId>jakarta.servlet</groupId>
         <artifactId>jakarta.servlet-api</artifactId>
         <version>${jakarta.servlet-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.junit</groupId>

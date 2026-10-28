@@ -33,7 +33,7 @@ class StrutsInstanceResolverTest {
         }
     }
 
-    static class FallbackForm extends ActionForm {
+    public static class FallbackForm extends ActionForm {
     }
 
     @Configuration

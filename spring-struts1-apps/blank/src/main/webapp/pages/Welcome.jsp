@@ -1,42 +1,39 @@
 <%--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
 
-Welcome page of the ported blank application. The weblegacy original uses
-the struts-bean / struts-html / struts-logic tag libraries, which arrive in
-phase 2; the plain-JSP equivalent below renders the same content.
+         http://www.apache.org/licenses/LICENSE-2.0
 
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 --%>
-<%@ page import="org.apache.struts.Globals,
-                 org.apache.struts.util.MessageResources,
-                 java.util.Locale" %>
-<%
-    MessageResources resources = (MessageResources)
-        application.getAttribute(Globals.MESSAGES_KEY);
-    Locale locale = (Locale) session.getAttribute(Globals.LOCALE_KEY);
-    String title = (resources != null)
-        ? resources.getMessage(locale, "welcome.title")
-        : null;
-    String heading = (resources != null)
-        ? resources.getMessage(locale, "welcome.heading")
-        : null;
-    String message = (resources != null)
-        ? resources.getMessage(locale, "welcome.message")
-        : null;
-%>
-<html>
+<%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>
+<%@ taglib uri="http://struts.apache.org/tags-html" prefix="html" %>
+<%@ taglib uri="http://struts.apache.org/tags-logic" prefix="logic" %>
+
+<html:html>
 <head>
-<title><%= title %></title>
+<title><bean:message key="welcome.title"/></title>
+<html:base/>
 </head>
 <body bgcolor="white">
 
-<% if (resources == null) { %>
+<logic:notPresent name="org.apache.struts.action.MESSAGE" scope="application">
   <font color="red">
     ERROR:  Application resources not loaded -- check servlet container
     logs for error messages.
   </font>
-<% } %>
+</logic:notPresent>
 
-<h3><%= heading %></h3>
-<p><%= message %></p>
+<h3><bean:message key="welcome.heading"/></h3>
+<p><bean:message key="welcome.message"/></p>
 
 </body>
-</html>
+</html:html>

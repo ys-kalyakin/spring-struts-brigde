@@ -46,6 +46,13 @@ public interface ModuleConfig extends Serializable {
 
     ActionConfig findActionConfig(String path);
 
+    /**
+     * Find the action configuration registered under the given actionId
+     * (Struts 1.4 feature; the phase 2 configuration model does not support
+     * actionId attributes, so this lookup finds nothing).
+     */
+    ActionConfig findActionConfigId(String actionId);
+
     ActionConfig[] findActionConfigs();
 
     ExceptionConfig findExceptionConfig(String type);

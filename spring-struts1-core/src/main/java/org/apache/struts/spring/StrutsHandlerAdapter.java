@@ -23,6 +23,7 @@ import org.apache.struts.config.ExceptionConfig;
 import org.apache.struts.config.FormBeanConfig;
 import org.apache.struts.config.ForwardConfig;
 import org.apache.struts.config.ModuleConfig;
+import org.apache.struts.util.ModuleUtils;
 import org.apache.struts.util.RequestUtils;
 
 /**
@@ -62,10 +63,25 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
     public ModelAndView handle(HttpServletRequest request,
         HttpServletResponse response, Object handler) throws Exception {
         ActionMapping mapping = (ActionMapping) handler;
-        ModuleConfig moduleConfig = actionServlet.getModuleConfig();
+        // The handler mapping has already selected the module by the request
+        // path prefix; fall back to the mapping's own module configuration.
+        ModuleConfig moduleConfig =
+            ModuleUtils.getInstance().getModuleConfig(request);
+        if (moduleConfig == null) {
+            moduleConfig = mapping.getModuleConfig();
+        }
+        if (moduleConfig == null) {
+            moduleConfig = actionServlet.getModuleConfig();
+        }
 
         request.setAttribute(Globals.MAPPING_KEY, mapping);
         request.setAttribute(Globals.MODULE_KEY, moduleConfig);
+        // Classic postback support: html:form without an action submits to
+        // the URI of the current action.
+        if (request.getAttribute(Globals.ORIGINAL_URI_KEY) == null) {
+            request.setAttribute(Globals.ORIGINAL_URI_KEY,
+                request.getServletPath());
+        }
 
         processContent(response, moduleConfig);
         processNoCache(response, moduleConfig);
@@ -222,22 +238,37 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
 
     /**
      * Forward or redirect to the resource described by the forward
-     * configuration, if any.
+     * configuration, if any. Module-relative paths are expanded with the
+     * module prefix (classic <code>processForwardConfig</code> semantics).
      */
     protected void processForwardConfig(HttpServletRequest request,
         HttpServletResponse response, ForwardConfig forward) throws Exception {
         if (forward == null) {
             return;
         }
+
+        ModuleConfig moduleConfig =
+            ModuleUtils.getInstance().getModuleConfig(request);
+        String forwardPath = forward.getPath();
+        String uri;
+
+        // Paths not starting with / are passed through without any
+        // processing (they are already context-relative or absolute URLs)
+        if (forwardPath.startsWith("/")) {
+            uri = RequestUtils.forwardURL(request, forward, moduleConfig);
+        } else {
+            uri = forwardPath;
+        }
+
         if (forward.getRedirect()) {
-            String path = forward.getPath();
-            if (path.startsWith("/")) {
-                path = request.getContextPath() + path;
+            // Only prepend the context path for context-relative URIs
+            if (uri.startsWith("/")) {
+                uri = request.getContextPath() + uri;
             }
-            response.sendRedirect(response.encodeRedirectURL(path));
+            response.sendRedirect(response.encodeRedirectURL(uri));
             return;
         }
-        doForward(forward.getPath(), request, response);
+        doForward(uri, request, response);
     }
 
     protected void doForward(String path, HttpServletRequest request,

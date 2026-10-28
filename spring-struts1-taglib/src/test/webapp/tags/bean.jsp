@@ -1,0 +1,12 @@
+<%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>
+name=[<bean:write name="bean" property="name"/>]
+html=[<bean:write name="bean" property="html"/>]
+htmlRaw=[<bean:write name="bean" property="html" filter="false"/>]
+msg=[<bean:message key="it.hello"/>]
+msgArg=[<bean:message key="greeting" arg0="Ivan"/>]
+msgAlt=[<bean:message key="alt.hello" bundle="alt"/>]
+defined=[<bean:define id="theName" name="bean" property="name"/><bean:write name="theName"/>]
+param=[<bean:parameter id="color" name="color"/><bean:write name="color"/>]
+header=[<bean:header id="lang" name="Accept-Language"/><bean:write name="lang"/>]
+cookie=[<bean:cookie id="flavor" name="flavor"/><bean:write name="flavor" property="value"/>]
+size=[<bean:size id="sz" name="list"/><bean:write name="sz"/>]

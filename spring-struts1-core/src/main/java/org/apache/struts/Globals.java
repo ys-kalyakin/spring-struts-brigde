@@ -38,6 +38,24 @@ public class Globals implements Serializable {
     public static final String MODULE_KEY = "org.apache.struts.action.MODULE";
 
     /**
+     * The ServletContext attribute under which we store the module prefixes
+     * String[].
+     *
+     * @since Struts 1.2
+     */
+    public static final String MODULE_PREFIXES_KEY =
+        "org.apache.struts.globals.MODULE_PREFIXES";
+
+    /**
+     * The request attribute under which we store the original URI of the
+     * request.
+     *
+     * @since Struts 1.3
+     */
+    public static final String ORIGINAL_URI_KEY =
+        "org.apache.struts.globals.ORIGINAL_URI_KEY";
+
+    /**
      * The request attributes key under which your action should store an
      * <code>org.apache.struts.action.ActionErrors</code> object.
      */
@@ -91,4 +109,57 @@ public class Globals implements Serializable {
      */
     public static final String PLUG_INS_KEY =
         "org.apache.struts.action.PLUG_INS";
+
+    /**
+     * The context attributes key under which we store the mapping defined for
+     * our controller servlet, which will be either a path-mapped pattern
+     * (<code>/action/*</code>) or an extension mapped pattern
+     * (<code>*.do</code>).
+     */
+    public static final String SERVLET_KEY =
+        "org.apache.struts.action.SERVLET_MAPPING";
+
+    /**
+     * The session attributes key under which our transaction token is stored,
+     * if it is used.
+     */
+    public static final String TRANSACTION_TOKEN_KEY =
+        "org.apache.struts.action.TOKEN";
+
+    /**
+     * The page attributes key under which xhtml status is stored. This may
+     * be "true" or "false". When set to true, the html tags output xhtml.
+     *
+     * @since Struts 1.1
+     */
+    public static final String XHTML_KEY = "org.apache.struts.globals.XHTML";
+
+    /**
+     * The request attributes key under which XHTML version is stored. The
+     * version is stored as a {@link java.math.BigDecimal}.
+     *
+     * @since Struts 1.4
+     */
+    public static final String XHTML_VERSION_KEY = "org.apache.struts.globals.XHTML_VERSION";
+
+    /**
+     * The name of the taglib package.
+     */
+    public static final String TAGLIB_PACKAGE = "org.apache.struts.taglib.html";
+
+    /**
+     * The property under which a Cancel button press is reported.
+     */
+    public static final String CANCEL_PROPERTY = TAGLIB_PACKAGE + ".CANCEL";
+
+    /**
+     * The property under which a Cancel button press is reported, if the
+     * Cancel button is rendered as an image.
+     */
+    public static final String CANCEL_PROPERTY_X = TAGLIB_PACKAGE + ".CANCEL.x";
+
+    /**
+     * The property under which a transaction token is reported.
+     */
+    public static final String TOKEN_KEY = TAGLIB_PACKAGE + ".TOKEN";
 }

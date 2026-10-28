@@ -1,10 +1,14 @@
 package org.apache.struts.action;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import org.apache.struts.Globals;
+import org.apache.struts.config.ModuleConfig;
+import org.apache.struts.util.MessageResources;
+import org.apache.struts.util.ModuleUtils;
 
 /**
  * An <strong>Action</strong> is an adapter between the contents of an
@@ -83,5 +87,46 @@ public abstract class Action {
             return;
         }
         request.setAttribute(Globals.MESSAGE_KEY, messages);
+    }
+
+    /**
+     * Return the user's currently selected <code>Locale</code>, preferring
+     * the session attribute named by {@link Globals#LOCALE_KEY} and falling
+     * back to the request locale.
+     */
+    protected java.util.Locale getLocale(HttpServletRequest request) {
+        return org.apache.struts.util.RequestUtils.getUserLocale(request,
+            null);
+    }
+
+    /**
+     * Return the default <code>MessageResources</code> instance of the
+     * current module.
+     */
+    protected MessageResources getResources(HttpServletRequest request) {
+        return (MessageResources) request.getAttribute(Globals.MESSAGES_KEY);
+    }
+
+    /**
+     * Return the specified message resources instance of the current module,
+     * selected by the bundle key of its <code>message-resources</code>
+     * element.
+     */
+    protected MessageResources getResources(HttpServletRequest request,
+        String key) {
+        ServletContext context = getServlet().getServletContext();
+        ModuleConfig moduleConfig =
+            ModuleUtils.getInstance().getModuleConfig(request, context);
+        return (MessageResources) context.getAttribute(key
+            + moduleConfig.getPrefix());
+    }
+
+    /**
+     * Return <code>true</code> if the current form's cancel button was
+     * pressed: the request attribute named by {@link Globals#CANCEL_KEY} has
+     * been set (normally by the <code>html:cancel</code> tag).
+     */
+    protected boolean isCancelled(HttpServletRequest request) {
+        return (request.getAttribute(Globals.CANCEL_KEY) != null);
     }
 }

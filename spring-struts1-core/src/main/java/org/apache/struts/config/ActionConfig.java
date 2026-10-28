@@ -27,6 +27,9 @@ public class ActionConfig extends BaseConfig {
     /** Has this component been completely configured? */
     protected boolean configured;
 
+    /** The internal action identifier for this action mapping. */
+    protected String actionId;
+
     /** Module-relative path of the action or resource to be forwarded to. */
     protected String forward;
 
@@ -87,7 +90,11 @@ public class ActionConfig extends BaseConfig {
     }
 
     public String getAttribute() {
-        return attribute;
+        if (this.attribute == null) {
+            return (this.name);
+        } else {
+            return (this.attribute);
+        }
     }
 
     public void setAttribute(String attribute) {
@@ -156,6 +163,29 @@ public class ActionConfig extends BaseConfig {
     public void setParameter(String parameter) {
         throwIfConfigured();
         this.parameter = parameter;
+    }
+
+    /**
+     * Returns the internal action identifier, if any (the Struts 1.3.6+.
+     * <code>actionId</code> attribute used to alias actions in URLs).
+     */
+    public String getActionId() {
+        return this.actionId;
+    }
+
+    /**
+     * Set the internal action identifier of this action mapping. The
+     * identifier may not contain a forward slash.
+     */
+    public void setActionId(String actionId) {
+        throwIfConfigured();
+
+        if ((actionId != null) && (actionId.indexOf("/") > -1)) {
+            throw new IllegalArgumentException("actionId '" + actionId
+                + "' may not contain a forward slash");
+        }
+
+        this.actionId = actionId;
     }
 
     public String getPath() {

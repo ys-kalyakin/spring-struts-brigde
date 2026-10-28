@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<struts-config>
+
+    <form-beans>
+        <form-bean name="personForm" type="org.apache.struts.taglib.it.ITForm"/>
+        <form-bean name="dynaForm" type="org.apache.struts.action.DynaActionForm">
+            <form-property name="testString" type="java.lang.String"/>
+            <form-property name="status" type="java.lang.String" initial="new"/>
+        </form-bean>
+    </form-beans>
+
+    <global-exceptions>
+        <exception type="java.lang.IllegalStateException"
+                   path="/tags/error.jsp"
+                   key="boom.global"/>
+    </global-exceptions>
+
+    <global-forwards>
+        <forward name="welcome" path="/welcome.jsp"/>
+    </global-forwards>
+
+    <action-mappings>
+        <!-- Prepares data and forwards to the page given as parameter -->
+        <action path="/view" type="org.apache.struts.taglib.it.TagITAction"
+                parameter="/tags/bean.jsp"/>
+
+        <action path="/link" type="org.apache.struts.taglib.it.TagITAction"
+                parameter="/tags/link.jsp"/>
+
+        <action path="/formSubmit" type="org.apache.struts.taglib.it.TagITAction"
+                name="personForm" scope="request" validate="false"
+                parameter="/tags/html-form.jsp"/>
+
+        <action path="/errorPage" type="org.apache.struts.taglib.it.TagITAction"
+                parameter="/tags/html-errors.jsp"/>
+
+        <action path="/dynaCheck" type="org.apache.struts.taglib.it.TagITAction"
+                name="dynaForm" scope="request" validate="true"
+                parameter="/tags/dyna.jsp"/>
+
+        <action path="/xhtmlPage" type="org.apache.struts.taglib.it.TagITAction"
+                parameter="/tags/xhtml.jsp"/>
+
+        <action path="/nestedPage" type="org.apache.struts.taglib.it.TagITAction"
+                name="personForm" scope="request" validate="false"
+                parameter="/tags/nested.jsp"/>
+
+        <action path="/logicPage" type="org.apache.struts.taglib.it.TagITAction"
+                parameter="/tags/logic.jsp"/>
+
+        <action path="/redirectTest" forward="/tags/redirect.jsp"/>
+
+        <action path="/javascriptTest" forward="/tags/javascript.jsp"/>
+
+        <!-- Dispatch scenarios -->
+        <action path="/dispatch" type="org.apache.struts.taglib.it.ITDispatchAction"
+                parameter="method" scope="request" validate="false"/>
+
+        <action path="/lookup" type="org.apache.struts.taglib.it.ITLookupDispatchAction"
+                parameter="submit" scope="request" validate="false"/>
+
+        <action path="/mappingEdit" type="org.apache.struts.taglib.it.ITMappingDispatchAction"
+                parameter="edit" scope="request" validate="false"/>
+
+        <action path="/mappingSave" type="org.apache.struts.taglib.it.ITMappingDispatchAction"
+                parameter="save" scope="request" validate="false"/>
+
+        <action path="/event" type="org.apache.struts.taglib.it.ITEventDispatchAction"
+                parameter="save,cancel,default=go" scope="request" validate="false"/>
+
+        <!-- MAPPING_FLAVOR ActionDispatcher: the parameter IS the method name -->
+        <action path="/plainDispatch" type="org.apache.struts.taglib.it.ITPlainDispatchAction"
+                parameter="go" scope="request" validate="false"/>
+    </action-mappings>
+
+    <message-resources parameter="it-messages"/>
+    <message-resources key="alt" parameter="alt-messages"/>
+
+</struts-config>

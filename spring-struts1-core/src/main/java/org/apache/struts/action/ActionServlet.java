@@ -93,13 +93,30 @@ public class ActionServlet extends HttpServlet
     public void init() throws ServletException {
         initInternal();
         initModuleConfig();
-        initModuleMessageResources(defaultModule());
-        initModulePlugIns(defaultModule());
+        // Classic behavior: message resources and plugins are initialized
+        // for EVERY module, the default module first.
+        for (String prefix : orderedModulePrefixes()) {
+            ModuleConfig mconfig = moduleConfigs.get(prefix);
+            initModuleMessageResources(mconfig);
+            initModulePlugIns(mconfig);
+        }
         getServletContext().setAttribute(Globals.ACTION_SERVLET_KEY, this);
         getServletContext().setAttribute(Globals.MODULE_KEY, defaultModule());
         if (log.isDebugEnabled()) {
             log.debug("ActionServlet initialized with config={}", config);
         }
+    }
+
+    /**
+     * All configured module prefixes in deterministic order: the default
+     * module ("") first, then the other prefixes sorted lexicographically.
+     */
+    private List<String> orderedModulePrefixes() {
+        List<String> prefixes = new ArrayList<>(moduleConfigs.keySet());
+        prefixes.remove("");
+        prefixes.sort(String::compareTo);
+        prefixes.add(0, "");
+        return prefixes;
     }
 
     /**
@@ -144,10 +161,35 @@ public class ActionServlet extends HttpServlet
      * the file name in the error.
      */
     protected void initModuleConfig() throws ServletException {
-        ModuleConfigFactory factoryObject = ModuleConfigFactory.createFactory();
-        ModuleConfig mconfig = factoryObject.createModuleConfig("");
+        initModuleConfig("", config);
+        jakarta.servlet.ServletConfig servletConfig = getServletConfig();
+        java.util.Enumeration<String> names = servletConfig.getInitParameterNames();
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            if (name.startsWith("config/")) {
+                String prefix = "/" + name.substring("config/".length());
+                initModuleConfig(prefix, servletConfig.getInitParameter(name));
+            }
+        }
 
-        for (String file : config.split("\\s*,\\s*")) {
+        getServletContext().setAttribute(Globals.MODULE_PREFIXES_KEY,
+            moduleConfigs.keySet().stream()
+                .filter(prefix -> !prefix.isEmpty())
+                .sorted()
+                .toArray(String[]::new));
+    }
+
+    /**
+     * Parse the comma-separated list of configuration files for one module
+     * with the given prefix. A missing or unparsable file fails startup with
+     * the file name in the error.
+     */
+    protected void initModuleConfig(String prefix, String configValue)
+        throws ServletException {
+        ModuleConfigFactory factoryObject = ModuleConfigFactory.createFactory();
+        ModuleConfig mconfig = factoryObject.createModuleConfig(prefix);
+
+        for (String file : configValue.split("\\s*,\\s*")) {
             String path = file.trim();
             if (path.isEmpty()) {
                 continue;
@@ -167,7 +209,8 @@ public class ActionServlet extends HttpServlet
         }
 
         mconfig.freeze();
-        moduleConfigs.put(mconfig.getPrefix(), mconfig);
+        moduleConfigs.put(prefix, mconfig);
+        getServletContext().setAttribute(Globals.MODULE_KEY + prefix, mconfig);
     }
 
     /** The set of public identifiers, and corresponding resource names, for the versions of the configuration DTDs that we know about. */
@@ -215,10 +258,12 @@ public class ActionServlet extends HttpServlet
     /**
      * Initialize the message resources for the module: create a
      * <code>MessageResources</code> for each <code>message-resources</code>
-     * element and store it in the servlet context under its key.
+     * element and store it in the servlet context under its key, suffixed
+     * with the module prefix (classic per-module storage).
      */
     protected void initModuleMessageResources(ModuleConfig mconfig)
         throws ServletException {
+        String prefix = mconfig.getPrefix();
         for (MessageResourcesConfig mrc : mconfig
             .findMessageResourcesConfigs()) {
             try {
@@ -231,7 +276,11 @@ public class ActionServlet extends HttpServlet
                 MessageResources resources =
                     factoryObject.createResources(mrc.getParameter());
                 resources.setReturnNull(mrc.getNull());
-                getServletContext().setAttribute(mrc.getKey(), resources);
+                getServletContext().setAttribute(mrc.getKey() + prefix,
+                    resources);
+                if (prefix.isEmpty()) {
+                    getServletContext().setAttribute(mrc.getKey(), resources);
+                }
             } catch (Exception e) {
                 throw new ServletException(
                     "Cannot initialize MessageResources of key "
@@ -306,8 +355,8 @@ public class ActionServlet extends HttpServlet
     }
 
     /**
-     * Return the module configuration for the given prefix (phase 1 supports
-     * only the default module, prefix "").
+     * Return the module configuration for the given prefix (the default
+     * module has prefix "").
      */
     public ModuleConfig getModuleConfig(String prefix) {
         return moduleConfigs.get(prefix);

@@ -91,10 +91,20 @@ public class FormBeanConfig extends BaseConfig {
 
     /**
      * Create and return an <code>ActionForm</code> instance appropriate to
-     * the information in this <code>FormBeanConfig</code>.
+     * the information in this <code>FormBeanConfig</code>: dynamic forms
+     * (DynaActionForm and subclasses) are instantiated through their
+     * <code>DynaActionFormClass</code> and initialized from the declared
+     * form properties, other types are instantiated directly.
      */
     public ActionForm createActionForm() {
         try {
+            if (isDynamic()) {
+                org.apache.struts.action.DynaActionForm instance =
+                    (org.apache.struts.action.DynaActionForm)
+                        getDynaActionFormClass().newInstance();
+                instance.initialize(this);
+                return instance;
+            }
             Class<?> clazz = formBeanClass();
             Object instance = clazz.getDeclaredConstructor().newInstance();
             if (!(instance instanceof ActionForm)) {
@@ -107,6 +117,40 @@ public class FormBeanConfig extends BaseConfig {
                 "Cannot create ActionForm of type " + type, e);
         }
     }
+
+    /**
+     * Return true when the configured type is <code>DynaActionForm</code>
+     * or a subclass of it.
+     */
+    public boolean isDynamic() {
+        try {
+            return org.apache.struts.action.DynaActionForm.class
+                .isAssignableFrom(formBeanClass());
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Return the <code>DynaActionFormClass</code> for this form bean
+     * configuration, creating and caching it on first use.
+     */
+    public org.apache.struts.action.DynaActionFormClass
+        getDynaActionFormClass() {
+        if (dynaActionFormClass == null) {
+            synchronized (this) {
+                if (dynaActionFormClass == null) {
+                    dynaActionFormClass =
+                        new org.apache.struts.action.DynaActionFormClass(this);
+                }
+            }
+        }
+        return dynaActionFormClass;
+    }
+
+    /** The cached DynaActionFormClass for dynamic forms. */
+    private transient org.apache.struts.action.DynaActionFormClass
+        dynaActionFormClass;
 
     /**
      * Return the <code>Class</code> instance for the form bean implementation

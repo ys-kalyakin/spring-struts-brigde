@@ -25,6 +25,9 @@ public class FormPropertyConfig extends BaseConfig {
     /** The role or roles allowed to access this property. */
     protected String role;
 
+    /** Conditions under which the property should be reset to its initial value. */
+    protected String reset;
+
     public FormPropertyConfig() {
     }
 
@@ -84,6 +87,64 @@ public class FormPropertyConfig extends BaseConfig {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getReset() {
+        return reset;
+    }
+
+    public void setReset(String reset) {
+        this.reset = reset;
+    }
+
+    /**
+     * Return the initial value of this property as an instance of the
+     * configured type: the string <code>initial</code> converted to the
+     * type, the default value of the type when no initial is configured, or
+     * an array of the configured size for array types.
+     */
+    public Object initial() {
+        Object initialValue = null;
+
+        try {
+            Class<?> clazz = loadTypeClass();
+
+            if (clazz.isArray()) {
+                if (initial != null) {
+                    initialValue =
+                        org.apache.commons.beanutils.ConvertUtils.convert(
+                            initial, clazz);
+                } else {
+                    initialValue =
+                        java.lang.reflect.Array.newInstance(
+                            clazz.getComponentType(), size);
+                }
+            } else {
+                if (initial != null) {
+                    initialValue =
+                        org.apache.commons.beanutils.ConvertUtils.convert(
+                            initial, clazz);
+                } else {
+                    initialValue = clazz.getDeclaredConstructor().newInstance();
+                }
+            }
+        } catch (Throwable t) {
+            initialValue = null;
+        }
+
+        return initialValue;
+    }
+
+    /**
+     * Return the configured property type as a class.
+     */
+    public Class<?> getTypeClass() throws ClassNotFoundException {
+        return loadTypeClass();
+    }
+
+    private Class<?> loadTypeClass() throws ClassNotFoundException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        return (cl != null) ? cl.loadClass(type) : Class.forName(type);
     }
 
     @Override

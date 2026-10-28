@@ -43,6 +43,9 @@ public class ModuleConfigImpl implements ModuleConfig {
     /** The list of action configurations for this module, in registration order. */
     protected List<ActionConfig> actionConfigList = new ArrayList<>();
 
+    /** Action configurations keyed by their <code>actionId</code>. */
+    protected Map<String, ActionConfig> actionConfigIds = new HashMap<>();
+
     /** The set of exception configurations for this module, keyed by class name. */
     protected Map<String, ExceptionConfig> exceptions = new HashMap<>();
 
@@ -137,6 +140,15 @@ public class ModuleConfigImpl implements ModuleConfig {
             log.warn("Overriding ActionConfig of path {}", path);
         }
 
+        String actionId = config.getActionId();
+        if ((actionId != null) && !actionId.isEmpty()) {
+            if (actionConfigIds.containsKey(actionId)) {
+                log.warn("Overriding actionId[{}] for path[{}] with path[{}]",
+                    actionId, actionConfigIds.get(actionId).getPath(), path);
+            }
+            actionConfigIds.put(actionId, config);
+        }
+
         actionConfigs.put(path, config);
         actionConfigList.add(config);
     }
@@ -208,6 +220,14 @@ public class ModuleConfigImpl implements ModuleConfig {
     @Override
     public ActionConfig findActionConfig(String path) {
         return actionConfigs.get(path);
+    }
+
+    @Override
+    public ActionConfig findActionConfigId(String actionId) {
+        if (actionId != null) {
+            return actionConfigIds.get(actionId);
+        }
+        return null;
     }
 
     @Override

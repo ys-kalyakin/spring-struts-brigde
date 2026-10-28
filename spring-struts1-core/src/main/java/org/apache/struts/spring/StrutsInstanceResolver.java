@@ -3,6 +3,8 @@ package org.apache.struts.spring;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.servlet.ServletException;
+
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -62,17 +64,24 @@ public class StrutsInstanceResolver implements ApplicationContextAware {
     /**
      * Resolve a fresh form instance for the given form bean configuration:
      * a registered prototype bean yields a new instance per call, the
-     * classic fallback creates directly.
+     * classic fallback creates through
+     * {@link FormBeanConfig#createActionForm} (which wires dynamic
+     * <code>DynaActionForm</code> beans to their
+     * <code>DynaActionFormClass</code> and applies the declared initial
+     * values).
      */
     public ActionForm resolveForm(FormBeanConfig config) throws Exception {
-        String type = config.getType();
-        Class<?> clazz = loadClass(type);
+        Class<?> clazz = loadClass(config.getType());
 
         String[] beanNames = applicationContext.getBeanNamesForType(clazz);
         if (beanNames.length > 0) {
             return applicationContext.getBean(beanNames[0], ActionForm.class);
         }
-        return (ActionForm) instantiate(clazz);
+        try {
+            return config.createActionForm();
+        } catch (IllegalStateException e) {
+            throw new ServletException(e.getMessage(), e.getCause());
+        }
     }
 
     private Class<?> loadClass(String type) throws ClassNotFoundException {

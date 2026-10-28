@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Struts Examples Application ported to the spring-struts1 engine.
+    The classic ActionServlet is served by the Spring DispatcherServlet;
+    the struts-config init-params keep their classic names and values.
+-->
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_1.xsd"
+      version="6.1">
+
+    <display-name>Struts Examples Application</display-name>
+
+    <!-- Standard Action Servlet Configuration (with debugging) -->
+    <servlet>
+        <servlet-name>action</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextClass</param-name>
+            <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
+        </init-param>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>org.apache.struts.webapp.examples.ExamplesConfig</param-value>
+        </init-param>
+
+        <!-- Default -->
+        <init-param>
+            <param-name>config</param-name>
+            <param-value>/WEB-INF/struts-config.xml</param-value>
+        </init-param>
+
+        <!-- Exercise module -->
+        <init-param>
+            <param-name>config/exercise</param-name>
+            <param-value>/WEB-INF/exercise/struts-config.xml</param-value>
+        </init-param>
+
+        <!-- Dispatch Action module -->
+        <init-param>
+            <param-name>config/dispatch</param-name>
+            <param-value>/WEB-INF/dispatch/struts-config.xml</param-value>
+        </init-param>
+
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- Standard Action Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>action</servlet-name>
+        <url-pattern>*.do</url-pattern>
+    </servlet-mapping>
+
+    <!-- The Usual Welcome File List -->
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+</web-app>
