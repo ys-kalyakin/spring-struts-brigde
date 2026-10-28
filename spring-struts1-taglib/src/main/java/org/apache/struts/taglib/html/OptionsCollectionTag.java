@@ -26,7 +26,6 @@ import org.apache.struts.util.IteratorAdapter;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -35,6 +34,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Tag for creating multiple &lt;select&gt; options from a collection. The
@@ -49,7 +49,7 @@ import java.util.Map;
  *          $
  * @since Struts 1.1
  */
-public class OptionsCollectionTag extends TagSupport {
+public class OptionsCollectionTag extends SpringTagSupport {
     private static final long serialVersionUID = 1914555968585129477L;
 
     // ----------------------------------------------------- Instance Variables

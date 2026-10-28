@@ -24,7 +24,6 @@ import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -35,6 +34,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 
 import java.util.Locale;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Tag that retrieves the specified property of the specified bean, converts
@@ -44,7 +44,7 @@ import java.util.Locale;
  * @version $Rev$ $Date: 2004-10-16 12:38:42 -0400 (Sat, 16 Oct 2004)
  *          $
  */
-public class WriteTag extends TagSupport {
+public class WriteTag extends SpringTagSupport {
     private static final long serialVersionUID = 9063011151700733307L;
 
     /**

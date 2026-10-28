@@ -24,7 +24,7 @@ import org.apache.struts.taglib.TagUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.BodyTagSupport;
+import org.apache.struts.taglib.spring.SpringBodyTagSupport;
 
 /**
  * NestedRootTag.
@@ -45,7 +45,7 @@ import jakarta.servlet.jsp.tagext.BodyTagSupport;
  *          $
  * @since Struts 1.1
  */
-public class NestedRootTag extends BodyTagSupport implements NestedNameSupport {
+public class NestedRootTag extends SpringBodyTagSupport implements NestedNameSupport {
     private static final long serialVersionUID = 6034271254121373745L;
 
     /* usual member variables */

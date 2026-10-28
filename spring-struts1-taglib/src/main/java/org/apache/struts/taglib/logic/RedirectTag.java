@@ -25,13 +25,13 @@ import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.io.IOException;
 
 import java.net.MalformedURLException;
 
 import java.util.Map;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Generate a URL-encoded redirect to the specified URI.
@@ -39,7 +39,7 @@ import java.util.Map;
  * @version $Rev$ $Date: 2004-10-16 12:38:42 -0400 (Sat, 16 Oct 2004)
  *          $
  */
-public class RedirectTag extends TagSupport {
+public class RedirectTag extends SpringTagSupport {
     private static final long serialVersionUID = -633259759046315419L;
 
     /**

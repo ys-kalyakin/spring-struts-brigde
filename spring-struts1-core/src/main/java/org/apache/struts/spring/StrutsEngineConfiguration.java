@@ -17,6 +17,11 @@ import org.apache.struts.action.ActionServlet;
 public class StrutsEngineConfiguration {
 
     @Bean
+    public static StrutsEngineRegistrar strutsEngineRegistrar() {
+        return new StrutsEngineRegistrar();
+    }
+
+    @Bean
     public ActionServlet actionServlet() {
         return new ActionServlet();
     }

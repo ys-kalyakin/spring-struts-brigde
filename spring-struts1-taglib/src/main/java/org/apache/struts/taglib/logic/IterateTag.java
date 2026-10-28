@@ -29,11 +29,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.BodyTagSupport;
 
 import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.IteratorAdapter;
 import org.apache.struts.util.MessageResources;
+import org.apache.struts.taglib.spring.SpringBodyTagSupport;
 
 /**
  * Custom tag that iterates the elements of a collection, which can be either
@@ -45,7 +45,7 @@ import org.apache.struts.util.MessageResources;
  * @version $Rev$ $Date: 2004-11-03 14:20:47 -0500 (Wed, 03 Nov 2004)
  *          $
  */
-public class IterateTag extends BodyTagSupport {
+public class IterateTag extends SpringBodyTagSupport {
     private static final long serialVersionUID = -5999125654202702585L;
 
     /**

@@ -25,9 +25,9 @@ import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.util.Locale;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Custom tag that retrieves an internationalized messages string (with
@@ -38,7 +38,7 @@ import java.util.Locale;
  * @version $Rev$ $Date: 2005-09-16 09:38:33 -0400 (Fri, 16 Sep 2005)
  *          $
  */
-public class MessageTag extends TagSupport {
+public class MessageTag extends SpringTagSupport {
     private static final long serialVersionUID = -7079614664108381469L;
 
     /**

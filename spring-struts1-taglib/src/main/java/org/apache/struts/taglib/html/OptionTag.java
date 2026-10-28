@@ -25,7 +25,7 @@ import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.BodyTagSupport;
+import org.apache.struts.taglib.spring.SpringBodyTagSupport;
 
 /**
  * Tag for select options.  The body of this tag is presented to the user in
@@ -35,7 +35,7 @@ import jakarta.servlet.jsp.tagext.BodyTagSupport;
  * @version $Rev$ $Date: 2005-08-21 19:08:45 -0400 (Sun, 21 Aug 2005)
  *          $
  */
-public class OptionTag extends BodyTagSupport {
+public class OptionTag extends SpringBodyTagSupport {
     private static final long serialVersionUID = -7578679181809130326L;
 
     // ----------------------------------------------------- Instance Variables

@@ -23,7 +23,7 @@ package org.apache.struts.taglib.logic;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Abstract base class for the various conditional evaluation tags.
@@ -31,7 +31,7 @@ import jakarta.servlet.jsp.tagext.TagSupport;
  * @version $Rev$ $Date: 2004-10-16 12:38:42 -0400 (Sat, 16 Oct 2004)
  *          $
  */
-public abstract class ConditionalTagBase extends TagSupport {
+public abstract class ConditionalTagBase extends SpringTagSupport {
     private static final long serialVersionUID = 3946322389227285250L;
 
     /**

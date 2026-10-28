@@ -25,7 +25,6 @@ import java.lang.reflect.Method;
 
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.BodyTagSupport;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.struts.Globals;
@@ -36,6 +35,7 @@ import org.apache.struts.util.MessageResources;
 import org.apache.struts.util.RequestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.struts.taglib.spring.SpringBodyTagSupport;
 
 /**
  * Base class for tags that render form elements capable of including
@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  * @version $Rev$ $Date$
  */
-public abstract class BaseHandlerTag extends BodyTagSupport {
+public abstract class BaseHandlerTag extends SpringBodyTagSupport {
     private static final long serialVersionUID = -981395499563339165L;
 
     /**

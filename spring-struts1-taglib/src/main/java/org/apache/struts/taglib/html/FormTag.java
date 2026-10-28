@@ -37,9 +37,9 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.JspWriter;
 import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.io.IOException;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Custom tag that represents an input form, associated with a bean whose
@@ -47,7 +47,7 @@ import java.io.IOException;
  *
  * @version $Rev$ $Date$
  */
-public class FormTag extends TagSupport {
+public class FormTag extends SpringTagSupport {
     private static final long serialVersionUID = 8974150782496551522L;
 
     /**

@@ -21,13 +21,13 @@
 package org.apache.struts.taglib.html;
 
 import org.apache.struts.Globals;
-import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
 import org.apache.struts.taglib.TagUtils;
+import org.apache.struts.taglib.spring.ErrorsMessagesRenderer;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.util.Iterator;
 
@@ -59,7 +59,7 @@ import java.util.Iterator;
  * @version $Rev$ $Date: 2005-08-21 19:08:45 -0400 (Sun, 21 Aug 2005)
  *          $
  */
-public class ErrorsTag extends TagSupport {
+public class ErrorsTag extends SpringTagSupport {
     private static final long serialVersionUID = -1001104694221127422L;
 
     /**
@@ -184,95 +184,13 @@ public class ErrorsTag extends TagSupport {
      * @throws JspException if a JSP exception has occurred
      */
     public int doStartTag() throws JspException {
-        // Were any error messages specified?
-        ActionMessages errors = null;
-
-        try {
-            errors =
-                TagUtils.getInstance().getActionMessages(pageContext, name);
-        } catch (JspException e) {
-            TagUtils.getInstance().saveException(pageContext, e);
-            throw e;
+        String rendered = tagService(ErrorsMessagesRenderer.class,
+            ErrorsMessagesRenderer::new)
+            .renderErrors(pageContext, bundle, locale, name, property,
+                getHeader(), getFooter(), getPrefix(), getSuffix());
+        if (rendered != null) {
+            TagUtils.getInstance().write(pageContext, rendered);
         }
-
-        if ((errors == null) || errors.isEmpty()) {
-            return (EVAL_BODY_INCLUDE);
-        }
-
-        boolean headerPresent =
-            TagUtils.getInstance().present(pageContext, bundle, locale,
-                getHeader());
-
-        boolean footerPresent =
-            TagUtils.getInstance().present(pageContext, bundle, locale,
-                getFooter());
-
-        boolean prefixPresent =
-            TagUtils.getInstance().present(pageContext, bundle, locale,
-                getPrefix());
-
-        boolean suffixPresent =
-            TagUtils.getInstance().present(pageContext, bundle, locale,
-                getSuffix());
-
-        // Render the error messages appropriately
-        StringBuilder results = new StringBuilder();
-        boolean headerDone = false;
-        String message = null;
-        Iterator<ActionMessage> reports =
-            (property == null) ? errors.get() : errors.get(property);
-
-        while (reports.hasNext()) {
-            ActionMessage report = reports.next();
-
-            if (!headerDone) {
-                if (headerPresent) {
-                    message =
-                        TagUtils.getInstance().message(pageContext, bundle,
-                            locale, getHeader());
-
-                    results.append(message);
-                }
-
-                headerDone = true;
-            }
-
-            if (prefixPresent) {
-                message =
-                    TagUtils.getInstance().message(pageContext, bundle, locale,
-                        getPrefix());
-                results.append(message);
-            }
-
-            if (report.isResource()) {
-                message =
-                    TagUtils.getInstance().message(pageContext, bundle, locale,
-                        report.getKey(), report.getValues());
-            } else {
-                message = report.getKey();
-            }
-
-            if (message != null) {
-                results.append(message);
-            }
-
-            if (suffixPresent) {
-                message =
-                    TagUtils.getInstance().message(pageContext, bundle, locale,
-                        getSuffix());
-                results.append(message);
-            }
-        }
-
-        if (headerDone && footerPresent) {
-            message =
-                TagUtils.getInstance().message(pageContext, bundle, locale,
-                    getFooter());
-            results.append(message);
-        }
-
-        TagUtils.getInstance().write(pageContext, results.toString());
-
         return (EVAL_BODY_INCLUDE);
     }
 

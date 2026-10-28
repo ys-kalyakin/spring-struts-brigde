@@ -23,13 +23,13 @@ package org.apache.struts.taglib.html;
 import java.util.Iterator;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.BodyTagSupport;
 
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
 import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
+import org.apache.struts.taglib.spring.SpringBodyTagSupport;
 
 /**
  * Custom tag that iterates the elements of a message collection. It defaults
@@ -42,7 +42,7 @@ import org.apache.struts.util.MessageResources;
  *          $
  * @since Struts 1.1
  */
-public class MessagesTag extends BodyTagSupport {
+public class MessagesTag extends SpringBodyTagSupport {
     private static final long serialVersionUID = -7665117721919199746L;
 
     /**

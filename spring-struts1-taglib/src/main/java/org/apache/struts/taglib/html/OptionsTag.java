@@ -26,7 +26,6 @@ import org.apache.struts.util.IteratorAdapter;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -35,6 +34,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Tag for creating multiple &lt;select&gt; options from a collection.  The
@@ -44,7 +44,7 @@ import java.util.Map;
  * Iterator, or a Map. <b>NOTE</b> - This tag requires a Java2 (JDK 1.2 or
  * later) platform.
  */
-public class OptionsTag extends TagSupport {
+public class OptionsTag extends SpringTagSupport {
     private static final long serialVersionUID = -585632142361843380L;
 
     /**

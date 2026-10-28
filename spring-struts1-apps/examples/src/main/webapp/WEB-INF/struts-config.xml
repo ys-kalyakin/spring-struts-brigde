@@ -30,6 +30,8 @@
                    type="org.apache.struts.webapp.examples.CustomFormBean">
             <set-property property="example" value="EXAMPLE"/>
         </form-bean>
+        <form-bean name="demoForm"
+                   type="org.apache.struts.webapp.examples.SpringDemoForm"/>
     </form-beans>
 
     <global-exceptions/>
@@ -47,6 +49,12 @@
             type="org.apache.struts.webapp.examples.CustomActionMapping">
         <action path="/welcome" forward="/welcome.jsp">
             <set-property property="example" value="EXAMPLE"/>
+        </action>
+
+        <action path="/SpringIntegration"
+                type="org.apache.struts.webapp.examples.SpringIntegrationAction"
+                name="demoForm" scope="request" validate="false">
+            <forward name="page" path="/spring-integration.jsp"/>
         </action>
     </action-mappings>
 

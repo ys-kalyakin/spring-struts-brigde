@@ -25,6 +25,8 @@
     <spring.version>7.0.10</spring.version>
     <tomcat.version>11.0.27</tomcat.version>
     <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
+    <jakarta.el-api.version>6.0.1</jakarta.el-api.version>
+    <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
     <jakarta.servlet.jsp-api.version>4.0.0</jakarta.servlet.jsp-api.version>
     <commons-digester.version>2.1</commons-digester.version>
     <commons-beanutils.version>1.11.0</commons-beanutils.version>
@@ -44,6 +46,21 @@
         <groupId>jakarta.servlet</groupId>
         <artifactId>jakarta.servlet-api</artifactId>
         <version>${jakarta.servlet-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.el</groupId>
+        <artifactId>jakarta.el-api</artifactId>
+        <version>${jakarta.el-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.servlet.jsp</groupId>
+        <artifactId>jakarta.servlet.jsp-api</artifactId>
+        <version>${jakarta.servlet.jsp-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.annotation</groupId>
+        <artifactId>jakarta.annotation-api</artifactId>
+        <version>${jakarta.annotation-api.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>

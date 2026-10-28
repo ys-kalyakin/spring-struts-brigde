@@ -25,13 +25,13 @@ import java.util.Locale;
 
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import org.apache.struts.Globals;
 import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Renders an HTML <html> element with appropriate language attributes if
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @version $Rev$ $Date: 2005-08-21 19:08:45 -0400 (Sun, 21 Aug 2005)
  *          $
  */
-public class HtmlTag extends TagSupport {
+public class HtmlTag extends SpringTagSupport {
     private static final long serialVersionUID = -4739352136106954707L;
 
     // ------------------------------------------------------------- Properties

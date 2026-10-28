@@ -9,6 +9,7 @@
         <form-bean name="personForm" type="org.apache.struts.spring.it.PersonForm"/>
         <form-bean name="validatingForm" type="org.apache.struts.spring.it.ValidatingForm"/>
         <form-bean name="diForm" type="org.apache.struts.spring.it.AnnotatedForm"/>
+        <form-bean name="plainDIForm" type="org.apache.struts.spring.it.PlainDIForm"/>
     </form-beans>
 
     <global-exceptions>
@@ -65,6 +66,11 @@
                 name="diForm" scope="request" validate="false"/>
 
         <action path="/ServletCheck" type="org.apache.struts.spring.it.ServletCheckAction"/>
+
+        <action path="/PlainDI" type="org.apache.struts.spring.it.PlainDIAction"/>
+
+        <action path="/PlainDIForm" type="org.apache.struts.spring.it.PlainDIFormAction"
+                name="plainDIForm" scope="request" validate="false"/>
 
         <action path="/Msg" type="org.apache.struts.spring.it.MsgAction"/>
     </action-mappings>

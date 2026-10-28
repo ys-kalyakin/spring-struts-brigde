@@ -23,8 +23,8 @@ package org.apache.struts.taglib.html;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.BodyTagSupport;
 import jakarta.servlet.jsp.tagext.Tag;
+import org.apache.struts.taglib.spring.SpringBodyTagSupport;
 
 /**
  * Adds a new request parameter to its parent {@link LinkTag}.
@@ -32,7 +32,7 @@ import jakarta.servlet.jsp.tagext.Tag;
  * @version $Rev$ $Date$
  * @since Struts 1.3.6
  */
-public class ParamTag extends BodyTagSupport {
+public class ParamTag extends SpringBodyTagSupport {
     private static final long serialVersionUID = -1366158296805914170L;
 
     /**

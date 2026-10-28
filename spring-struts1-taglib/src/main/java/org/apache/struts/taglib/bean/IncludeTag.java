@@ -26,7 +26,6 @@ import org.apache.struts.util.RequestUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.io.BufferedInputStream;
 import java.io.InputStreamReader;
@@ -37,6 +36,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import java.util.Map;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Define the contents of a specified intra-application request as a page
@@ -49,7 +49,7 @@ import java.util.Map;
  * @version $Rev$ $Date: 2005-08-21 19:08:45 -0400 (Sun, 21 Aug 2005)
  *          $
  */
-public class IncludeTag extends TagSupport {
+public class IncludeTag extends SpringTagSupport {
     private static final long serialVersionUID = 7506510616296363473L;
 
     // ------------------------------------------------------------- Properties

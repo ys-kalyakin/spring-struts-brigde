@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<struts-config>
+
+    <form-beans>
+        <form-bean name="fixtureForm"
+                   type="org.apache.struts.fixtures.FixtureForm"/>
+        <form-bean name="dynaForm"
+                   type="org.apache.struts.action.DynaActionForm">
+            <form-property name="greeting" type="java.lang.String"
+                           initial="hi"/>
+        </form-bean>
+    </form-beans>
+
+    <action-mappings>
+        <action path="/Fixture"
+                type="org.apache.struts.fixtures.FixtureAction"/>
+    </action-mappings>
+
+    <message-resources parameter="test-messages"/>
+    <message-resources key="alternate" parameter="alternate-messages"/>
+
+</struts-config>

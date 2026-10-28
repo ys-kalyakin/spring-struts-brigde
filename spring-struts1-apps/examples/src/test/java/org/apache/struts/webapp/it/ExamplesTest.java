@@ -178,4 +178,34 @@ class ExamplesTest {
         assertPage("/dispatch/dispatch-noparam.do",
             "DispatchAction Example");
     }
+
+    @Test
+    void springIntegrationShowcase() throws Exception {
+        HttpResponse<String> resp = get(
+            "/SpringIntegration.do?label=from-query");
+        assertTrue(resp.statusCode() == 200, resp.body());
+
+        // EL resolves the Spring bean by name through the engine.
+        assertTrue(resp.body().contains("el-bean:injected-service-ok"),
+            resp.body());
+        // spring:message renders from the Struts bundle via MessageSource.
+        assertTrue(resp.body().contains("spring-message:Spring demo message"),
+            resp.body());
+        // The unannotated form is a Spring prototype: dependency injected,
+        // @PostConstruct executed before populate.
+        assertTrue(resp.body()
+                .contains("di-form:injected-service-ok:postconstructed"),
+            resp.body());
+        // html:errors renders through the Spring errors renderer.
+        assertTrue(resp.body()
+                .contains("errors:<UL><LI>Demo error message</LI></UL>"),
+            resp.body());
+        // html:form/html:text build the URL and take the value from the
+        // populated form.
+        assertTrue(resp.body().contains("value=\"from-query\""),
+            resp.body());
+        assertTrue(resp.body()
+            .contains("action=\"/examples/SpringIntegration.do"),
+            resp.body());
+    }
 }

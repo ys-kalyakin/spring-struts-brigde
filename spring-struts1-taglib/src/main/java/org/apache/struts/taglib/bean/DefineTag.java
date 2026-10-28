@@ -22,12 +22,12 @@ package org.apache.struts.taglib.bean;
 
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.BodyTagSupport;
 
 import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.struts.taglib.spring.SpringBodyTagSupport;
 
 /**
  * Define a scripting variable based on the value(s) of the specified bean
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * @version $Rev$ $Date: 2005-06-15 12:16:32 -0400 (Wed, 15 Jun 2005)
  *          $
  */
-public class DefineTag extends BodyTagSupport {
+public class DefineTag extends SpringBodyTagSupport {
     private static final long serialVersionUID = -4615510039410385921L;
 
     /**

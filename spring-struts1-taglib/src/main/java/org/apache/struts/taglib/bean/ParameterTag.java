@@ -24,7 +24,7 @@ import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Define a scripting variable based on the value(s) of the specified
@@ -33,7 +33,7 @@ import jakarta.servlet.jsp.tagext.TagSupport;
  * @version $Rev$ $Date: 2004-10-16 12:38:42 -0400 (Sat, 16 Oct 2004)
  *          $
  */
-public class ParameterTag extends TagSupport {
+public class ParameterTag extends SpringTagSupport {
     private static final long serialVersionUID = -3980455390796879785L;
 
     /**

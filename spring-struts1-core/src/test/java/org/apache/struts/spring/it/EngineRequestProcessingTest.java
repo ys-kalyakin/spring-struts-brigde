@@ -217,6 +217,32 @@ class EngineRequestProcessingTest {
     }
 
     @Test
+    void unannotatedActionIsSpringSingletonWithInjectedDependency()
+        throws Exception {
+        HttpResponse<String> first = get("/PlainDI.do");
+        HttpResponse<String> second = get("/PlainDI.do");
+        assertTrue(first.body().startsWith("plaindi:"), first.body());
+        assertTrue(first.body().endsWith(":greeted-by-service:postConstruct=1"),
+            "Dependency must be injected and @PostConstruct called once "
+                + "before execute: " + first.body());
+        assertEquals(first.body(), second.body(),
+            "Auto-registered action must be a reused singleton");
+    }
+
+    @Test
+    void unannotatedFormIsSpringPrototypeWithInjectedDependency()
+        throws Exception {
+        HttpResponse<String> first = get("/PlainDIForm.do?name=Ivan");
+        HttpResponse<String> second = get("/PlainDIForm.do?name=Oleg");
+        String id1 = first.body().split(":")[1];
+        String id2 = second.body().split(":")[1];
+        assertNotEquals(id1, id2,
+            "Auto-registered form must be fresh per request");
+        assertTrue(first.body().contains(":greeted-by-service:name=Ivan"),
+            "Form dependency must be injected: " + first.body());
+    }
+
+    @Test
     void messagesResolvedWithSessionLocaleAndMissingKeyFormat()
         throws Exception {
         HttpResponse<String> resp = getSession("/Msg.do?setLocale=ru_RU");

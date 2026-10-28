@@ -28,7 +28,7 @@ import org.apache.struts.util.MessageResources;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Perform a forward or redirect to a page that is looked up in the
@@ -37,7 +37,7 @@ import jakarta.servlet.jsp.tagext.TagSupport;
  * @version $Rev$ $Date: 2004-10-16 12:38:42 -0400 (Sat, 16 Oct 2004)
  *          $
  */
-public class ForwardTag extends TagSupport {
+public class ForwardTag extends SpringTagSupport {
     private static final long serialVersionUID = -6945897858520054480L;
 
     // ----------------------------------------------------------- Properties

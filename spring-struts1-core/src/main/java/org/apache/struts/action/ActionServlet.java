@@ -11,7 +11,6 @@ import jakarta.servlet.UnavailableException;
 import jakarta.servlet.http.HttpServlet;
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.digester.Digester;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -19,11 +18,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import org.apache.struts.Globals;
-import org.apache.struts.config.ConfigRuleSet;
 import org.apache.struts.config.MessageResourcesConfig;
 import org.apache.struts.config.ModuleConfig;
 import org.apache.struts.config.ModuleConfigFactory;
 import org.apache.struts.config.PlugInConfig;
+import org.apache.struts.config.StrutsConfigParser;
 import org.apache.struts.util.MessageResources;
 import org.apache.struts.util.MessageResourcesFactory;
 import org.apache.struts.util.RequestUtils;
@@ -213,46 +212,12 @@ public class ActionServlet extends HttpServlet
         getServletContext().setAttribute(Globals.MODULE_KEY + prefix, mconfig);
     }
 
-    /** The set of public identifiers, and corresponding resource names, for the versions of the configuration DTDs that we know about. */
-    protected String[] registrations =
-        {
-            "-//Apache Software Foundation//DTD Struts Configuration 1.0//EN",
-            "/org/apache/struts/resources/struts-config_1_0.dtd",
-            "-//Apache Software Foundation//DTD Struts Configuration 1.1//EN",
-            "/org/apache/struts/resources/struts-config_1_1.dtd",
-            "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN",
-            "/org/apache/struts/resources/struts-config_1_2.dtd",
-            "-//Apache Software Foundation//DTD Struts Configuration 1.3//EN",
-            "/org/apache/struts/resources/struts-config_1_3.dtd",
-            "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN",
-            "/org/apache/struts/resources/struts-config_1_4.dtd"
-        };
-
     /**
      * Parse a single configuration file into the given module configuration.
      */
     protected void parseModuleConfigFile(URL url, ModuleConfig mconfig)
         throws ServletException {
-        Digester digester = new Digester();
-        digester.push(mconfig);
-        digester.setClassLoader(Thread.currentThread()
-            .getContextClassLoader());
-        digester.setValidating(validating);
-        digester.setNamespaceAware(true);
-        digester.addRuleSet(new ConfigRuleSet());
-        // Register our local copy of the configuration DTDs
-        for (int i = 0; i < registrations.length; i += 2) {
-            URL dtdUrl = getClass().getResource(registrations[i + 1]);
-            if (dtdUrl != null) {
-                digester.register(registrations[i], dtdUrl.toString());
-            }
-        }
-        try {
-            digester.parse(url);
-        } catch (Exception e) {
-            throw new ServletException(
-                "Cannot parse configuration resource " + url, e);
-        }
+        StrutsConfigParser.parse(url, mconfig, validating);
     }
 
     /**

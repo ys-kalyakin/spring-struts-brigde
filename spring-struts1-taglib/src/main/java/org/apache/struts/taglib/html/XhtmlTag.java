@@ -22,19 +22,19 @@ package org.apache.struts.taglib.html;
 
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import org.apache.struts.Globals;
 import org.apache.struts.taglib.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * This tag tells all other html taglib tags to render themselves in xhtml.
  * Its presence in a page turns on xhtml.<p>
  * Example:<br/> &lt;html:xhtml/&gt;</p>
  */
-public class XhtmlTag extends TagSupport {
+public class XhtmlTag extends SpringTagSupport {
     private static final long serialVersionUID = -1346016551741493372L;
 
     /**

@@ -29,11 +29,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.JspWriter;
 import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.io.IOException;
 
 import java.util.StringTokenizer;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Renders an HTML <base> element with an href attribute pointing to the
@@ -45,7 +45,7 @@ import java.util.StringTokenizer;
  * @version $Rev$ $Date: 2005-09-20 02:29:01 -0400 (Tue, 20 Sep 2005)
  *          $
  */
-public class BaseTag extends TagSupport {
+public class BaseTag extends SpringTagSupport {
     private static final long serialVersionUID = 4758687983139578649L;
 
     /**

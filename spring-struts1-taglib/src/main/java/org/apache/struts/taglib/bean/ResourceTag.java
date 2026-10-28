@@ -24,11 +24,11 @@ import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import org.apache.struts.taglib.spring.SpringTagSupport;
 
 /**
  * Define a scripting variable based on the contents of the specified web
@@ -37,7 +37,7 @@ import java.io.InputStreamReader;
  * @version $Rev$ $Date: 2004-10-16 12:38:42 -0400 (Sat, 16 Oct 2004)
  *          $
  */
-public class ResourceTag extends TagSupport {
+public class ResourceTag extends SpringTagSupport {
     private static final long serialVersionUID = -2393578665475166929L;
 
     // ------------------------------------------------------------- Properties
