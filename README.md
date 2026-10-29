@@ -1,5 +1,7 @@
 # spring-struts-bridge
 
+[![CI](https://github.com/ys-kalyakin/spring-struts-brigde/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ys-kalyakin/spring-struts-brigde/actions/workflows/ci.yml)
+
 Воссоздание фреймворка **Struts 1** поверх актуального Spring: существующее Struts-приложение мигрирует на современный стек заменой зависимости, подключением Spring Boot стартера и минимальными правками кода (аннотации над формами и экшенами, чтобы они стали Spring-бинами). Эталон совместимости — [weblegacy/struts1](https://github.com/weblegacy/struts1) (линия 1.5.x, `jakarta.*`): его API, TLD и тестовые приложения служат критерием корректности реализации.
 
 Ключевые принципы:

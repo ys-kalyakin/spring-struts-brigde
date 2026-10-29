@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Cache Maven wrapper
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
+
+      - name: Build and test
+        run: ./mvnw -B -ntp verify
+
+      - name: Summarize test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob
+          import os
+          import xml.etree.ElementTree as ET
+
+          totals = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
+          reports = glob.glob("**/target/surefire-reports/TEST-*.xml", recursive=True)
+          for path in reports:
+              try:
+                  root = ET.parse(path).getroot()
+              except ET.ParseError:
+                  continue
+              for key in totals:
+                  totals[key] += int(root.attrib.get(key, 0))
+
+          lines = ["## Test results", ""]
+          if reports:
+              lines += [
+                  f"Surefire reports: {len(reports)}",
+                  "",
+                  "| Tests | Failures | Errors | Skipped |",
+                  "| ---: | ---: | ---: | ---: |",
+                  f"| {totals['tests']} | {totals['failures']} | {totals['errors']} | {totals['skipped']} |",
+              ]
+          else:
+              lines.append("No surefire reports found.")
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          text = "\n".join(lines) + "\n"
+          if summary:
+              with open(summary, "a", encoding="utf-8") as output:
+                  output.write(text)
+          else:
+              print(text)
+          PY
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: '**/target/surefire-reports/**'
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            spring-struts1-core/target/*.jar
+            spring-struts1-taglib/target/*.jar
+            spring-struts1-tiles/target/*.jar
+            spring-struts1-apps/mailreader-dao/target/*.jar
+            spring-struts1-apps/blank/target/*.war
+            spring-struts1-apps/examples/target/*.war
+            spring-struts1-apps/cookbook/target/*.war
+            spring-struts1-apps/mailreader/target/*.war
+          if-no-files-found: error
+          retention-days: 7
