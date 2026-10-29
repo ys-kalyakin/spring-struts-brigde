@@ -19,5 +19,8 @@
   <modules>
     <module>blank</module>
     <module>examples</module>
+    <module>cookbook</module>
+    <module>mailreader-dao</module>
+    <module>mailreader</module>
   </modules>
 </project>

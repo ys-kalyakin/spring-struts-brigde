@@ -1,0 +1,173 @@
+package org.apache.struts.tiles.xmlDefinition;
+
+import org.apache.struts.tiles.ComponentDefinition;
+import org.apache.struts.tiles.NoSuchDefinitionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+  *A definition read from an XML definitions file.
+  */
+public class XmlDefinition extends ComponentDefinition
+{
+  private static final long serialVersionUID = -5843791058928194033L;
+
+  /**
+   * Extends attribute value.
+   */
+  private String inherit;
+
+  /**
+   * The {@code Log} instance for this class.
+   */
+  private transient final Logger log =
+    LoggerFactory.getLogger(XmlDefinition.class);
+
+  /**
+   * Used for resolving inheritance.
+   */
+  private boolean isVisited=false;
+
+
+     /**
+      * Constructor.
+      */
+   public XmlDefinition()
+   {
+   super();
+   //if(debug)
+     //System.out.println( "create definition" );
+   }
+
+  /**
+   * Add an attribute to this component.
+   *
+   * @param attribute Attribute to add.
+   */
+  public void addAttribute( XmlAttribute attribute)
+    {
+    putAttribute( attribute.getName(), attribute.getValue() );
+    }
+
+  /**
+   * Set extends.
+   *
+   * @param name Name of the extended definition.
+   */
+  public void setExtends(String name)
+    {
+    inherit = name;
+    }
+
+  /**
+   * Get extends.
+   *
+   * @return Name of the extended definition.
+   */
+  public String getExtends()
+    {
+    return inherit;
+    }
+
+  /**
+   * Get extends flag.
+   *
+   */
+  public boolean isExtending( )
+    {
+    return inherit!=null;
+    }
+
+  /**
+   * Set isVisited.
+   *
+   */
+  public void setIsVisited( boolean isVisited )
+    {
+    this.isVisited = isVisited;
+    }
+
+    /**
+     * Resolve inheritance.
+     * First, resolve parent's inheritance, then set path to the parent's path.
+     * Also copy attributes setted in parent, and not set in child
+     * If instance doesn't extend anything, do nothing.
+     * @throws NoSuchDefinitionException If an inheritance can not be solved.
+     */
+  public void resolveInheritance( XmlDefinitionsSet definitionsSet )
+    throws NoSuchDefinitionException
+    {
+      // Already done, or not needed ?
+    if( isVisited || !isExtending() )
+      return;
+
+    log.debug("Resolve definition for child name='{}' extends='{}'.",
+      getName(), getExtends());
+
+      // Set as visited to avoid endless recurisvity.
+    setIsVisited( true );
+
+      // Resolve parent before itself.
+    XmlDefinition parent = definitionsSet.getDefinition( getExtends() );
+    if( parent == null )
+      { // error
+      String msg = "Error while resolving definition inheritance: child '"
+                           + getName() +    "' can't find its ancestor '"
+                           + getExtends() +
+                           "'. Please check your description file.";
+      log.error( msg );
+        // to do : find better exception
+      throw new NoSuchDefinitionException( msg );
+      }
+
+    parent.resolveInheritance( definitionsSet );
+
+      // Iterate on each parent's attribute and add it if not defined in child.
+    for( String name : parent.getAttributes().keySet() )
+      {
+      if( !getAttributes().containsKey(name) )
+        putAttribute( name, parent.getAttribute(name) );
+      }
+      // Set path and role if not setted
+    if( path == null )
+      setPath( parent.getPath() );
+    if( role == null )
+      setRole( parent.getRole() );
+    if( controller==null )
+      {
+      setController( parent.getController());
+      setControllerType( parent.getControllerType());
+      }
+    }
+
+  /**
+   * Overload this definition with passed child.
+   * All attributes from child are copied to this definition. Previous
+   * attributes with same name are disguarded.
+   * Special attribute 'path','role' and 'extends' are overloaded if defined
+   * in child.
+   * @param child Child used to overload this definition.
+   */
+  public void overload( XmlDefinition child )
+    {
+    if( child.getPath() != null )
+      {
+      path = child.getPath();
+      }
+    if( child.getExtends() != null )
+      {
+      inherit = child.getExtends();
+      }
+    if( child.getRole() != null )
+      {
+      role = child.getRole();
+      }
+    if( child.getController()!=null )
+      {
+      controller = child.getController();
+      controllerType =  child.getControllerType();
+      }
+      // put all child attributes in parent.
+    attributes.putAll( child.getAttributes());
+    }
+}

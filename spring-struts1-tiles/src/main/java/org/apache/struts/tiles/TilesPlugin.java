@@ -1,0 +1,370 @@
+package org.apache.struts.tiles;
+
+import java.util.Map;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.UnavailableException;
+
+import org.apache.struts.action.ActionServlet;
+import org.apache.struts.action.PlugIn;
+import org.apache.struts.config.ModuleConfig;
+import org.apache.struts.config.PlugInConfig;
+import org.apache.struts.spring.DefinitionForwardResolver;
+import org.apache.struts.util.RequestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
+/**
+ * Tiles Plugin used to initialize Tiles.
+ * This plugin is to be used with Struts 1.1 in association with
+ * {@link TilesRequestProcessor}.
+ * <br>
+ * This plugin creates one definition factory for each Struts-module. The definition factory
+ * configuration is read first from 'web.xml' (backward compatibility), then it is
+ * overloaded with values found in the plugin property values.
+ * <br>
+ * The plugin changes the Struts configuration by specifying a {@link TilesRequestProcessor} as
+ * request processor. If you want to use your own RequestProcessor,
+ * it should subclass TilesRequestProcessor.
+ * <br>
+ * This plugin can also be used to create one single factory for all modules.
+ * This behavior is enabled by specifying <code>moduleAware=false</code> in each
+ * plugin properties. In this case, the definition factory
+ * configuration file is read by the first Tiles plugin to be initialized. The order is
+ * determined by the order of modules declaration in web.xml. The first module
+ * is always the default one if it exists.
+ * The plugin should be declared in each struts-config.xml file in order to
+ * properly initialize the request processor.
+ * @since Struts 1.1
+ */
+public class TilesPlugin implements PlugIn {
+
+    /**
+     * Marker for logging of fatal errors.
+     */
+    private final static Marker FATAL = MarkerFactory.getMarker("FATAL");
+
+    /**
+     * The {@code Log} instance for this class.
+     */
+    private final Logger log =
+        LoggerFactory.getLogger(TilesPlugin.class);
+
+    /**
+     * Is the factory module aware?
+     */
+    protected boolean moduleAware = false;
+
+    /**
+     * Tiles util implementation classname. This property can be set
+     * by user in the plugin declaration.
+     */
+    protected String tilesUtilImplClassname = null;
+
+    /**
+     * Associated definition factory.
+     */
+    protected DefinitionsFactory definitionFactory = null;
+
+    /**
+     * The plugin config object provided by the ActionServlet initializing
+     * this plugin.
+     */
+    protected PlugInConfig currentPlugInConfigObject=null;
+
+    /**
+     * Get the module aware flag.
+     * @return <code>true</code>: user wants a single factory instance,
+     * <code>false:</code> user wants multiple factory instances (one per module with Struts)
+     */
+    public boolean isModuleAware() {
+        return moduleAware;
+    }
+
+    /**
+     * Set the module aware flag.
+     * This flag is only meaningful if the property <code>tilesUtilImplClassname</code> is not
+     * set.
+     * @param moduleAware <code>true</code>: user wants a single factory instance,
+     * <code>false:</code> user wants multiple factory instances (one per module with Struts)
+     */
+    public void setModuleAware(boolean moduleAware) {
+        this.moduleAware = moduleAware;
+    }
+
+    /**
+     * <p>Receive notification that the specified module is being
+     * started up.</p>
+     *
+     * @param servlet ActionServlet that is managing all the modules
+     *  in this web application.
+     * @param moduleConfig ModuleConfig for the module with which
+     *  this plugin is associated.
+     *
+     * @exception ServletException if this <code>PlugIn</code> cannot
+     *  be successfully initialized.
+     */
+    public void init(ActionServlet servlet, ModuleConfig moduleConfig)
+        throws ServletException {
+
+        // Create factory config object
+        DefinitionsFactoryConfig factoryConfig =
+            readFactoryConfig(servlet, moduleConfig);
+
+        // Set the module name in the config. This name will be used to compute
+        // the name under which the factory is stored.
+        factoryConfig.setFactoryName(moduleConfig.getPrefix());
+
+        // Register the Spring definition-forward hook (the engine consults
+        // DefinitionForwardResolver beans instead of a swapped processor)
+        this.initDefinitionForwardResolver(servlet);
+
+        this.initTilesUtil();
+
+        this.initDefinitionsFactory(servlet.getServletContext(), moduleConfig, factoryConfig);
+    }
+
+    /**
+     * Set TilesUtil implementation according to properties 'tilesUtilImplClassname'
+     * and 'moduleAware'.  These properties are taken into account only once. A
+     * side effect is that only the values set in the first initialized plugin are
+     * effectively taken into account.
+     * @throws ServletException
+     */
+    private void initTilesUtil() throws ServletException {
+
+        if (TilesUtil.isTilesUtilImplSet()) {
+            log.debug("Skipping re-init of Tiles Plugin. Values defined in the " +
+                    "first initialized plugin take precedence.");
+            return;
+        }
+
+        // Check if user has specified a TilesUtil implementation classname or not.
+        // If no implementation is specified, check if user has specified one
+        // shared single factory for all module, or one factory for each module.
+
+        if (this.getTilesUtilImplClassname() == null) {
+
+            if (isModuleAware()) {
+                TilesUtil.setTilesUtil(new TilesUtilStrutsModulesImpl());
+            } else {
+                TilesUtil.setTilesUtil(new TilesUtilStrutsImpl());
+            }
+
+        } else { // A classname is specified for the tilesUtilImp, use it.
+            try {
+                TilesUtilStrutsImpl impl =
+                    (TilesUtilStrutsImpl) RequestUtils
+                        .applicationClass(getTilesUtilImplClassname())
+                        .getDeclaredConstructor().newInstance();
+                TilesUtil.setTilesUtil(impl);
+
+            } catch (ClassCastException ex) {
+                throw new ServletException(
+                    "Can't set TilesUtil implementation to '"
+                        + getTilesUtilImplClassname()
+                        + "'. TilesUtil implementation should be a subclass of '"
+                        + TilesUtilStrutsImpl.class.getName()
+                        + "'", ex);
+
+            } catch (Exception ex) {
+                throw new ServletException(
+                    "Can't set TilesUtil implementation.",
+                    ex);
+            }
+        }
+
+    }
+
+    /**
+     * Initialize the DefinitionsFactory this module will use.
+     * @param servletContext
+     * @param moduleConfig
+     * @param factoryConfig
+     * @throws ServletException
+     */
+    private void initDefinitionsFactory(
+        ServletContext servletContext,
+        ModuleConfig moduleConfig,
+        DefinitionsFactoryConfig factoryConfig)
+        throws ServletException {
+
+        // Check if a factory already exist for this module
+        definitionFactory =
+            ((TilesUtilStrutsImpl) TilesUtil.getTilesUtil()).getDefinitionsFactory(
+                servletContext,
+                moduleConfig);
+
+        if (definitionFactory != null) {
+            throw new UnavailableException(
+                "Factory already exists for module '"
+                    + moduleConfig.getPrefix()
+                    + "' and cannot be redefined. " +
+                    "The factory found is from module '"
+                    + definitionFactory.getConfig().getFactoryName() + "'.");
+        }
+
+        // Create configurable factory
+        try {
+            definitionFactory =
+                TilesUtil.createDefinitionsFactory(
+                    servletContext,
+                    factoryConfig);
+
+        } catch (DefinitionsFactoryException ex) {
+            log.error("Can't create Tiles definition factory for module '{}'.",
+                moduleConfig.getPrefix());
+
+            throw new ServletException(ex);
+        }
+
+        log.info("Tiles definition factory loaded for module '{}'.",
+            moduleConfig.getPrefix());
+    }
+
+    /**
+     * End plugin.
+     */
+    public void destroy() {
+        definitionFactory.destroy();
+        definitionFactory = null;
+    }
+
+    /**
+     * Create FactoryConfig and initialize it from web.xml and struts-config.xml.
+     *
+     * @param servlet ActionServlet that is managing all the modules
+     *  in this web application.
+     * @param config ModuleConfig for the module with which
+     *  this plugin is associated.
+     * @exception ServletException if this <code>PlugIn</code> cannot
+     *  be successfully initialized.
+     */
+    @SuppressWarnings("deprecation")
+    protected DefinitionsFactoryConfig readFactoryConfig(
+        ActionServlet servlet,
+        ModuleConfig config)
+        throws ServletException {
+
+        // Create tiles definitions config object
+        DefinitionsFactoryConfig factoryConfig = new DefinitionsFactoryConfig();
+        // Get init parameters from web.xml files
+        try {
+            DefinitionsUtil.populateDefinitionsFactoryConfig(
+                factoryConfig,
+                servlet.getServletConfig());
+
+        } catch (Exception ex) {
+            String message = "Can't populate DefinitionsFactoryConfig class from 'web.xml'";
+            log.debug(message, ex);
+            ex.printStackTrace();
+            UnavailableException e2 = new UnavailableException(message);
+            e2.initCause(ex);
+            throw e2;
+        }
+
+        // Get init parameters from struts-config.xml
+        try {
+            Map<String, Object> strutsProperties = findStrutsPlugInConfigProperties(servlet, config);
+            factoryConfig.populate(strutsProperties);
+
+        } catch (Exception ex) {
+            String message = "Can't populate DefinitionsFactoryConfig class from '"
+                    + config.getPrefix()
+                    + "/struts-config.xml'";
+
+            log.debug(message, ex);
+
+            UnavailableException e2 = new UnavailableException(message);
+            e2.initCause(ex);
+            throw e2;
+        }
+
+        return factoryConfig;
+    }
+
+    /**
+     * Find original properties set in the Struts PlugInConfig object.
+     * First, we need to find the index of this plugin. Then we retrieve the array of configs
+     * and then the object for this plugin.
+     * @param servlet ActionServlet that is managing all the modules
+     *  in this web application.
+     * @param config ModuleConfig for the module with which
+     *  this plug in is associated.
+     *
+     * @exception ServletException if this <code>PlugIn</code> cannot
+     *  be successfully initialized.
+     */
+    protected Map<String, Object> findStrutsPlugInConfigProperties(
+        ActionServlet servlet,
+        ModuleConfig config)
+        throws ServletException {
+
+        return currentPlugInConfigObject.getProperties();
+    }
+
+    /**
+     * Register a {@link DefinitionForwardResolver} in the Spring
+     * application context that forwards to tiles definitions. Registered
+     * once per plugin instance; the engine picks the bean up from the
+     * context, so no processor replacement is involved.
+     *
+     * @param servlet ActionServlet that is managing all the modules
+     * @throws ServletException if the Spring context is not reachable
+     */
+    protected void initDefinitionForwardResolver(ActionServlet servlet)
+        throws ServletException {
+
+        org.springframework.context.ApplicationContext applicationContext =
+            servlet.getApplicationContext();
+
+        if (applicationContext instanceof
+            org.springframework.context.ConfigurableApplicationContext) {
+
+            org.springframework.beans.factory.config.ConfigurableListableBeanFactory
+                beanFactory =
+                ((org.springframework.context.ConfigurableApplicationContext)
+                    applicationContext).getBeanFactory();
+
+            // one resolver serves every module; later plugin instances
+            // (moduleAware or not) reuse the already registered bean.
+            if (!beanFactory.containsSingleton("tilesDefinitionForwardResolver")) {
+                beanFactory.registerSingleton(
+                    "tilesDefinitionForwardResolver",
+                    new TilesDefinitionForwardResolver());
+            }
+        } else if (applicationContext == null) {
+            throw new ServletException(
+                "TilesPlugin requires a Spring application context");
+        }
+    }
+
+    /**
+     * Set Tiles util implemention classname.
+     * If this property is set, the flag <code>moduleAware</code> will not be used anymore.
+     * @param tilesUtilImplClassname Classname.
+     */
+    public void setTilesUtilImplClassname(String tilesUtilImplClassname) {
+        this.tilesUtilImplClassname = tilesUtilImplClassname;
+    }
+
+    /**
+     * Get Tiles util implemention classname.
+     * @return The classname or <code>null</code> if none is set.
+     */
+    public String getTilesUtilImplClassname() {
+        return tilesUtilImplClassname;
+    }
+
+    /**
+     * Method used by the ActionServlet initializing this plugin.
+     * Set the plugin config object read from module config.
+     * @param plugInConfigObject PlugInConfig.
+     */
+    public void setCurrentPlugInConfigObject(PlugInConfig plugInConfigObject) {
+        this.currentPlugInConfigObject = plugInConfigObject;
+    }
+}

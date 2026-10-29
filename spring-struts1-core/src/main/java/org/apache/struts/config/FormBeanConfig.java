@@ -54,6 +54,130 @@ public class FormBeanConfig extends BaseConfig {
     }
 
     /**
+     * The path or action id of the form bean that this object should
+     * inherit properties from (classic <code>extends</code> attribute).
+     */
+    protected String inherit;
+
+    /** Whether the inheritance of this config has been processed. */
+    protected boolean extensionProcessed = false;
+
+    public String getExtends() {
+        return inherit;
+    }
+
+    public void setExtends(String inherit) {
+        throwIfConfigured();
+        this.inherit = inherit;
+    }
+
+    public boolean isExtensionProcessed() {
+        return extensionProcessed;
+    }
+
+    /**
+     * Inherit configuration information from the FormBeanConfig that this
+     * instance is extending (classic multi-page config inheritance).
+     */
+    public void processExtends(ModuleConfig moduleConfig)
+        throws ClassNotFoundException, IllegalAccessException,
+            InstantiationException, java.lang.reflect.InvocationTargetException {
+        throwIfConfigured();
+
+        String ancestor = getExtends();
+
+        if ((!extensionProcessed) && (ancestor != null)) {
+            FormBeanConfig baseConfig = moduleConfig.findFormBeanConfig(ancestor);
+
+            if (baseConfig == null) {
+                throw new NullPointerException("Unable to find "
+                    + "form bean '" + ancestor + "' to extend.");
+            }
+
+            if (checkCircularInheritance(moduleConfig)) {
+                throw new IllegalArgumentException(
+                    "Circular inheritance detected for form bean " + getName());
+            }
+
+            // Make sure the ancestor's own extension has been processed.
+            if (!baseConfig.isExtensionProcessed()) {
+                baseConfig.processExtends(moduleConfig);
+            }
+
+            inheritFrom(baseConfig);
+        }
+
+        extensionProcessed = true;
+    }
+
+    /**
+     * Traces the hierarchy of this object to check if any of the ancestors
+     * is extending this instance.
+     */
+    protected boolean checkCircularInheritance(ModuleConfig moduleConfig) {
+        String ancestorName = getExtends();
+
+        while (ancestorName != null) {
+            if (getName().equals(ancestorName)) {
+                return true;
+            }
+            FormBeanConfig ancestor =
+                moduleConfig.findFormBeanConfig(ancestorName);
+            if (ancestor == null) {
+                ancestorName = null;
+            } else {
+                ancestorName = ancestor.getExtends();
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Copy the not-overridden values of the given base config into this one.
+     */
+    public void inheritFrom(FormBeanConfig config)
+        throws ClassNotFoundException, IllegalAccessException,
+            InstantiationException, java.lang.reflect.InvocationTargetException {
+        throwIfConfigured();
+
+        if (getType() == null) {
+            setType(config.getType());
+        }
+
+        inheritFormProperties(config);
+        inheritProperties(config);
+    }
+
+    /**
+     * Compare the form properties of this bean with that of the given and
+     * copy those that are not present.
+     */
+    protected void inheritFormProperties(FormBeanConfig config) {
+        throwIfConfigured();
+
+        FormPropertyConfig[] baseFpcs = config.findFormPropertyConfigs();
+
+        for (FormPropertyConfig baseFpc : baseFpcs) {
+            FormPropertyConfig prop =
+                this.findFormPropertyConfig(baseFpc.getName());
+
+            if (prop == null) {
+                prop = new FormPropertyConfig();
+                try {
+                    org.apache.commons.beanutils.BeanUtils.copyProperties(
+                        prop, baseFpc);
+                } catch (IllegalAccessException
+                        | java.lang.reflect.InvocationTargetException ex) {
+                    throw new IllegalStateException(ex);
+                }
+                this.addFormPropertyConfig(prop);
+                prop.setProperties(baseFpc.copyProperties());
+            }
+        }
+    }
+
+    /**
      * Throw <code>IllegalStateException</code> if configuration is frozen.
      */
     protected void throwIfConfigured() {

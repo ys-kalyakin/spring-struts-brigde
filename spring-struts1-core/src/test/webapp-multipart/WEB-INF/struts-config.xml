@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<struts-config>
+
+    <form-beans>
+        <form-bean name="uploadForm" type="org.apache.struts.fixtures.MultipartForm"/>
+        <form-bean name="fixtureBean" type="org.apache.struts.validator.ValidatorFixtureForm"/>
+        <form-bean name="dynaTestBean" type="org.apache.struts.validator.DynaValidatorForm">
+            <form-property name="firstName" type="java.lang.String"/>
+        </form-bean>
+    </form-beans>
+
+    <action-mappings>
+        <action path="/Upload" type="org.apache.struts.spring.it.MultipartUploadAction"
+                name="uploadForm" scope="request" validate="true"
+                input="/upload-input.jsp"/>
+
+        <action path="/ValidatorSubmit" type="org.apache.struts.spring.it.ValidatorSubmitAction"
+                name="fixtureBean" scope="request" validate="true"
+                input="/validator-input.jsp"/>
+
+        <action path="/DynaValidatorSubmit" type="org.apache.struts.spring.it.DynaValidatorSubmitAction"
+                name="dynaTestBean" scope="request" validate="true"
+                input="/validator-input.jsp"/>
+    </action-mappings>
+
+    <message-resources parameter="validator-messages"/>
+
+    <controller maxFileSize="2K" memFileSize="1K"/>
+
+    <plug-in className="org.apache.struts.validator.ValidatorPlugIn">
+        <set-property property="pathnames"
+                      value="/org/apache/struts/validator/validator-rules.xml,
+                             /WEB-INF/validation.xml"/>
+        <set-property property="stopOnFirstError" value="false"/>
+    </plug-in>
+
+</struts-config>

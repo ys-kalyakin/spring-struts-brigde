@@ -44,6 +44,14 @@ public interface ModuleConfig extends Serializable {
 
     void addPlugInConfig(PlugInConfig plugInConfig);
 
+    void removeActionConfig(ActionConfig config);
+
+    void removeExceptionConfig(ExceptionConfig config);
+
+    void removeFormBeanConfig(FormBeanConfig config);
+
+    void removeForwardConfig(ForwardConfig config);
+
     ActionConfig findActionConfig(String path);
 
     /**

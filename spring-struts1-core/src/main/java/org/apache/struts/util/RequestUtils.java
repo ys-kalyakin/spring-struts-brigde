@@ -1,18 +1,38 @@
 package org.apache.struts.util;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 
+import org.apache.struts.Globals;
 import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionServlet;
+import org.apache.struts.action.ActionServletWrapper;
 import org.apache.struts.config.ActionConfig;
 import org.apache.struts.config.FormBeanConfig;
 import org.apache.struts.config.ForwardConfig;
 import org.apache.struts.config.ModuleConfig;
+import org.apache.struts.upload.FormFile;
+import org.apache.struts.upload.MultipartRequestHandler;
+import org.apache.struts.upload.MultipartRequestWrapper;
+import org.apache.struts.upload.SpringMultipartRequestHandler;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 /**
  * General purpose utility methods related to processing a servlet request.
@@ -25,6 +45,31 @@ import org.apache.struts.config.ModuleConfig;
  * touch beanutils converters directly.</p>
  */
 public class RequestUtils {
+
+    /**
+     * The <code>Log</code> instance for this class.
+     */
+    private static final Logger LOG =
+        LoggerFactory.getLogger(RequestUtils.class);
+
+    /**
+     * Pattern matching 'class' access (CVE-2014-0114).
+     */
+    protected static final Pattern CLASS_ACCESS_PATTERN = Pattern
+        .compile("(.*\\.|^|.*|\\[('|\"))class(\\.|('|\")]|\\[).*",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Create and return a fully-qualified class instance of the given name,
+     * using the current thread's context class loader.
+     */
+    public static Object applicationInstance(String className)
+        throws ClassNotFoundException, InstantiationException,
+        IllegalAccessException, InvocationTargetException,
+        NoSuchMethodException {
+        return applicationInstance(className,
+            Thread.currentThread().getContextClassLoader());
+    }
 
     /**
      * Create and return a fully-qualified class instance of the given name,
@@ -54,34 +99,293 @@ public class RequestUtils {
      * request, optionally restricting the processed parameter names to those
      * with the given prefix and/or suffix (which are stripped from the
      * property names).</p>
+     *
+     * <p>Multipart requests (<code>multipart/form-data</code>) are parsed
+     * through a <code>MultipartRequestHandler</code> before population: text
+     * elements populate like regular parameters, file elements fill
+     * properties of the matching types. When a limit is exceeded, population
+     * is skipped and the handler is attached to the form so the application
+     * can inspect the request attributes.</p>
+     *
+     * <p>Ported from weblegacy/struts1 1.5.x.</p>
      */
     public static void populate(Object bean, String prefix, String suffix,
         HttpServletRequest request) throws ServletException {
-        java.util.Map<String, String[]> filtered =
-            new java.util.LinkedHashMap<>();
-        for (java.util.Map.Entry<String, String[]> entry : request
-            .getParameterMap().entrySet()) {
-            String name = entry.getKey();
-            if (prefix != null) {
-                if (!name.startsWith(prefix)) {
-                    continue;
-                }
-                name = name.substring(prefix.length());
-            }
-            if (suffix != null) {
-                if (!name.endsWith(suffix)) {
-                    continue;
-                }
-                name = name.substring(0,
-                    name.length() - suffix.length());
-            }
-            filtered.put(name, entry.getValue());
+        // Build a list of relevant request parameters from this request
+        HashMap<String, Object> properties = new HashMap<>();
+
+        // Iterator of parameter names
+        Enumeration<String> names = null;
+
+        // Map for multipart parameters
+        Map<String, Object> multipartParameters = null;
+
+        String contentType = request.getContentType();
+        String method = request.getMethod();
+        boolean isMultipart = false;
+
+        if (bean instanceof ActionForm) {
+            ((ActionForm) bean).setMultipartRequestHandler(null);
         }
+
+        MultipartRequestHandler multipartHandler = null;
+        if ((contentType != null)
+            && (contentType.startsWith("multipart/form-data"))
+            && (method.equalsIgnoreCase("POST"))) {
+            // Get the ActionServletWrapper from the form bean
+            ActionServletWrapper servlet;
+
+            if (bean instanceof ActionForm) {
+                servlet = ((ActionForm) bean).getServletWrapper();
+            } else {
+                throw new ServletException("bean that's supposed to be "
+                    + "populated from a multipart request is not of type "
+                    + "\"org.apache.struts.action.ActionForm\", but type "
+                    + "\"" + bean.getClass().getName() + "\"");
+            }
+
+            // Obtain a MultipartRequestHandler: when the request has already
+            // been resolved by a Spring MultipartResolver, adapt its parts
+            // instead of parsing the body a second time
+            if (request instanceof MultipartHttpServletRequest) {
+                multipartHandler = new SpringMultipartRequestHandler();
+            } else {
+                multipartHandler = getMultipartHandler(request);
+            }
+
+            if (multipartHandler != null) {
+                isMultipart = true;
+
+                // Set servlet and mapping info
+                servlet.setServletFor(multipartHandler);
+                multipartHandler.setMapping((ActionMapping) request
+                    .getAttribute(Globals.MAPPING_KEY));
+
+                // Initialize multipart request class handler
+                multipartHandler.handleRequest(request);
+
+                // stop here if the maximum length has been exceeded
+                Boolean maxLengthExceeded =
+                    (Boolean) request.getAttribute(MultipartRequestHandler.ATTRIBUTE_MAX_LENGTH_EXCEEDED);
+
+                if ((maxLengthExceeded != null)
+                    && (maxLengthExceeded.booleanValue())) {
+                    ((ActionForm) bean).setMultipartRequestHandler(multipartHandler);
+                    return;
+                }
+
+                // retrieve form values and put into properties
+                multipartParameters =
+                    getAllParametersForMultipartRequest(request,
+                        multipartHandler);
+                names = Collections.enumeration(multipartParameters.keySet());
+            }
+        }
+
+        if (!isMultipart) {
+            names = request.getParameterNames();
+        }
+
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            String stripped = name;
+
+            if (prefix != null) {
+                if (!stripped.startsWith(prefix)) {
+                    continue;
+                }
+
+                stripped = stripped.substring(prefix.length());
+            }
+
+            if (suffix != null) {
+                if (!stripped.endsWith(suffix)) {
+                    continue;
+                }
+
+                stripped =
+                    stripped.substring(0, stripped.length() - suffix.length());
+            }
+
+            Object parameterValue = null;
+
+            if (isMultipart) {
+                parameterValue = multipartParameters.get(name);
+                parameterValue = rationalizeMultipleFileProperty(bean, name,
+                    parameterValue);
+            } else {
+                parameterValue = request.getParameterValues(name);
+            }
+
+            // CVE-2014-0114 security problem patch
+            if (CLASS_ACCESS_PATTERN.matcher(stripped).matches()) {
+                LOG.trace("ignore parameter: paramName={}", stripped);
+                continue;
+            }
+
+            // Populate parameters, except "standard" struts attributes
+            // such as 'org.apache.struts.action.CANCEL'
+            if (!(stripped.startsWith("org.apache.struts."))) {
+                properties.put(stripped, parameterValue);
+            }
+        }
+
+        // Set the corresponding properties of our bean
         try {
-            BeanUtils.populate(bean, filtered);
+            BeanUtils.populate(bean, properties);
         } catch (Exception e) {
             throw new ServletException("BeanUtils.populate", e);
+        } finally {
+            if (multipartHandler != null) {
+                // Set the multipart request handler for our ActionForm.
+                ((ActionForm) bean).setMultipartRequestHandler(multipartHandler);
+            }
         }
+    }
+
+    /**
+     * If the specified property has multiple FormFile objects, but the form
+     * bean type can only process a single FormFile object, then this method
+     * attempts to take this situation into account.
+     *
+     * <p>Ported from weblegacy/struts1 1.5.x.</p>
+     */
+    private static Object rationalizeMultipleFileProperty(Object bean,
+            String name, Object parameterValue) throws ServletException {
+
+        if (!(parameterValue instanceof FormFile[])) {
+            return parameterValue;
+        }
+
+        final FormFile[] formFileValue = (FormFile[]) parameterValue;
+        try {
+            final Class<?> propertyType =
+                    PropertyUtils.getPropertyType(bean, name);
+
+            if (propertyType == null) {
+                return parameterValue;
+            }
+
+            if (List.class.isAssignableFrom(propertyType)) {
+                return Arrays.asList(formFileValue);
+            }
+
+            if (FormFile.class.isAssignableFrom(propertyType)) {
+                switch (formFileValue.length) {
+                    case 0:
+                        LOG.error("FormFile-parameter \"{}\" for FormBean "
+                                + "\"{}\" has unexpected length of null!",
+                                name, bean.getClass().getName());
+                        return null;
+
+                    case 1:
+                        return formFileValue[0];
+
+                    default:
+                        LOG.error("FormFile-parameter \"{}\" for FormBean "
+                                + "\"{}\" should have an Array or a List as "
+                                + "method parameter!", name,
+                                bean.getClass().getName());
+                        return formFileValue[0];
+                }
+            }
+        } catch (IllegalAccessException | InvocationTargetException
+                | NoSuchMethodException e) {
+            throw new ServletException(e);
+        }
+
+        // no changes
+        return parameterValue;
+    }
+
+    /**
+     * Try to locate a multipart request handler for this request: the
+     * mapping-specific handler stored under {@link Globals#MULTIPART_KEY}
+     * first, then the module's controller configuration.
+     *
+     * <p>Ported from weblegacy/struts1 1.5.x.</p>
+     */
+    private static MultipartRequestHandler getMultipartHandler(
+        HttpServletRequest request) throws ServletException {
+        MultipartRequestHandler multipartHandler = null;
+        String multipartClass =
+            (String) request.getAttribute(Globals.MULTIPART_KEY);
+
+        request.removeAttribute(Globals.MULTIPART_KEY);
+
+        // Try to initialize the mapping specific request handler
+        if (multipartClass != null) {
+            try {
+                multipartHandler =
+                    (MultipartRequestHandler) applicationInstance(multipartClass);
+            } catch (ClassNotFoundException cnfe) {
+                LOG.error("MultipartRequestHandler class \"{}\" "
+                    + "in mapping class not found, "
+                    + "defaulting to global multipart class", multipartClass);
+            } catch (InstantiationException ie) {
+                LOG.error("InstantiationException when instantiating "
+                    + "MultipartRequestHandler \"{}\", "
+                    + "defaulting to global multipart class, exception: {}",
+                    multipartClass, ie.getMessage());
+            } catch (IllegalAccessException iae) {
+                LOG.error("IllegalAccessException when instantiating "
+                    + "MultipartRequestHandler \"{}\", "
+                    + "defaulting to global multipart class, exception: {}",
+                    multipartClass, iae.getMessage());
+            } catch (ReflectiveOperationException re) {
+                LOG.error("Cannot instantiate MultipartRequestHandler "
+                    + "\"{}\", defaulting to global multipart class, "
+                    + "exception: {}", multipartClass, re.getMessage());
+            }
+
+            if (multipartHandler != null) {
+                return multipartHandler;
+            }
+        }
+
+        ModuleConfig moduleConfig =
+            ModuleUtils.getInstance().getModuleConfig(request);
+
+        multipartClass = moduleConfig.getControllerConfig().getMultipartClass();
+
+        // Try to initialize the global request handler
+        if (multipartClass != null) {
+            try {
+                multipartHandler =
+                    (MultipartRequestHandler) applicationInstance(multipartClass);
+            } catch (ReflectiveOperationException re) {
+                throw new ServletException("Cannot instantiate multipart "
+                    + "class \"" + multipartClass + "\"", re);
+            }
+        }
+
+        return multipartHandler;
+    }
+
+    /**
+     * Create a <code>Map</code> containing all of the parameters supplied for
+     * a multipart request, keyed by parameter name: text and file elements
+     * from the multipart body plus query string parameters.
+     *
+     * <p>Ported from weblegacy/struts1 1.5.x.</p>
+     */
+    private static Map<String, Object> getAllParametersForMultipartRequest(
+        HttpServletRequest request, MultipartRequestHandler multipartHandler) {
+
+        final Map<String, Object> parameters =
+                new HashMap<>(multipartHandler.getAllElements());
+
+        if (request instanceof MultipartRequestWrapper) {
+            request =
+                (HttpServletRequest) ((MultipartRequestWrapper) request)
+                .getRequest();
+
+            parameters.putAll(request.getParameterMap());
+        } else {
+            LOG.debug("Gathering multipart parameters for unwrapped request");
+        }
+
+        return parameters;
     }
 
     /**

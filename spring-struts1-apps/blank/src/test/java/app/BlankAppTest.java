@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import org.apache.struts.Globals;
 import org.apache.struts.spring.testsupport.TomcatTestServer;
+import org.apache.struts.validator.ValidatorPlugIn;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -75,6 +76,14 @@ class BlankAppTest {
     void pluginInitializedAtStartup() {
         assertEquals("true",
             server.servletContext().getAttribute("blank.plugin.init"));
+    }
+
+    @Test
+    void validatorResourcesLoadedAtStartup() {
+        Object resources = server.servletContext()
+            .getAttribute(ValidatorPlugIn.VALIDATOR_KEY);
+        assertNotNull(resources,
+            "ValidatorPlugIn must load the validation rules");
     }
 
     @Test

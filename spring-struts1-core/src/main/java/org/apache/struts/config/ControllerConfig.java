@@ -33,16 +33,23 @@ public class ControllerConfig extends BaseConfig {
     protected boolean locale = true;
 
     /** The maximum size of an entire multipart request. */
-    protected String maxFileSize = "250M";
+    protected String maxSize = "256M";
 
     /** The maximum size of a file to be accepted in an upload. */
-    protected String maxStringLen = "4M";
+    protected String maxFileSize = "250M";
 
-    /** The maximum size of a string parameter. */
+    /** The maximum length of a string parameter in a multipart request. */
+    protected String maxStringLen = "4K";
+
+    /** The maximum number of files accepted in an upload (-1 = no limit). */
+    protected long fileCountMax = -1L;
+
+    /** The size threshold above which uploaded files will be written to disk. */
     protected String memFileSize = "256K";
 
     /** The fully qualified Java class name of the MultipartRequestHandler. */
-    protected String multipartClass = null;
+    protected String multipartClass =
+        "org.apache.struts.upload.CommonsMultipartRequestHandler";
 
     /** Should we set the no-cache HTTP headers on each response? */
     protected boolean nocache = false;
@@ -121,12 +128,28 @@ public class ControllerConfig extends BaseConfig {
         this.maxFileSize = maxFileSize;
     }
 
+    public String getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(String maxSize) {
+        this.maxSize = maxSize;
+    }
+
     public String getMaxStringLen() {
         return maxStringLen;
     }
 
     public void setMaxStringLen(String maxStringLen) {
         this.maxStringLen = maxStringLen;
+    }
+
+    public long getFileCountMax() {
+        return fileCountMax;
+    }
+
+    public void setFileCountMax(long fileCountMax) {
+        this.fileCountMax = fileCountMax;
     }
 
     public String getMemFileSize() {

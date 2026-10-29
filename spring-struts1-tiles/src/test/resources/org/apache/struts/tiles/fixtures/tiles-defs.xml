@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+          "-//Apache Software Foundation//DTD Tiles Configuration 1.4//EN"
+          "http://jakarta.apache.org/struts/dtds/tiles-config_1_4.dtd">
+
+<tiles-definitions>
+
+    <definition name=".base" path="/layout.jsp">
+        <put name="header" value="/header.jsp"/>
+        <put name="footer" value="/footer.jsp"/>
+        <put name="body" value="/body.jsp"/>
+    </definition>
+
+    <definition name=".page" extends=".base">
+        <put name="body" value="/other-body.jsp"/>
+    </definition>
+
+    <definition name=".menu" path="/menu.jsp">
+        <putList name="items">
+            <add value="Home"/>
+            <add value="About"/>
+        </putList>
+    </definition>
+
+    <definition name=".controlled" path="/controlled.jsp"
+                controllerClass="org.apache.struts.tiles.it.TestTileController">
+        <put name="title" value="Tile Title"/>
+    </definition>
+
+</tiles-definitions>

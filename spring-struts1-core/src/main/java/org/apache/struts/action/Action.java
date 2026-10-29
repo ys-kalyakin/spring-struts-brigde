@@ -20,9 +20,71 @@ import org.apache.struts.util.ModuleUtils;
 public abstract class Action {
 
     /**
+     * The "success" forward name (classic public constant).
+     */
+    public static final String SUCCESS = "success";
+
+    /**
+     * The "continue" forward name (classic public constant).
+     */
+    public static final String CONTINUE = "continue";
+
+    /**
+     * The "input" forward name (classic public constant).
+     */
+    public static final String INPUT = "input";
+
+    /**
+     * The "error" forward name (classic public constant).
+     */
+    public static final String ERROR = "error";
+
+    /**
+     * The "severe" forward name for severe errors (classic public
+     * constant).
+     */
+    public static final String SEVERE_ERROR = "severe";
+
+    /** The processor for transactional tokens (classic protected field). */
+    private static org.apache.struts.util.TokenProcessor token =
+        org.apache.struts.util.TokenProcessor.getInstance();
+
+    /**
      * The <code>ActionServlet</code> that owns this class.
      */
     protected transient ActionServlet servlet = null;
+
+    /**
+     * Return <code>true</code> if there is a transaction token stored in
+     * the user's current session, and the value submitted as a request
+     * parameter matches it (classic transactional token API).
+     */
+    protected boolean isTokenValid(HttpServletRequest request) {
+        return token.isTokenValid(request, false);
+    }
+
+    /**
+     * As {@link #isTokenValid(HttpServletRequest)}, optionally resetting
+     * the saved token after the check.
+     */
+    protected boolean isTokenValid(HttpServletRequest request, boolean reset) {
+        return token.isTokenValid(request, reset);
+    }
+
+    /**
+     * Reset the saved transaction token in the user's session.
+     */
+    protected void resetToken(HttpServletRequest request) {
+        token.resetToken(request);
+    }
+
+    /**
+     * Save a new transaction token in the user's current session, creating
+     * a new session if necessary.
+     */
+    protected void saveToken(HttpServletRequest request) {
+        token.saveToken(request);
+    }
 
     /**
      * Return the ActionServlet instance that owns this Action.

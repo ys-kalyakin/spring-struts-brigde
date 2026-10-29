@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<digester-rules>
+  <object-create-rule pattern="types" classname="java.util.ArrayList"/>
+  <call-method-rule pattern="types/type" methodname="add" paramcount="0"/>
+</digester-rules>

@@ -100,6 +100,17 @@ public class Globals implements Serializable {
         "org.apache.struts.action.MESSAGE";
 
     /**
+     * The request attributes key under which a multipart class for the
+     * current mapping is stored; read by
+     * <code>RequestUtils.populate</code> to obtain the
+     * <code>MultipartRequestHandler</code> for the request.
+     *
+     * @since Struts 1.1
+     */
+    public static final String MULTIPART_KEY =
+        "org.apache.struts.action.mapping.multipartclass";
+
+    /**
      * The base of the context attributes key under which an array of
      * <code>PlugIn</code> instances will be stored. This will be suffixed
      * with the actual module prefix (including the leading "/" character) to

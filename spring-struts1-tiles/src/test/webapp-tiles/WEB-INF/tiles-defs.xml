@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+          "-//Apache Software Foundation//DTD Tiles Configuration 1.4//EN"
+          "http://jakarta.apache.org/struts/dtds/tiles-config_1_4.dtd">
+
+<tiles-definitions>
+
+    <definition name=".layout" path="/layout.jsp">
+        <put name="title" value="Base Title"/>
+        <put name="body" value="/body.jsp"/>
+    </definition>
+
+    <definition name=".page" extends=".layout">
+        <put name="title" value="Page Title"/>
+    </definition>
+
+    <definition name=".controlled" path="/controlled.jsp"
+                controllerClass="org.apache.struts.tiles.it.TestTileController">
+        <put name="title" value="Controlled Page"/>
+        <put name="body" value="/body.jsp"/>
+    </definition>
+
+    <definition name=".menu" path="/menu.jsp"
+                controllerClass="org.apache.struts.tiles.it.TestTileController">
+        <putList name="items">
+            <add value="Home"/>
+            <add value="About"/>
+        </putList>
+    </definition>
+
+    <definition name=".locale" path="/locale.jsp">
+        <put name="title" value="Default Title"/>
+    </definition>
+
+    <definition name=".action-tile" path="/TilesRender.do">
+        <put name="title" value="Tile Action Title"/>
+    </definition>
+
+</tiles-definitions>

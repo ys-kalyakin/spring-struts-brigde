@@ -23,6 +23,16 @@ public class ActionMapping extends ActionConfig {
      * specified forwarding configuration. If no forwarding configuration can
      * be found, return <code>null</code>.
      */
+    /**
+     * Create and return an <code>ActionForward</code> representing the
+     * <code>input</code> of this action, narrowed from the
+     * <code>ActionConfig</code> forward.
+     */
+    @Override
+    public ActionForward getInputForward() {
+        return (ActionForward) super.getInputForward();
+    }
+
     public ActionForward findForward(String forwardName) {
         ForwardConfig config = findForwardConfig(forwardName);
 

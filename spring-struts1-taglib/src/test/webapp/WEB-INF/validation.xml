@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE form-validation PUBLIC
+          "-//Apache Software Foundation//DTD Commons Validator Rules Configuration Bean 1.4.0//EN"
+          "http://commons.apache.org/dtds/validator_1_4_0.dtd">
+
+<form-validation>
+
+    <formset>
+
+        <form name="dynaForm">
+
+            <field property="testString" depends="required">
+                <arg key="prompt.testString" position="0"/>
+            </field>
+
+        </form>
+
+    </formset>
+
+</form-validation>

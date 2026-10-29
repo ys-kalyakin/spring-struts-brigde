@@ -1,0 +1,89 @@
+package org.apache.struts.tiles.taglib;
+
+import org.apache.struts.taglib.spring.SpringTagSupport;
+
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.TagSupport;
+
+import org.apache.struts.tiles.DefinitionsFactory;
+import org.apache.struts.tiles.DefinitionsFactoryConfig;
+import org.apache.struts.tiles.DefinitionsFactoryException;
+import org.apache.struts.tiles.TilesUtil;
+
+  /**
+   * Init definitions factory.
+   */
+public class InitDefinitionsTag extends SpringTagSupport
+    implements ComponentConstants {
+  private static final long serialVersionUID = 1471051490484770266L;
+
+
+  private String filename = null;
+  private String classname = null;
+
+  /**
+   * Default constructor.
+   */
+  public InitDefinitionsTag() {
+    super();
+  }
+
+    /**
+     * Release all allocated resources.
+     */
+    public void release() {
+
+        super.release();
+        filename = null;
+    }
+
+    /**
+     * Set file.
+     */
+  public void setFile(String name){
+    this.filename = name;
+  }
+
+    /**
+     * Set classname.
+     */
+  public void setClassname(String classname){
+    this.classname = classname;
+  }
+
+    /**
+     * Do start tag.
+     */
+  public int doStartTag() throws JspException
+  {
+  DefinitionsFactory factory =
+      TilesUtil.getDefinitionsFactory(pageContext.getRequest(),
+          pageContext.getServletContext());
+  if(factory != null )
+    return SKIP_BODY;
+
+  DefinitionsFactoryConfig factoryConfig = new DefinitionsFactoryConfig();
+  factoryConfig.setFactoryClassname( classname );
+  factoryConfig.setDefinitionConfigFiles( filename );
+
+  try
+    {
+    factory = TilesUtil.createDefinitionsFactory(
+        pageContext.getServletContext(), factoryConfig);
+    }
+   catch( DefinitionsFactoryException ex )
+      {
+      ex.printStackTrace();
+      throw new JspException( ex );
+      }
+  return SKIP_BODY;
+  }
+
+    /**
+     * Do end tag.
+     */
+  public int doEndTag() throws JspException {
+    return EVAL_PAGE;
+  }
+
+}

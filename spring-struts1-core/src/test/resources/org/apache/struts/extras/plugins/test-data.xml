@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<types>
+  <type>imap</type>
+  <type>pop3</type>
+</types>

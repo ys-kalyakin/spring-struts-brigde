@@ -2,6 +2,8 @@ package org.apache.struts.fixtures;
 
 import jakarta.servlet.ServletException;
 
+import org.apache.struts.config.ModuleConfig;
+
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.PlugIn;
@@ -19,7 +21,7 @@ public class FixturePlugin implements PlugIn {
     private boolean destroyed;
 
     @Override
-    public void init(ActionServlet servlet) throws ServletException {
+    public void init(ActionServlet servlet, ModuleConfig config) throws ServletException {
         initialized = true;
         servlet.getServletContext().setAttribute("fixturePlugin.message",
             message);

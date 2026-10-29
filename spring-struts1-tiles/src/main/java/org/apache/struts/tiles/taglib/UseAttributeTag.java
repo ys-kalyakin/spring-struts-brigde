@@ -1,0 +1,196 @@
+package org.apache.struts.tiles.taglib;
+
+import org.apache.struts.taglib.spring.SpringTagSupport;
+
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.TagSupport;
+
+import org.apache.struts.tiles.taglib.util.TagUtils;
+import org.apache.struts.tiles.ComponentContext;
+
+
+/**
+ * Custom tag exposing a component attribute to page.
+ *
+ */
+public class UseAttributeTag extends SpringTagSupport {
+    private static final long serialVersionUID = 6568135554030718942L;
+
+
+    // ----------------------------------------------------- Instance Variables
+
+
+    /**
+     * Class name of object.
+     */
+    private String  classname = null;
+
+
+    /**
+     * The scope name.
+     */
+    private String scopeName = null;
+
+    /**
+     * The scope value.
+     */
+    private int scope = PageContext.PAGE_SCOPE;
+
+
+
+    /**
+     * The attribute name to be exposed.
+     */
+    private String attributeName = null;
+
+    /**
+     * Are errors ignored. This is the property for attribute 'ignore'.
+     * Default value is <code>false</code>, which throws an exception.
+     * Only "attribute not found" - errors are ignored.
+     */
+  protected boolean isErrorIgnored = false;
+
+
+    // ------------------------------------------------------------- Properties
+
+
+    /**
+     * Release all allocated resources.
+     */
+    public void release() {
+
+        super.release();
+        attributeName = null;
+        classname = null;
+        scope = PageContext.PAGE_SCOPE;
+        scopeName = null;
+        isErrorIgnored = false;
+          // Parent doesn't clear id, so we do it
+          // bug reported by Heath Chiavettone on 18 Mar 2002
+        id = null;
+    }
+
+    /**
+     * Get class name.
+     */
+    public String getClassname() {
+
+  return (this.classname);
+
+    }
+
+
+    /**
+     * Set the class name.
+     *
+     * @param name The new class name.
+     */
+    public void setClassname(String name) {
+
+  this.classname = name;
+
+    }
+
+    /**
+     * Set name.
+     */
+  public void setName(String value){
+    this.attributeName = value;
+  }
+
+    /**
+     * Get name.
+     */
+  public String getName()
+  {
+  return attributeName;
+  }
+
+    /**
+     * Set the scope.
+     *
+     * @param scope The new scope.
+     */
+    public void setScope(String scope) {
+  this.scopeName = scope;
+    }
+
+    /**
+     * Get scope.
+     */
+  public String getScope()
+  {
+  return scopeName;
+  }
+
+    /**
+     * Set ignore.
+     */
+  public void setIgnore(boolean ignore)
+    {
+    this.isErrorIgnored = ignore;
+    }
+
+    /**
+     * Get ignore.
+     */
+  public boolean getIgnore()
+  {
+  return isErrorIgnored;
+  }
+
+    // --------------------------------------------------------- Public Methods
+
+
+    /**
+     * Expose the requested attribute from component context.
+     *
+     * @exception JspException if a JSP exception has occurred
+     */
+  public int doStartTag() throws JspException
+    {
+      // Do a local copy of id
+    String localId=this.id;
+    if( localId==null )
+      localId=attributeName;
+
+    ComponentContext compContext = (ComponentContext)pageContext.getAttribute( ComponentConstants.COMPONENT_CONTEXT, PageContext.REQUEST_SCOPE);
+    if( compContext == null )
+      throw new JspException ( "Error - tag useAttribute : no tiles context found." );
+
+    Object value = compContext.getAttribute(attributeName);
+        // Check if value exists and if we must send a runtime exception
+    if( value == null )
+      if(!isErrorIgnored)
+        throw new JspException ( "Error - tag useAttribute : attribute '"+ attributeName + "' not found in context. Check tag syntax" );
+       else
+        return SKIP_BODY;
+
+    if( scopeName != null )
+      {
+      scope = TagUtils.getScope( scopeName, PageContext.PAGE_SCOPE );
+      if(scope!=ComponentConstants.COMPONENT_SCOPE)
+        pageContext.setAttribute(localId, value, scope);
+      }
+     else
+      pageContext.setAttribute(localId, value);
+
+      // Continue processing this page
+    return SKIP_BODY;
+    }
+
+
+
+
+    /**
+     * Clean up after processing this enumeration.
+     *
+     * @exception JspException if a JSP exception has occurred
+     */
+  public int doEndTag() throws JspException
+    {
+    return (EVAL_PAGE);
+    }
+
+}

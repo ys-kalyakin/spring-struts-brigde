@@ -1,0 +1,138 @@
+package org.apache.struts.tiles;
+
+import java.io.IOException;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.apache.struts.Globals;
+import org.apache.struts.config.ModuleConfig;
+import org.apache.struts.util.ModuleUtils;
+
+/**
+ * Implementation of TilesUtil for Struts multi modules.
+ * Methods in this implementation are aware of the Struts module context.
+ * <br>
+ * <ul>
+ * <li>The method getFactory(...) returns the factory for the current Struts
+ * module.</li>
+ * <li>Methods doForward() and doInclude() use the request dispatcher
+ * directly (forward resolution of definitions is handled by the engine
+ * hook).</li>
+ * <li>The method createFactory(...) creates a factory for the current module and
+ * stores it under the appropriate property name.</li>
+ * </ul>
+ */
+public class TilesUtilStrutsModulesImpl extends TilesUtilStrutsImpl {
+    private static final long serialVersionUID = 2840296621378046205L;
+
+    /**
+     * Do a forward using request dispatcher.
+     *
+     * This method is used by the Tiles package anytime a forward is required.
+     * @param uri Uri or Definition name to forward.
+     * @param request Current page request.
+     * @param response Current page response.
+     * @param servletContext Current servlet context.
+     */
+    public void doForward(
+        String uri,
+        HttpServletRequest request,
+        HttpServletResponse response,
+        ServletContext servletContext)
+        throws IOException, ServletException {
+
+        request.getRequestDispatcher(uri).forward(request, response);
+    }
+
+    /**
+     * Do an include using request dispatcher.
+     *
+     * This method is used by the Tiles package anytime an include is required.
+     * @param uri Uri or Definition name to forward.
+     * @param request Current page request.
+     * @param response Current page response.
+     * @param servletContext Current servlet context.
+     */
+    public void doInclude(
+        String uri,
+        HttpServletRequest request,
+        HttpServletResponse response,
+        ServletContext servletContext)
+        throws IOException, ServletException {
+
+        request.getRequestDispatcher(uri).include(request, response);
+    }
+
+    /**
+     * Get the definition factory from appropriate servlet context.
+     * @param request Current request.
+     * @param servletContext Current servlet context.
+     * @return Definitions factory or null if not found.
+     */
+    public DefinitionsFactory getDefinitionsFactory(
+        ServletRequest request,
+        ServletContext servletContext) {
+
+        return getDefinitionsFactory(
+            servletContext,
+            getModuleConfig((HttpServletRequest) request, servletContext));
+    }
+
+    /**
+     * Get definition factory for the module attached to specified moduleConfig.
+     * @param servletContext Current servlet context.
+     * @param moduleConfig Module config of the module for which the factory is requested.
+     * @return Definitions factory or null if not found.
+     */
+    public DefinitionsFactory getDefinitionsFactory(
+        ServletContext servletContext,
+        ModuleConfig moduleConfig) {
+
+        return (DefinitionsFactory) servletContext.getAttribute(
+            DEFINITIONS_FACTORY + moduleConfig.getPrefix());
+    }
+
+    /**
+     * Make definition factory accessible to tags.
+     * Factory is stored in servlet context.
+     * @param factory Factory to be made accessible.
+     * @param servletContext Current servlet context.
+     */
+    protected void makeDefinitionsFactoryAccessible(
+        DefinitionsFactory factory,
+        ServletContext servletContext) {
+
+        String prefix = factory.getConfig().getFactoryName();
+        servletContext.setAttribute(DEFINITIONS_FACTORY + prefix, factory);
+    }
+
+    /**
+     * Get the current ModuleConfig.
+     * <br>
+     * Lookup in the request and do selectModule if not found. The side effect
+     * is, that the ModuleConfig object is set in the request if it was not present.
+     * @param request Current request.
+     * @param servletContext Current servlet context*.
+     * @return The ModuleConfig for current request.
+     */
+    protected ModuleConfig getModuleConfig(
+        HttpServletRequest request,
+        ServletContext servletContext) {
+
+        ModuleConfig moduleConfig =
+            ModuleUtils.getInstance().getModuleConfig(request);
+
+        if (moduleConfig == null) {
+            // ModuleConfig not found in current request. Select it.
+            ModuleUtils.getInstance().selectModule(request, servletContext);
+            moduleConfig = ModuleUtils.getInstance().getModuleConfig(request);
+        }
+
+        return moduleConfig;
+    }
+
+}

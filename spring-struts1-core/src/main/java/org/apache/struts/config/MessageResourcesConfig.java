@@ -58,6 +58,21 @@ public class MessageResourcesConfig extends BaseConfig {
         this.nullValue = nullValue;
     }
 
+    /**
+     * Indicates whether 'escape processing' should be performed on the
+     * message string (classic <code>escape</code> property of the
+     * <code>&lt;message-resources&gt;</code> element, since Struts 1.2.8).
+     */
+    private boolean escape = true;
+
+    public boolean isEscape() {
+        return escape;
+    }
+
+    public void setEscape(boolean escape) {
+        this.escape = escape;
+    }
+
     @Override
     public String toString() {
         return "MessageResourcesConfig[key=" + key + ",parameter=" + parameter

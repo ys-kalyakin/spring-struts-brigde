@@ -19,16 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Ported Struts Examples application integration tests on embedded Tomcat
- * 11: the exercise module pages render their classic HTML structure and the
+ * 11: the exercise module pages render their classic HTML structure, the
  * dispatch module scenarios execute their methods through the classic
- * dispatch actions.
- *
- * <p>The ported application intentionally registers only the default,
- * exercise and dispatch modules (no upload/validator modules in this
- * phase). Consequently the pages that reference the excluded modules are
- * out of scope: html-link.jsp (links /upload and /validator) and
- * bean-include.jsp (includes /welcome.jsp, which links /validator). Their
- * tag-level behavior is covered by the taglib module ITs.</p>
+ * dispatch actions, the upload module runs the multipart pipeline (including
+ * the graceful two-megabyte limit) and the validator module runs the
+ * registration, multi-page registration, validwhen, bundles and
+ * client-javascript scenarios.
  */
 class ExamplesTest {
 
@@ -206,6 +202,214 @@ class ExamplesTest {
             resp.body());
         assertTrue(resp.body()
             .contains("action=\"/examples/SpringIntegration.do"),
+            resp.body());
+    }
+
+    // ------------------------------------------------------------------
+    // upload module
+    // ------------------------------------------------------------------
+
+    private static final String UPLOAD_BOUNDARY = "examples-it-boundary";
+
+    private static byte[] multipartBody(String textName, String textValue,
+        String fileField, String[] fileNames) {
+        StringBuilder sb = new StringBuilder();
+        if (textName != null) {
+            sb.append("--").append(UPLOAD_BOUNDARY).append("\r\n")
+                .append("Content-Disposition: form-data; name=\"")
+                .append(textName).append("\"\r\n\r\n")
+                .append(textValue).append("\r\n");
+        }
+        if (fileField != null) {
+            for (String fileName : fileNames) {
+                sb.append("--").append(UPLOAD_BOUNDARY).append("\r\n")
+                    .append("Content-Disposition: form-data; name=\"")
+                    .append(fileField).append("\"; filename=\"")
+                    .append(fileName).append("\"\r\n")
+                    .append("Content-Type: text/plain\r\n\r\n")
+                    .append("payload-of-").append(fileName).append("\r\n");
+            }
+        }
+        sb.append("--").append(UPLOAD_BOUNDARY).append("--\r\n");
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static HttpResponse<String> postMultipart(String path,
+        byte[] body) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(
+            URI.create(server.baseUrl() + path))
+            .header("Content-Type",
+                "multipart/form-data; boundary=" + UPLOAD_BOUNDARY)
+            .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+            .build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    @Test
+    void uploadSubmitShowsTextAndFirstFile() throws Exception {
+        HttpResponse<String> resp = postMultipart("/upload/upload-submit.do",
+            multipartBody("theText", "hello", "theFile",
+                new String[] {"report.txt"}));
+        assertEquals(200, resp.statusCode(), resp.body());
+        assertTrue(resp.body().contains("The Text:</b>&nbsp;hello"),
+            resp.body());
+        assertTrue(resp.body().contains("The File name:</b>&nbsp;report.txt"),
+            resp.body());
+        assertTrue(resp.body().contains("The File content type:</b>&nbsp;text/plain"),
+            resp.body());
+        assertTrue(resp.body().contains("payload-of-report.txt"), resp.body());
+    }
+
+    @Test
+    void uploadOverTwoMegabytesShowsGracefulMessage() throws Exception {
+        StringBuilder bigFile = new StringBuilder();
+        while (bigFile.length() < 3 * 1024 * 1024) {
+            bigFile.append("0123456789abcdef");
+        }
+        // the single part replaces the small payload with a huge one
+        StringBuilder sb = new StringBuilder();
+        sb.append("--").append(UPLOAD_BOUNDARY).append("\r\n")
+            .append("Content-Disposition: form-data; name=\"theText\"\r\n\r\n")
+            .append("boom\r\n");
+        sb.append("--").append(UPLOAD_BOUNDARY).append("\r\n")
+            .append("Content-Disposition: form-data; name=\"theFile\"; filename=\"big.bin\"\r\n")
+            .append("Content-Type: application/octet-stream\r\n\r\n")
+            .append(bigFile).append("\r\n");
+        sb.append("--").append(UPLOAD_BOUNDARY).append("--\r\n");
+        HttpResponse<String> resp = postMultipart("/upload/upload-submit.do",
+            sb.toString().getBytes(StandardCharsets.UTF_8));
+        assertEquals(200, resp.statusCode(), resp.body());
+        assertTrue(resp.body()
+            .contains("The maximum upload length has been exceeded by the client."),
+            resp.body());
+    }
+
+    @Test
+    void uploadMultiCountsSelectedFiles() throws Exception {
+        HttpResponse<String> resp = postMultipart(
+            "/upload/upload-submit-multi.do",
+            multipartBody("theText", "multi", "theFile",
+                new String[] {"a.txt", "b.txt"}));
+        assertEquals(200, resp.statusCode(), resp.body());
+        assertTrue(resp.body().contains("Number of selected files:</b>&nbsp;2"),
+            resp.body());
+        assertTrue(resp.body().contains("The File name:</b>&nbsp;a.txt"),
+            resp.body());
+    }
+
+    // ------------------------------------------------------------------
+    // validator module
+    // ------------------------------------------------------------------
+
+    @Test
+    void registrationEmptySubmitShowsRequiredErrors() throws Exception {
+        // stopOnFirstError only affects the generated javascript; the
+        // server side reports every field error
+        HttpResponse<String> resp = post("/validator/registration-submit.do",
+            "firstName=&lastName=&email=");
+        assertEquals(200, resp.statusCode(), resp.body());
+        assertTrue(resp.body().contains("First Name is required."), resp.body());
+        assertTrue(resp.body().contains("E-mail is required."), resp.body());
+    }
+
+    @Test
+    void registrationValidSubmitSucceeds() throws Exception {
+        HttpResponse<String> resp = post("/validator/registration-submit.do",
+            "firstName=Tester&lastName=User&addr=1+Main+St"
+            + "&cityStateZip.city=Springfield&cityStateZip.stateProv=IL"
+            + "&cityStateZip.zipPostal%5B1%5D=62704&phone=555-1234567"
+            + "&email=test%40example.com");
+        assertEquals(200, resp.statusCode(), resp.body());
+        assertTrue(resp.body().contains("Struts Validator"), resp.body());
+        assertTrue(!resp.body().contains("is required"), resp.body());
+    }
+
+    @Test
+    void multiRegistrationPageFlow() throws Exception {
+        // invalid page 1 -> back to the page 1 input
+        HttpResponse<String> invalid = post(
+            "/validator/multiRegistration-submit.do",
+            "page=1&firstName=&lastName=&addr=");
+        assertEquals(200, invalid.statusCode(), invalid.body());
+        assertTrue(invalid.body().contains("First Name is required."),
+            invalid.body());
+
+        // valid page 1 fields but missing page 2 fields: the action calls
+        // validate() itself and (without accept-page, the weblegacy default)
+        // all pages are validated — the page 2 errors route back to input 1
+        HttpResponse<String> page1 = post(
+            "/validator/multiRegistration-submit.do",
+            "page=1&firstName=Tester&lastName=User&addr=1+Main+St"
+            + "&cityStateZip.city=Springfield");
+        assertEquals(200, page1.statusCode(), page1.body());
+        assertTrue(page1.body().contains("State is required."), page1.body());
+        assertTrue(page1.body().contains("E-mail is required."), page1.body());
+
+        // valid page 2 (page 1 fields still submitted) -> success
+        HttpResponse<String> done = post(
+            "/validator/multiRegistration-submit.do",
+            "page=2&firstName=Tester&lastName=User&addr=1+Main+St"
+            + "&cityStateZip.city=Springfield&cityStateZip.stateProv=IL"
+            + "&cityStateZip.zipPostal%5B1%5D=62704&phone=555-1234567"
+            + "&email=test%40example.com");
+        assertEquals(200, done.statusCode(), done.body());
+        assertTrue(done.body().contains("Struts Validator"), done.body());
+    }
+
+    @Test
+    void validwhenRejectsMaxBelowMinAndAcceptsCorrection() throws Exception {
+        // every rule but max passes; the max=9 against min=25 violates
+        // the (*this* > min) comparison
+        HttpResponse<String> invalid = post(
+            "/validator/validateValidWhenExamples.do",
+            "firstName=Fred&lastName=World&fieldA=X&fieldB=Y"
+            + "&min=25&max=9&address1=1+Main&city=Springfield&zip=12345");
+        assertEquals(200, invalid.statusCode(), invalid.body());
+        assertTrue(invalid.body()
+            .contains("Maximum must be greater than the Minimum"),
+            invalid.body());
+        assertTrue(!invalid.body().contains("Last Name is required."),
+            invalid.body());
+
+        HttpResponse<String> valid = post(
+            "/validator/validateValidWhenExamples.do",
+            "firstName=Fred&lastName=World&fieldA=X&fieldB=Y"
+            + "&min=25&max=30&address1=1+Main&city=Springfield&zip=12345");
+        assertEquals(200, valid.statusCode(), valid.body());
+        assertTrue(valid.body().contains("Struts Validator"), valid.body());
+        assertTrue(!valid.body()
+            .contains("Maximum must be greater than the Minimum"),
+            valid.body());
+    }
+
+    @Test
+    void jsRegistrationRendersClientValidationScript() throws Exception {
+        HttpResponse<String> resp = get("/validator/jsRegistration.do");
+        assertEquals(200, resp.statusCode(), resp.body());
+        assertTrue(resp.body().contains("function validateRegistrationForm("),
+            resp.body());
+        assertTrue(resp.body().contains("required"), resp.body());
+    }
+
+    @Test
+    void bundleExamplesResolveAlternateBundles() throws Exception {
+        HttpResponse<String> resp = post(
+            "/validator/validateBundleExamples.do",
+            "name=&address=&phone=&dob=&age=");
+        assertEquals(200, resp.statusCode(), resp.body());
+        // literal literal message (resource=false)
+        assertTrue(resp.body()
+            .contains("You have forgotten to enter the name."), resp.body());
+        // msg resolved from the "other" bundle, arg from the "different"
+        // bundle and the default bundle
+        assertTrue(resp.body()
+            .contains("[Other Bundle]Missing Field: Address(Other Bundle)"),
+            resp.body());
+        assertTrue(resp.body()
+            .contains("[Other Bundle]Missing Field: Phone Number(Different Bundle)"),
+            resp.body());
+        assertTrue(resp.body()
+            .contains("[Default Bundle]Missing Field: Date of Birth(Different Bundle)"),
             resp.body());
     }
 }

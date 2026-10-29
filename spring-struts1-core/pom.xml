@@ -16,6 +16,29 @@
   <name>spring-struts1-core</name>
   <description>Struts 1 engine and configuration model on Spring MVC</description>
 
+  <build>
+    <plugins>
+      <!-- validwhen parser (org.apache.struts.validator.validwhen),
+           generated from the weblegacy grammar like the reference build -->
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-maven-plugin</artifactId>
+        <version>4.13.2</version>
+        <configuration>
+          <visitor>true</visitor>
+          <listener>false</listener>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>antlr4</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -49,6 +72,24 @@
       <groupId>commons-beanutils</groupId>
       <artifactId>commons-beanutils</artifactId>
       <version>${commons-beanutils.version}</version>
+    </dependency>
+    <!-- multipart upload (org.apache.struts.upload contract, CommonsMultipartRequestHandler) -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-fileupload2-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-fileupload2-jakarta-servlet6</artifactId>
+    </dependency>
+    <!-- declarative validation (org.apache.struts.validator, validwhen parser) -->
+    <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
     </dependency>
 
     <dependency>

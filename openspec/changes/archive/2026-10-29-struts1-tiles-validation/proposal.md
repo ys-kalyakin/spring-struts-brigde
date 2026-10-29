@@ -1,0 +1,36 @@
+# Proposal
+
+## Why
+
+Фазы 1–3 закрыли движок, тэг-библиотеки и Spring-нативную модель бинов, но три крупные подсистемы Struts 1 ещё отсутствуют: Tiles, multipart-upload и commons-validator. Без них не запускаются целевые приложения weblegacy — секции upload/validator в `apps/examples`, `apps/cookbook` и `apps/mailreader`: их конфигурации уже перенесены в репозиторий, но ссылаются на несуществующие классы (`ValidatorPlugIn`, `UploadForm`, `RegistrationForm`), а `html:javascript` объявлен в TLD без реализации. Это следующий этап роадмапа («Tiles, upload, validation»).
+
+## What Changes
+
+- **Новый модуль `spring-struts1-tiles`** — Tiles 1.x-совместимая реализация (решение открытого вопроса роадмапа: порт модуля `struts-tiles` weblegacy, а не tiles2): `TilesPlugin`, фабрика определений с XML-парсингом `tiles-defs.xml` (digester-правила, локальные DTD 1.1/1.3/1.4, фабрика по умолчанию `I18nFactorySet` с локальными вариантами файлов), `ComponentContext`/`ComponentDefinition`, контроллеры тайлов (`Controller`, `UrlController`, `ActionController`, `TilesAction`); тэг-библиотека `struts-tiles` (URI `http://struts.apache.org/tags-tiles`, 11 тегов: insert, definition, put, putList, add, get, getAsString, useAttribute, importAttribute, initComponentDefinitions) на Spring-базе тегов; переход по форварду на tiles-definition через hook в движке (Spring-нативный аналог `TilesRequestProcessor`/`TilesPreProcessor` без подмены процессора). Фабрика определений и сервисы логики тайлов регистрируются как Spring-компоненты при сохранении классического доступа через `TilesUtil`/context-атрибут.
+- **Multipart upload в ядре**: контракт `org.apache.struts.upload` (`FormFile`, `MultipartRequestHandler`, `MultipartRequestWrapper`, семантика превышения лимитов через request-атрибут `ATTRIBUTE_MAX_LENGTH_EXCEEDED`), реализация `CommonsMultipartRequestHandler` поверх commons-fileupload2-jakarta (как в weblegacy), интеграция в populate-шаг движка (`processMultipart` → handler → текстовые/файловые элементы → populate), multi-file семантика `getFileElements() → FormFile[]` с рационализацией под тип свойства формы; лимиты из `<controller>`: `maxFileSize`, `maxSize`, `maxStringLen`, `fileCountMax`, `memFileSize`, `tempDir`, `bufferSize` (значения по умолчанию — как в weblegacy, включая `maxStringLen=4K`). Если запрос уже разобран Spring-мультипарсером пользователя (`MultipartHttpServletRequest`), его части адаптируются в тот же контракт.
+- **commons-validator в ядре**: порт пакета `org.apache.struts.validator` — `ValidatorPlugIn` (init-params `pathnames`, `stopOnFirstError`; подключение декларативно через `<plug-in>`), `Resources` (initValidator, аргументы, бандлы), `ValidatorForm`/`DynaValidatorForm` (ключ валидации `mapping.getAttribute()`, поддержка `page`), `FieldChecks` (полный набор правил), `validwhen` на ANTLR4-runtime (как в weblegacy); `ValidatorActionForm`/`DynaValidatorActionForm` — в extras (как в weblegacy); ресурсы движка: `validator-rules.xml`, `LocalStrings.properties`, JS-утилиты commons-validator.
+- **`html:javascript` реализован** (клиентская генерация скриптов валидации в `spring-struts1-taglib`): отложенный тег из спеки `html-taglib` становится рабочим.
+- **Портирование целевых приложений**: `examples` — включение модулей `upload` и `validator` в web.xml и портирование их классов/JSP (`UploadForm`, `UploadAction`, `RegistrationForm` и др.); новый war `cookbook` (валидация `DynaValidatorForm`, кастомный валидатор, остальные секции); новый war `mailreader` (`DynaValidatorForm` с наследованием form-bean, плагины `ModuleConfigVerifier`, `MemoryDatabasePlugIn`, `DigestingPlugIn`); dao-модуль mailreader переносится из эталона в репозиторий как собственный модуль (решение открытого вопроса роадмапа о зависимостях mailreader-dao).
+- **Конфигурация**: `ControllerConfig` дополняется `maxSize` и `fileCountMax` (как в weblegacy); плагины Tiles и валидации продолжают подключаться только декларативно через struts-config.xml.
+- **Новые зависимости**: `commons-validator` 1.10.1, `antlr4-runtime` 4.13.2 (для validwhen), `commons-fileupload2-core` + `commons-fileupload2-jakarta` (как в weblegacy — 2.0.0-M1, возможно новее стабильный 2.x).
+
+## Capabilities
+
+### New Capabilities
+
+- `multipart-upload`: контракт `org.apache.struts.upload` (FormFile, MultipartRequestHandler) и его обработка в жизненном цикле запроса — разбор multipart-запроса, populate файловых и текстовых элементов, семантика превышения лимитов, настройки `<controller>`.
+- `struts-validator`: декларативная валидация commons-validator — `ValidatorPlugIn`, валидаторные формы (ValidatorForm/DynaValidatorForm и экшен-варианты), правила из validation.xml/validator-rules.xml, сообщения ошибок, клиентский `html:javascript`.
+- `struts-tiles`: Tiles-определения и плагин — парсинг tiles-defs.xml, фабрика определений (в т.ч. i18n-варианты), контроллеры тайлов, переход по форварду на definition, тэг-библиотека struts-tiles.
+
+### Modified Capabilities
+
+- `request-processing`: populate-шаг получает multipart-ветку — multipart-запрос разбирается handler-ом до populate, текстовые и файловые элементы заполняют форму, превышение лимитов узнаётся через request-атрибут; шаг обработки форварда получает резолв tiles-definitions.
+- `html-taglib`: требование «Отложенный валидаторный тег» заменяется реализацией — `html:javascript` генерирует клиентские скрипты commons-validator по validation.xml.
+
+## Impact
+
+- **Код:** `spring-struts1-core` — новый пакет `org.apache.struts.upload`, `org.apache.struts.validator` (+ `validwhen`), `org.apache.struts.extras.validator` и `org.apache.struts.extras.plugins`; правки `StrutsHandlerAdapter` (multipart-ветка populate, резолв tiles-definition в форвардах), `RequestUtils` (populate по элементам multipart), `Globals.MULTIPART_KEY`, `ActionForm` (доступ к multipart-обработчику), `ControllerConfig` (maxSize, fileCountMax); `spring-struts1-taglib` — `JavascriptValidatorTag`; новый модуль `spring-struts1-tiles`; `spring-struts1-apps` — examples (включение модулей, новые классы и JSP), новые war `cookbook` и `mailreader`, новый модуль `mailreader-dao`.
+- **API:** классический публичный API Struts 1 сохраняется и расширяется портами эталонных пакетов (`org.apache.struts.upload`, `org.apache.struts.validator`, `org.apache.struts.tiles.*`, URI и TLD `struts-tiles` идентичны weblegacy). Явных BREAKING нет; значение по умолчанию `ControllerConfig.maxStringLen` приводится к эталону (4K вместо текущего 4M) — отклонение от weblegacy устраняется до того, как на него кто-то оперся.
+- **Зависимости:** `commons-validator` 1.10.1, `antlr4-runtime` 4.13.2, `commons-fileupload2-core`/`commons-fileupload2-jakarta` (базовая версия как в weblegacy — 2.0.0-M1) — compile-область ядра; tiles-модуль переиспользует digester из ядра.
+- **Тесты:** IT `examples` расширяются сценариями upload (multipart-POST, превышение лимита, multi-file) и validator (required/mask/minlength, validwhen, multi-page, javascript); новые IT-наборы `CookbookAppTest` и `MailreaderAppTest`; регресс существующих IT `blank`/`examples` без изменений ожиданий (blank дополнительно получает реальный `ValidatorPlugIn` вместо заглушки `TestPlugin`).
+- **Не входит в объём:** tiles2-мост (`org.apache.tiles`), struts-el, BeanValidatorForm/LazyValidatorForm, faces/scripting-приложения, стартер Boot (фаза 4), публикация артефактов.

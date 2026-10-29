@@ -1,0 +1,820 @@
+package org.apache.struts.upload;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileItem;
+import org.apache.commons.fileupload2.core.FileUploadByteCountLimitException;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.FileUploadFileCountLimitException;
+import org.apache.commons.fileupload2.core.FileUploadSizeException;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.struts.Globals;
+import org.apache.struts.action.ActionMapping;
+import org.apache.struts.action.ActionServlet;
+import org.apache.struts.config.ModuleConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+
+/**
+ * This class implements the {@code MultipartRequestHandler} interface by
+ * providing a wrapper around the Jakarta Commons FileUpload library.
+ *
+ * @since Struts 1.1
+ */
+public class CommonsMultipartRequestHandler implements MultipartRequestHandler {
+    // ----------------------------------------------------- Manifest Constants
+
+    /**
+     * The default value for the maximum allowable size, in bytes, of an
+     * uploaded file. The value is equivalent to 250MB.
+     */
+    public static final long DEFAULT_SIZE_MAX = 250 * 1024 * 1024;
+
+    /**
+     * The default value for the maximum allowable size, in bytes, of an
+     * uploaded file. The value is equivalent to 250MB.
+     */
+    public static final long DEFAULT_FILE_SIZE_MAX = 250 * 1024 * 1024;
+
+    /**
+     * The default value for the maximum length of a string parameter, in
+     * bytes, in a multipart request. The value is equivalent to 4KB.
+     */
+    public static final long DEFAULT_MAX_STRING_LEN = 4 * 1024;
+
+    /**
+     * The default value for the threshold which determines whether an uploaded
+     * file will be written to disk or cached in memory. The value is
+     * equivalent to 250KB.
+     */
+    public static final int DEFAULT_SIZE_THRESHOLD = 256 * 1024;
+
+    // ----------------------------------------------------- Instance Variables
+
+    /**
+     * The {@code Log} instance for this class.
+     */
+    private final Logger log =
+        LoggerFactory.getLogger(CommonsMultipartRequestHandler.class);
+
+    /**
+     * The combined text and file request parameters.
+     */
+    private HashMap<String, Object> elementsAll;
+
+    /**
+     * The file request parameters.
+     */
+    private HashMap<String, FormFile[]> elementsFile;
+
+    /**
+     * The text request parameters.
+     */
+    private HashMap<String, String[]> elementsText;
+
+    /**
+     * The action mapping with which this handler is associated.
+     */
+    private ActionMapping mapping;
+
+    /**
+     * The servlet with which this handler is associated.
+     */
+    private ActionServlet servlet;
+
+    /**
+     * Indicator if we run on a windows-system.
+     */
+    private final static boolean WIN_SYSTEM =
+            System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("windows");
+
+    // ---------------------------------------- MultipartRequestHandler Methods
+
+    /**
+     * Retrieves the servlet with which this handler is associated.
+     *
+     * @return The associated servlet.
+     */
+    public ActionServlet getServlet() {
+        return this.servlet;
+    }
+
+    /**
+     * Sets the servlet with which this handler is associated.
+     *
+     * @param servlet The associated servlet.
+     */
+    public void setServlet(ActionServlet servlet) {
+        this.servlet = servlet;
+    }
+
+    /**
+     * Retrieves the action mapping with which this handler is associated.
+     *
+     * @return The associated action mapping.
+     */
+    public ActionMapping getMapping() {
+        return this.mapping;
+    }
+
+    /**
+     * Sets the action mapping with which this handler is associated.
+     *
+     * @param mapping The associated action mapping.
+     */
+    public void setMapping(ActionMapping mapping) {
+        this.mapping = mapping;
+    }
+
+    /**
+     * Parses the input stream and partitions the parsed items into a set of
+     * form fields and a set of file items. In the process, the parsed items
+     * are translated from Commons FileUpload {@code FileItem} instances to
+     * Struts {@code FormFile} instances.
+     *
+     * @param request The multipart request to be processed.
+     *
+     * @throws ServletException if an unrecoverable error occurs.
+     */
+    public void handleRequest(HttpServletRequest request)
+        throws ServletException {
+        // Get the app config for the current request.
+        ModuleConfig ac =
+            (ModuleConfig) request.getAttribute(Globals.MODULE_KEY);
+
+        // Create a factory for disk-based file items
+        DiskFileItemFactory.Builder factory = DiskFileItemFactory.builder();
+
+        // Set the maximum size that will be stored in memory.
+        factory.setBufferSize((int) getSizeThreshold(ac));
+
+        // Set the location for saving data on disk.
+        factory.setFile(getRepositoryFile(ac));
+
+        // Create a new file upload handler
+        JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload = new JakartaServletFileUpload<>(factory.get());
+
+        // The following line is to support an "EncodingFilter"
+        // see http://issues.apache.org/bugzilla/show_bug.cgi?id=23255
+        // (Tomcat may report a null character encoding before any parameter
+        // has been read; fall back to the fileupload2 default then)
+        String characterEncoding = request.getCharacterEncoding();
+        if (characterEncoding != null) {
+            upload.setHeaderCharset(Charset.forName(characterEncoding));
+        }
+
+        // Sets the maximum allowed size of a complete request before a FileUploadException will be thrown.
+        upload.setMaxSize(getSizeMax(ac));
+
+        // Sets the maximum file size before a FileUploadException will be thrown.
+        upload.setMaxFileSize(getFileSizeMax(ac));
+
+        // Sets the maximum number of files allowed per request.
+        upload.setMaxFileCount(getFileCountMax(ac));
+
+        // Create the hash maps to be populated.
+        elementsText = new HashMap<>();
+        elementsFile = new HashMap<>();
+        elementsAll = new HashMap<>();
+
+        // Parse the request into file items.
+        List<DiskFileItem> items = null;
+
+        try {
+            items = upload.parseRequest(request);
+        } catch (FileUploadSizeException e) {
+            // Special handling for uploads that are too big or too much file-uploads.
+            request.setAttribute(MultipartRequestHandler.ATTRIBUTE_MAX_LENGTH_EXCEEDED,
+                Boolean.TRUE);
+
+            if (e instanceof FileUploadByteCountLimitException) {
+                final FileUploadByteCountLimitException e2 = (FileUploadByteCountLimitException) e;
+                request.setAttribute(MultipartRequestHandler.ATTRIBUTE_MAX_BYTE_LENGTH_EXCEEDED,
+                        Boolean.TRUE);
+
+                log.warn("Byte-Count-Limit-Exception: FieldName: {}, FileName: {}, MaxSize: {}, "
+                        + "CurrentSize: {}", e2.getFieldName(), e2.getFieldName(),
+                        e2.getPermitted(), e2.getActualSize(), e2);
+            } else if (e instanceof FileUploadFileCountLimitException) {
+                final FileUploadFileCountLimitException e2 = (FileUploadFileCountLimitException) e;
+                request.setAttribute(MultipartRequestHandler.ATTRIBUTE_MAX_FILE_COUNT_EXCEEDED,
+                        Boolean.TRUE);
+
+                log.warn("File-Count-Limit-Exception: MaxSize: {}, CurrentSize: {}",
+                        e2.getPermitted(), e2.getActualSize(), e2);
+            } else {
+                log.warn("Byte-Count-Limit-Exception: MaxSize: {}, CurrentSize: {}",
+                        e.getPermitted(), e.getActualSize(), e);
+            }
+
+            clearInputStream(request);
+            return;
+        } catch (FileUploadException e) {
+            log.error("Failed to parse multipart request", e);
+            clearInputStream(request);
+            throw new ServletException(e);
+        }
+
+        // Get the maximum allowable length of a string parameter in a
+        // multipart request. CVE-2023-34396
+        final long maxStringLen = getMaxStringLen(ac);
+
+        // Partition the items into form fields and files.
+        for (DiskFileItem item : items) {
+            if (item.isFormField()) {
+                addTextParameter(request, maxStringLen, item);
+            } else {
+                addFileParameter(item);
+            }
+        }
+    }
+
+    /**
+     * Returns a hash map containing the text (that is, non-file) request
+     * parameters.
+     *
+     * @return The text request parameters.
+     */
+    public HashMap<String, String[]> getTextElements() {
+        return this.elementsText;
+    }
+
+    /**
+     * Returns a hash map containing the file (that is, non-text) request
+     * parameters.
+     *
+     * @return The file request parameters.
+     */
+    public HashMap<String, FormFile[]> getFileElements() {
+        return this.elementsFile;
+    }
+
+    /**
+     * Returns a hash map containing both text and file request parameters.
+     *
+     * @return The text and file request parameters.
+     */
+    public HashMap<String, Object> getAllElements() {
+        return this.elementsAll;
+    }
+
+    /**
+     * Cleans up when a problem occurs during request processing.
+     */
+    public void rollback() {
+        for (FormFile[] files : elementsFile.values()) {
+            for (FormFile formFile : files) {
+                try {
+                    formFile.destroy();
+                } catch (IOException e) {
+                    log.atWarn()
+                        .setMessage("Failed to destroy FormFile {}")
+                        .addArgument(formFile.getFileName())
+                        .setCause(e)
+                        .log();
+                }
+            }
+        }
+    }
+
+    /**
+     * Cleans up at the end of a request.
+     */
+    public void finish() {
+        rollback();
+    }
+
+    // -------------------------------------------------------- Support Methods
+
+    /**
+     * Finishes reading the input stream from an aborted upload. Fix for
+     * STR-2700 to prevent Window machines from hanging.
+     */
+    protected void clearInputStream(HttpServletRequest request) {
+        if (WIN_SYSTEM) {
+            try {
+                ServletInputStream is = request.getInputStream();
+                byte[] data = new byte[DEFAULT_SIZE_THRESHOLD];
+                int bytesRead = 0;
+                do {
+                    bytesRead = is.read(data);
+                } while (bytesRead > -1);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Returns the maximum allowed size of a complete request. The value is
+     * obtained from the current module's controller configuration.
+     *
+     * @param mc The current module's configuration.
+     *
+     * @return The maximum allowable size of a complete request, in bytes.
+     */
+    protected long getSizeMax(ModuleConfig mc) {
+        return convertSizeToBytes("maximal request size",
+                mc.getControllerConfig().getMaxSize(), DEFAULT_SIZE_MAX);
+    }
+
+    /**
+     * Returns the maximum allowable file-size, in bytes, of an uploaded file.
+     * The value is obtained from the current module's controller
+     * configuration.
+     *
+     * @param mc The current module's configuration.
+     *
+     * @return The maximum allowable file size, in bytes.
+     */
+    protected long getFileSizeMax(ModuleConfig mc) {
+        return convertSizeToBytes("maximal file size",
+                mc.getControllerConfig().getMaxFileSize(), DEFAULT_FILE_SIZE_MAX);
+    }
+
+    /**
+     * Returns the maximum allowable length, in bytes, of a string parameter in
+     * a multipart request. The value is obtained from the current module's
+     * controller configuration.
+     *
+     * @param mc The current module's configuration.
+     *
+     * @return The maximum allowable length of a string parameter, in bytes.
+     */
+    protected long getMaxStringLen(ModuleConfig mc) {
+        return convertSizeToBytes("maximal string length",
+                mc.getControllerConfig().getMaxStringLen(), DEFAULT_MAX_STRING_LEN);
+    }
+
+    /**
+     * Returns the size threshold which determines whether an uploaded file
+     * will be written to disk or cached in memory.
+     *
+     * @param mc The current module's configuration.
+     *
+     * @return The size threshold, in bytes.
+     */
+    protected long getSizeThreshold(ModuleConfig mc) {
+        return convertSizeToBytes("threshold size",
+                mc.getControllerConfig().getMemFileSize(), DEFAULT_SIZE_THRESHOLD);
+    }
+
+    /**
+     * Converts a size value from a string representation to its numeric value.
+     * The string must be of the form nnnm, where nnn is an arbitrary decimal
+     * value, and m is a multiplier. The multiplier must be one of 'K', 'M' and
+     * 'G', representing kilobytes, megabytes and gigabytes respectively.
+     *
+     * <p>If the size value cannot be converted, for example due to invalid
+     * syntax, the supplied default is returned instead.</p>
+     *
+     * @param sizeType    The type of the size. Is's used for logging-message.
+     * @param sizeString  The string representation of the size to be converted.
+     * @param defaultSize The value to be returned if the string is invalid.
+     *
+     * @return The actual size in bytes.
+     */
+    protected long convertSizeToBytes(String sizeType, String sizeString, long defaultSize) {
+        int multiplier = 1;
+
+        if (sizeString.endsWith("K")) {
+            multiplier = 1024;
+        } else if (sizeString.endsWith("M")) {
+            multiplier = 1024 * 1024;
+        } else if (sizeString.endsWith("G")) {
+            multiplier = 1024 * 1024 * 1024;
+        }
+
+        if (multiplier != 1) {
+            sizeString = sizeString.substring(0, sizeString.length() - 1);
+        }
+
+        long size = 0;
+
+        try {
+            size = Long.parseLong(sizeString);
+        } catch (NumberFormatException nfe) {
+            log.warn("Invalid format for {} ('{}'). Using default.", sizeType, sizeString);
+            size = defaultSize;
+            multiplier = 1;
+        }
+
+        return size * multiplier;
+    }
+
+    /**
+     * Returns the maximum permitted number of files that may be uploaded in a
+     * single request. A value of -1 indicates no maximum. The value is
+     * obtained from the current module's controller configuration.
+     *
+     * @param mc The current module's configuration.
+     *
+     * @return The maximum allowable file size, in bytes.
+     */
+    protected long getFileCountMax(ModuleConfig mc) {
+        return mc.getControllerConfig().getFileCountMax();
+    }
+
+    /**
+     * Returns the path to the temporary directory to be used for uploaded
+     * files which are written to disk. The directory used is determined from
+     * the first of the following to be non-empty.
+     *
+     * <ol>
+     * <li>A temp dir explicitly defined either using the {@code tempDir}
+     * servlet init param, or the {@code tempDir} attribute of the
+     * &lt;controller&gt; element in the Struts config file.</li>
+     * <li>The container-specified temp dir, obtained from the
+     * {@code jakarta.servlet.context.tempdir} servlet context attribute.</li>
+     * <li>The temp dir specified by the {@code java.io.tmpdir} system
+     * property.</li>
+     * </ol>
+     *
+     * @param mc The module config instance for which the path should be
+     *           determined.
+     *
+     * @return The path to the directory to be used to store uploaded files.
+     */
+    protected File getRepositoryFile(ModuleConfig mc) {
+        File tempDirFile = null;
+
+        // First, look for an explicitly defined temp dir.
+        String tempDir = mc.getControllerConfig().getTempDir();
+
+        // If none, look for a container specified temp dir.
+        if (tempDir == null || tempDir.isEmpty()) {
+            if (servlet != null) {
+                ServletContext context = servlet.getServletContext();
+                tempDirFile =
+                    (File) context.getAttribute(ServletContext.TEMPDIR);
+
+                if (tempDirFile != null) {
+                    tempDirFile = tempDirFile.getAbsoluteFile();
+                }
+            }
+
+            // If none, pick up the system temp dir.
+            if (tempDirFile == null) {
+                tempDir = System.getProperty("java.io.tmpdir");
+            }
+        }
+
+        if (tempDirFile == null && tempDir != null && !tempDir.isEmpty()) {
+            tempDirFile = new File(tempDir);
+        }
+
+        log.trace("File upload temp dir: {}", tempDirFile);
+
+        return tempDirFile;
+    }
+
+    /**
+     * Adds a regular text parameter to the set of text parameters for this
+     * request and also to the list of all parameters. Handles the case of
+     * multiple values for the same parameter by using an array for the
+     * parameter value.
+     *
+     * @param request      The request in which the parameter was specified.
+     * @param maxStringLen The maximum allowable length of a string parameter.
+     * @param item         The file item for the parameter to add.
+     */
+    protected void addTextParameter(HttpServletRequest request, long maxStringLen, FileItem<?> item) {
+        final String name = item.getFieldName();
+        final String value;
+
+        // CVE-2023-34396
+        if (item.getSize() > maxStringLen) {
+            request.setAttribute(MultipartRequestHandler.ATTRIBUTE_MAX_LENGTH_EXCEEDED,
+                    Boolean.TRUE);
+            request.setAttribute(MultipartRequestHandler.ATTRIBUTE_MAX_STRING_LENGTH_EXCEEDED,
+                    Boolean.TRUE);
+
+            log.warn("Max-String-Length: FieldName: {}, FileName: {}, MaxSize: {}, "
+                    + "CurrentSize: {}", item.getFieldName(), item.getFieldName(),
+                    maxStringLen, item.getSize());
+
+            value = "";
+        } else {
+            value = getTextValue(request, item);
+        }
+
+        if (request instanceof MultipartRequestWrapper) {
+            MultipartRequestWrapper wrapper = (MultipartRequestWrapper) request;
+
+            wrapper.setParameter(name, value);
+        }
+
+        elementsAll.put(name, addElement(elementsText, name, value));
+    }
+
+    /**
+     * Gets the regular text parameter of the item.
+     *
+     * @param request The request in which the parameter was specified.
+     * @param item    The file item for the parameter.
+     *
+     * @return the value of the {@code item}
+     */
+    protected String getTextValue(HttpServletRequest request, FileItem<?> item) {
+        Charset encoding = null;
+
+        if (item instanceof DiskFileItem) {
+            encoding = ((DiskFileItem)item).getCharset();
+            log.debug("DiskFileItem.getCharset=[{}]", encoding);
+        }
+
+        if (encoding == null) {
+            try {
+                encoding = Charset.forName(request.getCharacterEncoding());
+                log.debug("request.getCharacterEncoding=[{}]", encoding);
+            } catch (UnsupportedCharsetException e) {
+                log.warn("Unknown request.getCharacterEncoding", e);
+            }
+        }
+
+        if (encoding != null) {
+            try {
+                return item.getString(encoding);
+            } catch (Exception e) {
+                // Handled below
+            }
+        }
+
+        try {
+            return item.getString(StandardCharsets.ISO_8859_1);
+        } catch (Exception e) {
+            // fileupload2 2.x declares IOException on every accessor; the
+            // classic last-resort item.getString() is not available here
+            log.info("FileItem-getString", e);
+            return "";
+        }
+    }
+
+    /**
+     * Adds a file parameter to the set of file parameters for this request and
+     * also to the list of all parameters.
+     *
+     * @param item The file item for the parameter to add.
+     */
+    protected void addFileParameter(FileItem<?> item) {
+        final String name = item.getFieldName();
+        final FormFile value = new CommonsFormFile(item);
+
+        elementsAll.put(name, addElement(elementsFile, name, value));
+    }
+
+    /**
+     * Appends a new element to an array, which is in a map. If no array exists with the name,
+     * a new array with the name will be created.
+     *
+     * @param <T>      the elements of the array
+     * @param elements the map with the arrays
+     * @param name     the name within the map to find the array
+     * @param value    the new element
+     *
+     * @return the new array with the append element
+     */
+    private static <T> T[] addElement(final HashMap<String, T[]> elements, final String name, final T value) {
+        final T[] oldArray = elements.get(name);
+        final T[] newArray;
+
+        if (oldArray != null) {
+            newArray = Arrays.copyOf(oldArray, oldArray.length + 1);
+        } else {
+            @SuppressWarnings("unchecked")
+            final T[] array =  (T[]) Array.newInstance(value.getClass(), 1);
+            newArray = array;
+        }
+        newArray[newArray.length - 1] = value;
+
+        elements.put(name, newArray);
+        return newArray;
+    }
+
+    // ---------------------------------------------------------- Inner Classes
+
+    /**
+     * This class implements the Struts {@code FormFile} interface by wrapping
+     * the Commons FileUpload {@code FileItem} interface. This implementation
+     * is <i>read-only</i>; any attempt to modify an instance of this class
+     * will result in an {@code UnsupportedOperationException}.
+     */
+    static class CommonsFormFile implements FormFile, Serializable {
+        private static final long serialVersionUID = -6784594200973351263L;
+
+        /**
+         * The {@code FileItem} instance wrapped by this object.
+         */
+        FileItem<?> fileItem;
+
+        /**
+         * Constructs an instance of this class which wraps the supplied file
+         * item.
+         *
+         * @param fileItem The Commons file item to be wrapped.
+         */
+        public CommonsFormFile(FileItem<?> fileItem) {
+            this.fileItem = fileItem;
+        }
+
+        /**
+         * Returns the content type for this file.
+         *
+         * @return A String representing content type.
+         */
+        public String getContentType() {
+            return fileItem.getContentType();
+        }
+
+        /**
+         * Sets the content type for this file.
+         *
+         * <p>NOTE: This method is not supported in this implementation.</p>
+         *
+         * @param contentType A string representing the content type.
+         */
+        public void setContentType(String contentType) {
+            throw new UnsupportedOperationException(
+                "The setContentType() method is not supported.");
+        }
+
+        /**
+         * Returns the size, in bytes, of this file.
+         *
+         * @return The size of the file, in bytes.
+         *
+         * @deprecated Use {@link #getFileLength()}
+         */
+        @Deprecated
+        public int getFileSize() {
+            long size = fileItem.getSize();
+            if (size > Integer.MAX_VALUE) {
+                throw new IllegalStateException("Size is greater than 2 GB; use getFileLength()");
+            }
+            return (int) size;
+        }
+
+        /**
+         * Sets the size, in bytes, for this file.
+         *
+         * <p>NOTE: This method is not supported in this implementation.</p>
+         *
+         * @param filesize The size of the file, in bytes.
+         *
+         * @deprecated Use {@link #setFileLength(long)}
+         */
+        @Deprecated
+        public void setFileSize(int filesize) {
+            throw new UnsupportedOperationException(
+                "The setFileSize() method is not supported.");
+        }
+
+        /**
+         * Returns the length of this file.
+         *
+         * @return The length of the file, in bytes.
+         *
+         * @throws IllegalStateException if size is greater than 2GB
+         */
+        public long getFileLength() {
+            return fileItem.getSize();
+        }
+
+        /**
+         * Sets the length, in bytes, for this file.
+         *
+         * <p>NOTE: This method is not supported in this implementation.</p>
+         *
+         * @param fileLength The length of the file, in bytes.
+         */
+        public void setFileLength(long fileLength) {
+            throw new UnsupportedOperationException(
+                "The setFileLength() method is not supported.");
+        }
+
+        /**
+         * Returns the (client-side) file name for this file.
+         *
+         * @return The client-size file name.
+         */
+        public String getFileName() {
+            return getBaseFileName(fileItem.getName());
+        }
+
+        /**
+         * Sets the (client-side) file name for this file.
+         *
+         * <p>NOTE: This method is not supported in this implementation.</p>
+         *
+         * @param fileName The client-side name for the file.
+         */
+        public void setFileName(String fileName) {
+            throw new UnsupportedOperationException(
+                "The setFileName() method is not supported.");
+        }
+
+        /**
+         * Returns the data for this file as a byte array. Note that this may
+         * result in excessive memory usage for large uploads. The use of the
+         * {@link #getInputStream() getInputStream} method is encouraged as an
+         * alternative.
+         *
+         * @return An array of bytes representing the data contained in this
+         *         form file.
+         *
+         * @throws FileNotFoundException If some sort of file representation
+         *                               cannot be found for the FormFile
+         * @throws IOException           If there is some sort of IOException
+         */
+        public byte[] getFileData()
+            throws FileNotFoundException, IOException {
+            return fileItem.get();
+        }
+
+        /**
+         * Get an InputStream that represents this file. This is the preferred
+         * method of getting file data.
+         *
+         * @throws FileNotFoundException If some sort of file representation
+         *                               cannot be found for the FormFile
+         * @throws IOException           If there is some sort of IOException
+         */
+        public InputStream getInputStream()
+            throws FileNotFoundException, IOException {
+            return fileItem.getInputStream();
+        }
+
+        /**
+         * Destroy all content for this form file. Implementations should
+         * remove any temporary files or any temporary file data stored
+         * somewhere.
+         *
+         * @throws IOException if an error occurs.
+         */
+        public void destroy() throws IOException {
+            fileItem.delete();
+        }
+
+        /**
+         * Returns the base file name from the supplied file path. On the
+         * surface, this would appear to be a trivial task. Apparently,
+         * however, some Linux JDKs do not implement {@code File.getName()}
+         * correctly for Windows paths, so we attempt to take care of that
+         * here.
+         *
+         * @param filePath The full path to the file.
+         *
+         * @return The base file name, from the end of the path.
+         */
+        protected String getBaseFileName(String filePath) {
+            // First, ask the JDK for the base file name.
+            String fileName = new File(filePath).getName();
+
+            // Now check for a Windows file name parsed incorrectly.
+            int colonIndex = fileName.indexOf(":");
+
+            if (colonIndex == -1) {
+                // Check for a Windows SMB file path.
+                colonIndex = fileName.indexOf("\\\\");
+            }
+
+            int backslashIndex = fileName.lastIndexOf("\\");
+
+            if ((colonIndex > -1) && (backslashIndex > -1)) {
+                // Consider this filename to be a full Windows path, and parse
+                // it accordingly to retrieve just the base file name.
+                fileName = fileName.substring(backslashIndex + 1);
+            }
+
+            return fileName;
+        }
+
+        /**
+         * Returns the (client-side) file name for this file.
+         *
+         * @return The client-size file name.
+         */
+        public String toString() {
+            return getFileName();
+        }
+    }
+}

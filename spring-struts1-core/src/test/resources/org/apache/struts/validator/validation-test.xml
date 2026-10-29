@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE form-validation PUBLIC
+          "-//Apache Software Foundation//DTD Commons Validator Rules Configuration Bean 1.4.0//EN"
+          "http://commons.apache.org/dtds/validator_1_4_0.dtd">
+
+<form-validation>
+
+    <global>
+        <constant>
+            <constant-name>phoneConst</constant-name>
+            <constant-value>^\(?(\d{3})\)?[-| ]?(\d{3})[-| ]?(\d{4})$</constant-value>
+        </constant>
+    </global>
+
+    <formset>
+
+        <form name="testBean">
+
+            <field property="firstName" depends="required,mask,minlength">
+                <arg key="prompt.firstName" position="0"/>
+                <msg name="mask" key="errors.invalid"/>
+                <var>
+                    <var-name>mask</var-name>
+                    <var-value>^[a-zA-Z]*$</var-value>
+                </var>
+                <var>
+                    <var-name>minlength</var-name>
+                    <var-value>2</var-value>
+                </var>
+            </field>
+
+            <field property="lastName" depends="minlength">
+                <arg key="prompt.lastName" position="0"/>
+                <var>
+                    <var-name>minlength</var-name>
+                    <var-value>5</var-value>
+                </var>
+            </field>
+
+            <field property="zip" depends="intRange">
+                <arg key="prompt.zip" position="0"/>
+                <arg name="intRange" key="${var:min}" position="1"/>
+                <arg name="intRange" key="${var:max}" position="2"/>
+                <var>
+                    <var-name>min</var-name>
+                    <var-value>10000</var-value>
+                </var>
+                <var>
+                    <var-name>max</var-name>
+                    <var-value>99999</var-value>
+                </var>
+            </field>
+
+            <field property="confirm" depends="validwhen">
+                <arg key="prompt.confirm" position="0"/>
+                <var>
+                    <var-name>test</var-name>
+                    <var-value>((firstName == null) or (*this* != null))</var-value>
+                </var>
+            </field>
+
+            <field property="middleInitial" depends="required" page="2">
+                <arg key="prompt.middleInitial" position="0"/>
+            </field>
+
+        </form>
+
+        <form name="numericWhenForm">
+
+            <field property="max" depends="required,integer,validwhen">
+                <arg key="prompt.max" position="0"/>
+                <msg name="validwhen" key="errors.numeric.when"/>
+                <var>
+                    <var-name>test</var-name>
+                    <var-value>(*this* &gt; min)</var-value>
+                </var>
+            </field>
+
+        </form>
+
+        <form name="phoneForm">
+            <field property="phone" depends="mask">
+                <arg key="prompt.phone" position="0"/>
+                <var>
+                    <var-name>mask</var-name>
+                    <var-value>${phoneConst}</var-value>
+                </var>
+            </field>
+        </form>
+    </formset>
+
+</form-validation>

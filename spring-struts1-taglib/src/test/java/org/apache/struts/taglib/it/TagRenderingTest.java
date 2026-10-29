@@ -170,9 +170,13 @@ class TagRenderingTest {
     }
 
     @Test
-    void javascriptTagFailsWithoutValidator() throws Exception {
-        // html:javascript is excluded from this phase (needs commons-validator):
-        // the page must fail loudly instead of rendering silently.
-        assertEquals(500, get("/javascriptTest.do").statusCode());
+    void javascriptTagRendersValidationScript() throws Exception {
+        // html:javascript generates the commons-validator client script
+        // for the requested form (the taglib webapp declares the plugin)
+        HttpResponse<String> resp = get("/javascriptTest.do");
+        assertEquals(200, resp.statusCode(), resp.body());
+        assertTrue(resp.body().contains("js=["), resp.body());
+        assertTrue(resp.body().contains("validateDynaForm"), resp.body());
+        assertTrue(resp.body().contains("required"), resp.body());
     }
 }

@@ -2,6 +2,8 @@ package org.apache.struts.spring.it;
 
 import jakarta.servlet.ServletException;
 
+import org.apache.struts.config.ModuleConfig;
+
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.PlugIn;
 
@@ -13,7 +15,7 @@ public class DirectPlugin implements PlugIn {
     private String label;
 
     @Override
-    public void init(ActionServlet servlet) throws ServletException {
+    public void init(ActionServlet servlet, ModuleConfig config) throws ServletException {
         servlet.getServletContext().setAttribute("plugin.direct",
             label + ":init");
     }

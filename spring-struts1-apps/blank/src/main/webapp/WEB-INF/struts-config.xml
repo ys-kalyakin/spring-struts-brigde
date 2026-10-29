@@ -5,10 +5,10 @@
 
 <!--
      Ported from weblegacy apps/blank (WEB-INF/struts-config.xml).
-     Adaptations for phase 1 of spring-struts-bridge:
-     - the ValidatorPlugIn (phase 3) is replaced by a simple lifecycle test
-       plugin (app.TestPlugin);
-     - everything else keeps the structure of the reference application.
+     The ValidatorPlugIn keeps the reference configuration, with the
+     validation.xml and message keys from the reference application; the
+     extra TestPlugin stays as a regression of the plugin lifecycle
+     mechanism.
 -->
 
 <struts-config>
@@ -39,6 +39,17 @@
 
 <!-- =============================================== Plug Ins Configuration -->
 
+  <!-- =================================================== Validator plugin -->
+
+  <plug-in className="org.apache.struts.validator.ValidatorPlugIn">
+    <set-property
+        property="pathnames"
+        value="/org/apache/struts/validator/validator-rules.xml,
+               /WEB-INF/validation.xml"/>
+  </plug-in>
+
+  <!-- Extra regression of the plugin lifecycle mechanism (not in the
+       reference application) -->
   <plug-in className="app.TestPlugin"/>
 
 </struts-config>

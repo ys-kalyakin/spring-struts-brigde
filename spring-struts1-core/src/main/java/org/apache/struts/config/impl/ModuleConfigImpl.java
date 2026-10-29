@@ -154,6 +154,18 @@ public class ModuleConfigImpl implements ModuleConfig {
     }
 
     @Override
+    public void removeActionConfig(ActionConfig config) {
+        throwIfConfigured();
+        config.setModuleConfig(null);
+        actionConfigs.remove(config.getPath());
+        actionConfigList.remove(config);
+        String actionId = config.getActionId();
+        if ((actionId != null) && !actionId.isEmpty()) {
+            actionConfigIds.remove(actionId);
+        }
+    }
+
+    @Override
     public void addExceptionConfig(ExceptionConfig config) {
         throwIfConfigured();
 
@@ -166,6 +178,12 @@ public class ModuleConfigImpl implements ModuleConfig {
     }
 
     @Override
+    public void removeExceptionConfig(ExceptionConfig config) {
+        throwIfConfigured();
+        exceptions.remove(config.getType());
+    }
+
+    @Override
     public void addFormBeanConfig(FormBeanConfig config) {
         throwIfConfigured();
 
@@ -175,6 +193,12 @@ public class ModuleConfigImpl implements ModuleConfig {
         }
 
         formBeans.put(key, config);
+    }
+
+    @Override
+    public void removeFormBeanConfig(FormBeanConfig config) {
+        throwIfConfigured();
+        formBeans.remove(config.getName());
     }
 
     @Override
@@ -200,6 +224,12 @@ public class ModuleConfigImpl implements ModuleConfig {
     }
 
     @Override
+    public void removeForwardConfig(ForwardConfig config) {
+        throwIfConfigured();
+        forwards.remove(config.getName());
+    }
+
+    @Override
     public void addMessageResourcesConfig(MessageResourcesConfig config) {
         throwIfConfigured();
 
@@ -219,7 +249,15 @@ public class ModuleConfigImpl implements ModuleConfig {
 
     @Override
     public ActionConfig findActionConfig(String path) {
-        return actionConfigs.get(path);
+        ActionConfig config = actionConfigs.get(path);
+
+        // If a direct match cannot be found, try to match action configs
+        // containing wildcard patterns only if a matcher exists.
+        if ((config == null) && (matcher != null)) {
+            config = matcher.match(path);
+        }
+
+        return config;
     }
 
     @Override
@@ -295,7 +333,18 @@ public class ModuleConfigImpl implements ModuleConfig {
     @Override
     public void freeze() {
         configured = true;
+
+        // classic wildcard matching: build the matcher over the frozen
+        // action configurations
+        ActionConfig[] aconfigs = findActionConfigs();
+        for (ActionConfig aconfig : aconfigs) {
+            aconfig.freeze();
+        }
+        matcher = new org.apache.struts.config.ActionConfigMatcher(aconfigs);
     }
+
+    /** The wildcard matcher over the action configurations, after freeze. */
+    protected org.apache.struts.config.ActionConfigMatcher matcher = null;
 
     protected void throwIfConfigured() {
         if (configured) {

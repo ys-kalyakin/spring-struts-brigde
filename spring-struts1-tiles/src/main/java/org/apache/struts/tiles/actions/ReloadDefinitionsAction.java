@@ -1,0 +1,71 @@
+package org.apache.struts.tiles.actions;
+
+import java.io.PrintWriter;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.apache.struts.action.Action;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+import org.apache.struts.tiles.DefinitionsFactory;
+import org.apache.struts.tiles.DefinitionsFactoryException;
+import org.apache.struts.tiles.TilesUtil;
+
+
+
+/**
+ * <p>A standard <strong>Action</strong> that calls the
+ * <code>reload()</code> method of our controller servlet to
+ * reload its configuration information from the configuration
+ * files (which have presumably been updated) dynamically.</p>
+ *
+ * @version $Rev$ $Date$
+ */
+
+public class ReloadDefinitionsAction extends Action {
+    private static final long serialVersionUID = -7047330717130537765L;
+
+    /**
+     * Process the specified HTTP request, and create the corresponding HTTP
+     * response (or forward to another web component that will create it),
+     * with provision for handling exceptions thrown by the business logic.
+     *
+     * @param mapping The ActionMapping used to select this instance
+     * @param form The optional ActionForm bean for this request (if any)
+     * @param request The HTTP request we are processing
+     * @param response The HTTP response we are creating
+     *
+     * @exception Exception if the application business logic throws
+     *  an exception
+     * @since Struts 1.1
+     */
+    public ActionForward execute(ActionMapping mapping,
+                                 ActionForm form,
+                                 HttpServletRequest request,
+                                 HttpServletResponse response)
+        throws Exception
+    {
+        response.setContentType("text/plain");
+        PrintWriter writer = response.getWriter();
+
+        try {
+          ServletContext context = getServlet().getServletContext();
+            DefinitionsFactory factory = TilesUtil.getDefinitionsFactory(request, context);
+            factory.setConfig(factory.getConfig(), context);
+            writer.println("OK");
+        } catch (ClassCastException e) {
+            writer.println("FAIL - " + e.toString());
+            getServlet().log("ReloadAction", e);
+        } catch (DefinitionsFactoryException e) {
+            writer.println("FAIL - " + e.toString());
+            getServlet().log("ReloadAction", e);
+        }
+
+        writer.flush();
+
+        return (null);
+    }
+}

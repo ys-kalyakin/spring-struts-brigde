@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.context.ServletContextAware;
@@ -25,6 +26,9 @@ import org.apache.struts.config.ForwardConfig;
 import org.apache.struts.config.ModuleConfig;
 import org.apache.struts.util.ModuleUtils;
 import org.apache.struts.util.RequestUtils;
+import org.apache.struts.upload.MultipartRequestWrapper;
+
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 /**
  * Spring MVC handler adapter that runs the classic Struts 1 request
@@ -74,6 +78,7 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
             moduleConfig = actionServlet.getModuleConfig();
         }
 
+        request = processMultipart(request);
         request.setAttribute(Globals.MAPPING_KEY, mapping);
         request.setAttribute(Globals.MODULE_KEY, moduleConfig);
         // Classic postback support: html:form without an action submits to
@@ -113,8 +118,49 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
             processForwardConfig(request, response, forward);
         } catch (Exception e) {
             processException(request, response, e, mapping, form);
+        } finally {
+            // Multipart cleanup: temp files of the parsed request are
+            // destroyed once the response has been fully produced (the
+            // rollback() of the classic pipeline on validation failures is
+            // kept too; both are idempotent).
+            cleanupMultipart(form);
         }
         return null;
+    }
+
+    /**
+     * Wrap a multipart POST request into a <code>MultipartRequestWrapper</code>
+     * so that text elements parsed from the body become visible as request
+     * parameters; non-multipart requests are returned unchanged.
+     *
+     * <p>Ported from the classic <code>RequestProcessor.processMultipart</code>.</p>
+     */
+    protected HttpServletRequest processMultipart(HttpServletRequest request) {
+        if (request instanceof MultipartHttpServletRequest) {
+            // already resolved by a user-configured Spring MultipartResolver
+            return request;
+        }
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            return request;
+        }
+
+        String contentType = request.getContentType();
+
+        if ((contentType != null)
+            && contentType.startsWith("multipart/form-data")) {
+            return new MultipartRequestWrapper(request);
+        }
+        return request;
+    }
+
+    /**
+     * Destroy the temporary resources of the form's multipart handler, if
+     * any (classic <code>MultipartRequestHandler.finish()</code>).
+     */
+    protected void cleanupMultipart(ActionForm form) {
+        if (form != null && form.getMultipartRequestHandler() != null) {
+            form.getMultipartRequestHandler().finish();
+        }
     }
 
     /**
@@ -193,16 +239,31 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
 
     /**
      * Populate the properties of the specified form bean from the request
-     * parameters, after resetting them.
+     * parameters, after resetting them. Multipart requests are parsed by the
+     * configured <code>MultipartRequestHandler</code> before population.
      */
     protected void processPopulate(HttpServletRequest request,
         ActionMapping mapping, ActionForm form) throws Exception {
         if (form == null) {
             return;
         }
+
+        form.setServlet(actionServlet);
         form.reset(mapping, request);
+
+        if (mapping.getMultipartClass() != null) {
+            request.setAttribute(Globals.MULTIPART_KEY,
+                mapping.getMultipartClass());
+        }
+
         RequestUtils.populate(form, mapping.getPrefix(), mapping.getSuffix(),
             request);
+
+        // Set the cancellation request attribute if appropriate
+        if ((request.getParameter(Globals.CANCEL_PROPERTY) != null)
+            || (request.getParameter(Globals.CANCEL_PROPERTY_X) != null)) {
+            request.setAttribute(Globals.CANCEL_KEY, Boolean.TRUE);
+        }
     }
 
     /**
@@ -224,6 +285,12 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
         if (errors == null || errors.isEmpty()) {
             return false;
         }
+
+        // Special handling for multipart request
+        if (form.getMultipartRequestHandler() != null) {
+            form.getMultipartRequestHandler().rollback();
+        }
+
         request.setAttribute(Globals.ERROR_KEY, errors);
 
         if (mapping.getInput() == null) {
@@ -240,10 +307,17 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
      * Forward or redirect to the resource described by the forward
      * configuration, if any. Module-relative paths are expanded with the
      * module prefix (classic <code>processForwardConfig</code> semantics).
+     * Before ordinary dispatch, registered
+     * {@link DefinitionForwardResolver} beans get the chance to resolve the
+     * path as a named view definition (the Spring-native tiles hook).
      */
     protected void processForwardConfig(HttpServletRequest request,
         HttpServletResponse response, ForwardConfig forward) throws Exception {
         if (forward == null) {
+            return;
+        }
+
+        if (resolveDefinitionForward(forward.getPath(), request, response)) {
             return;
         }
 
@@ -269,6 +343,28 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
             return;
         }
         doForward(uri, request, response);
+    }
+
+    /**
+     * Offer the raw forward path to the registered
+     * {@link DefinitionForwardResolver} beans (if any).
+     *
+     * @return <code>true</code> if a resolver produced the response
+     */
+    protected boolean resolveDefinitionForward(String path,
+        HttpServletRequest request, HttpServletResponse response)
+        throws Exception {
+        ApplicationContext context = actionServlet.getApplicationContext();
+        if (context == null) {
+            return false;
+        }
+        for (DefinitionForwardResolver resolver : context
+            .getBeansOfType(DefinitionForwardResolver.class).values()) {
+            if (resolver.resolveForward(path, request, response)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected void doForward(String path, HttpServletRequest request,

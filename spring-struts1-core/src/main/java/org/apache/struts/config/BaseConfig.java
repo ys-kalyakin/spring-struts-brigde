@@ -33,10 +33,48 @@ public abstract class BaseConfig implements Serializable {
     }
 
     /**
+     * Return the entire set of properties configured for this object.
+     * At this time this only needs to be exposed to support inheritance
+     * (wildcard config matching), so the access stays conservative.
+     */
+    protected Properties getProperties() {
+        return this.properties;
+    }
+
+    protected void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    /**
      * For each property in the source, set the same property in the target.
      */
     public static void copyProperties(BaseConfig source, BaseConfig target) {
         target.properties.putAll(source.properties);
+    }
+
+    /**
+     * Compare the properties of this config with that of the given and
+     * copy those that are not present. This method is used by subclasses
+     * that support configuration inheritance.
+     */
+    protected void inheritProperties(BaseConfig baseConfig) {
+        Properties baseProperties = baseConfig.getProperties();
+        for (java.util.Enumeration<?> keys = baseProperties.propertyNames();
+            keys.hasMoreElements();) {
+            String key = (String) keys.nextElement();
+            if (this.getProperty(key) == null) {
+                setProperty(key, baseProperties.getProperty(key));
+            }
+        }
+    }
+
+    /**
+     * Return a copy of the properties held by this object.
+     */
+    protected Properties copyProperties() {
+        Properties copy = new Properties();
+        copy.putAll(properties);
+        return copy;
     }
 
     @Override

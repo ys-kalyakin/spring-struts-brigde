@@ -2,6 +2,8 @@ package app;
 
 import jakarta.servlet.ServletException;
 
+import org.apache.struts.config.ModuleConfig;
+
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.PlugIn;
 
@@ -13,7 +15,7 @@ import org.apache.struts.action.PlugIn;
 public class TestPlugin implements PlugIn {
 
     @Override
-    public void init(ActionServlet servlet) throws ServletException {
+    public void init(ActionServlet servlet, ModuleConfig config) throws ServletException {
         servlet.getServletContext().setAttribute("blank.plugin.init", "true");
     }
 

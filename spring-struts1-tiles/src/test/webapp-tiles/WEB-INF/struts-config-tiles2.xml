@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<struts-config>
+
+    <action-mappings>
+        <action path="/Page2" type="org.apache.struts.tiles.it.DefinitionForwardAction">
+            <forward name="page" path=".page2"/>
+        </action>
+    </action-mappings>
+
+    <plug-in className="org.apache.struts.tiles.TilesPlugin">
+        <set-property property="definitions-config" value="/WEB-INF/tiles-defs2.xml"/>
+        <set-property property="moduleAware" value="true"/>
+    </plug-in>
+
+</struts-config>

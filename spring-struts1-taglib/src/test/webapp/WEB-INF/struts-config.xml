@@ -78,6 +78,12 @@
     </action-mappings>
 
     <message-resources parameter="it-messages"/>
+
+    <plug-in className="org.apache.struts.validator.ValidatorPlugIn">
+        <set-property property="pathnames"
+                      value="/org/apache/struts/validator/validator-rules.xml,
+                             /WEB-INF/validation.xml"/>
+    </plug-in>
     <message-resources key="alt" parameter="alt-messages"/>
 
 </struts-config>
