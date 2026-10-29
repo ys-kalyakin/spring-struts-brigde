@@ -85,10 +85,13 @@ class TilesIntegrationTest {
 
     @Test
     void localizedDefinitionsFileIsSelectedByLocale() throws Exception {
-        HttpResponse<String> defaultResp = get("/LocalePage.do", null);
-        assertEquals(200, defaultResp.statusCode(), defaultResp.body());
-        assertTrue(defaultResp.body().contains("LOCALE[TITLE:Default Title]"),
-            defaultResp.body());
+        // A locale without its own tiles-defs_xx.xml falls back to the base
+        // file. Send it explicitly: the JVM default locale is en on CI and
+        // would otherwise select tiles-defs_en for the first request.
+        HttpResponse<String> baseResp = get("/LocalePage.do", "ru");
+        assertEquals(200, baseResp.statusCode(), baseResp.body());
+        assertTrue(baseResp.body().contains("LOCALE[TITLE:Default Title]"),
+            baseResp.body());
 
         HttpResponse<String> englishResp = get("/LocalePage.do", "en");
         assertEquals(200, englishResp.statusCode(), englishResp.body());
