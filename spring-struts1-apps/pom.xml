@@ -22,5 +22,6 @@
     <module>cookbook</module>
     <module>mailreader-dao</module>
     <module>mailreader</module>
+    <module>demo</module>
   </modules>
 </project>

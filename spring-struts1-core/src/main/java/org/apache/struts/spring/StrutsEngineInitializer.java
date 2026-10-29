@@ -89,7 +89,7 @@ public class StrutsEngineInitializer
             }
         } catch (RuntimeException e) {
             log.warn("RequestContextFilter was not registered: {}",
-                e.getMessage());
+                e.toString());
         }
     }
 

@@ -28,6 +28,7 @@ import org.apache.struts.config.ModuleConfig;
 import org.apache.struts.config.ModuleConfigFactory;
 import org.apache.struts.config.PlugInConfig;
 import org.apache.struts.config.StrutsConfigParser;
+import org.apache.struts.spring.EnvironmentServletConfig;
 import org.apache.struts.util.MessageResources;
 import org.apache.struts.util.MessageResourcesFactory;
 import org.apache.struts.util.RequestUtils;
@@ -241,7 +242,15 @@ public class ActionServlet extends HttpServlet
             }
             URL url = null;
             try {
-                url = getServletContext().getResource(path);
+                // The environment-backed adapter of Boot mode resolves
+                // classpath: resources itself; the classic servlet resolves
+                // against the servlet context.
+                if (getServletConfig()
+                    instanceof EnvironmentServletConfig envConfig) {
+                    url = envConfig.resolveResource(path);
+                } else {
+                    url = getServletContext().getResource(path);
+                }
             } catch (java.net.MalformedURLException e) {
                 throw new UnavailableException(
                     "Malformed configuration resource path " + path);

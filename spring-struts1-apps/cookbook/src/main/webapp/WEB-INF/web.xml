@@ -17,37 +17,13 @@
 -->
 
 <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
-      metadata-complete="true" version="6.1">
+      xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_1.xsd"
+      version="6.1">
 
-  <display-name>Struts Examples Application</display-name>
-  <!-- Standard Action Servlet Configuration (with debugging) -->
-  <servlet>
-    <servlet-name>action</servlet-name>
-    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
-    <init-param>
-      <param-name>contextClass</param-name>
-      <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
-    </init-param>
-    <init-param>
-      <param-name>contextConfigLocation</param-name>
-      <param-value>examples.CookbookConfig</param-value>
-    </init-param>
-    <init-param>
-      <param-name>config</param-name>
-      <param-value>
-          /WEB-INF/struts-config.xml,
-          /WEB-INF/struts-config-Wildcard.xml
-       </param-value>
-    </init-param>
-    <load-on-startup>2</load-on-startup>
-  </servlet>
-
-  <!-- Standard Action Servlet Mapping -->
-  <servlet-mapping>
-    <servlet-name>action</servlet-name>
-    <url-pattern>*.do</url-pattern>
-  </servlet-mapping>
+  <display-name>Struts Cookbook</display-name>
+  <!-- The engine is bootstrapped by the spring-struts1 starter through the
+       Spring Boot application class; the configuration resources live in
+       WEB-INF/classes/application.properties (spring.struts1.config). -->
 
   <!-- The Usual Welcome File List -->
   <welcome-file-list>

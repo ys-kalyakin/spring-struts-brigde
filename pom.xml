@@ -16,6 +16,7 @@
     <module>spring-struts1-core</module>
     <module>spring-struts1-taglib</module>
     <module>spring-struts1-tiles</module>
+    <module>spring-struts1-starter</module>
     <module>spring-struts1-apps</module>
   </modules>
 
@@ -24,6 +25,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <spring.version>7.0.10</spring.version>
+    <!-- managed by spring-boot-dependencies 4.0.9 (same values, kept explicit for modules not governed by the BOM) -->
+    <spring-boot.version>4.0.9</spring-boot.version>
     <tomcat.version>11.0.27</tomcat.version>
     <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
     <jakarta.el-api.version>6.0.1</jakarta.el-api.version>
@@ -42,6 +45,14 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Boot BOM first: explicit entries below override it where pinned -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-webmvc</artifactId>
@@ -123,4 +134,25 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <!-- Publication channel is external configuration: the repositories are
+       supplied through properties when this profile is active
+       (-Dpublication.release.url, -Dpublication.snapshot.url), so the build
+       itself carries no repository coordinates. See README, section
+       "Публикация". -->
+  <profiles>
+    <profile>
+      <id>publication</id>
+      <distributionManagement>
+        <repository>
+          <id>publication-release</id>
+          <url>${publication.release.url}</url>
+        </repository>
+        <snapshotRepository>
+          <id>publication-snapshot</id>
+          <url>${publication.snapshot.url}</url>
+        </snapshotRepository>
+      </distributionManagement>
+    </profile>
+  </profiles>
 </project>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<!-- The configuration of the demo application: unchanged classic layout.
+     The resource lives on the classpath so both deployment modes work
+     (executable Boot application and WAR): the starter resolves
+     classpath: paths through spring.struts1.config. -->
+<struts-config>
+
+    <form-beans>
+        <form-bean name="subscribeForm"
+                   type="demo.SubscribeForm"/>
+    </form-beans>
+
+    <action-mappings>
+        <!-- The form page: a plain forward -->
+        <action path="/subscribe"
+                forward="/WEB-INF/jsp/subscribe.jsp"/>
+
+        <!-- The submission: populate, validate (errors return to the input
+             page), then the annotated action -->
+        <action path="/subscribeSubmit"
+                type="demo.SubscribeAction"
+                name="subscribeForm"
+                scope="request"
+                validate="true"
+                input="/WEB-INF/jsp/subscribe.jsp">
+            <forward name="success" path="/WEB-INF/jsp/subscribed.jsp"/>
+        </action>
+    </action-mappings>
+
+    <message-resources parameter="demo.Messages"/>
+
+</struts-config>

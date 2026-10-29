@@ -7,32 +7,8 @@
 
   <display-name>Struts Blank Application</display-name>
 
-  <!-- Standard Action Servlet Configuration: the engine runs on Spring MVC's
-       DispatcherServlet; the init-params are the classic contract, carried
-       over to the ActionServlet facade by the engine initializer. -->
-  <servlet>
-    <servlet-name>action</servlet-name>
-    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
-    <init-param>
-      <param-name>contextClass</param-name>
-      <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
-    </init-param>
-    <init-param>
-      <param-name>contextConfigLocation</param-name>
-      <param-value>app.BlankConfig</param-value>
-    </init-param>
-    <init-param>
-      <param-name>config</param-name>
-      <param-value>/WEB-INF/struts-config.xml</param-value>
-    </init-param>
-    <load-on-startup>2</load-on-startup>
-  </servlet>
-
-  <!-- Standard Action Servlet Mapping -->
-  <servlet-mapping>
-    <servlet-name>action</servlet-name>
-    <url-pattern>*.do</url-pattern>
-  </servlet-mapping>
+  <!-- The engine is bootstrapped by the spring-struts1 starter through the
+       Spring Boot application class (no servlet declaration, no init-params). -->
 
   <!-- The Usual Welcome File List -->
   <welcome-file-list>

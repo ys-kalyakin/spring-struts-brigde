@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.UnavailableException;
 
@@ -20,7 +21,10 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.context.EnvironmentAware;
+import org.springframework.core.env.Environment;
 import org.springframework.web.context.ServletConfigAware;
+import org.springframework.web.context.ServletContextAware;
 
 import org.apache.struts.Globals;
 import org.apache.struts.action.Action;
@@ -47,10 +51,13 @@ import org.apache.struts.config.StrutsConfigParser;
  * <code>messageSource</code> and before any engine bean is instantiated.
  * When no front servlet <code>ServletConfig</code> is available (the engine
  * is imported into a context without the classic init-param contract), the
- * registrar does nothing.</p>
+ * registrar builds a {@link EnvironmentServletConfig} from the servlet
+ * context and the environment when either is usable (Spring Boot mode);
+ * otherwise it does nothing.</p>
  */
 public class StrutsEngineRegistrar
-    implements BeanDefinitionRegistryPostProcessor, ServletConfigAware {
+    implements BeanDefinitionRegistryPostProcessor, ServletConfigAware,
+    ServletContextAware, EnvironmentAware {
 
     /** Prefix of the auto-registered singleton bean of an action type. */
     public static final String ACTION_BEAN_PREFIX = "strutsAction:";
@@ -67,18 +74,36 @@ public class StrutsEngineRegistrar
 
     private ServletConfig servletConfig;
 
+    private ServletContext servletContext;
+
+    private Environment environment;
+
     @Override
     public void setServletConfig(ServletConfig servletConfig) {
         this.servletConfig = servletConfig;
     }
 
     @Override
+    public void setServletContext(ServletContext servletContext) {
+        this.servletContext = servletContext;
+    }
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
+
+    @Override
     public void postProcessBeanDefinitionRegistry(
         BeanDefinitionRegistry registry) throws BeansException {
-        if (servletConfig == null) {
+        if (servletConfig == null && !useEnvironmentConfig()) {
             log.debug("No servlet config provided; struts-config types are "
                 + "not registered as Spring beans");
             return;
+        }
+        if (servletConfig == null) {
+            servletConfig = new EnvironmentServletConfig(servletContext,
+                environment);
         }
         if (!(registry instanceof ConfigurableListableBeanFactory
                 beanFactory)) {
@@ -114,6 +139,21 @@ public class StrutsEngineRegistrar
     public void postProcessBeanFactory(
         ConfigurableListableBeanFactory beanFactory) throws BeansException {
         // Nothing to do: all definitions are registered in the registry pass.
+    }
+
+    /**
+     * Whether the environment provides a usable configuration source when no
+     * classic servlet config exists: either a servlet context (WAR-style
+     * resource resolution) or an explicit configuration property (classpath
+     * resources). Plain non-web contexts stay no-op.
+     */
+    private boolean useEnvironmentConfig() {
+        if (environment == null) {
+            return false;
+        }
+        return servletContext != null
+            || environment.getProperty(
+                EnvironmentServletConfig.CONFIG_PROPERTY) != null;
     }
 
     /**
@@ -175,11 +215,18 @@ public class StrutsEngineRegistrar
     }
 
     /**
-     * Resolve a configuration resource path against the servlet context;
-     * overridable in tests.
+     * Resolve a configuration resource path: {@link EnvironmentServletConfig}
+     * resolves <code>classpath:</code> paths itself and servlet-context paths
+     * when the context is available; the classic config resolves against the
+     * servlet context.
      */
     protected URL resourceUrl(String path) throws MalformedURLException {
-        return servletConfig.getServletContext().getResource(path);
+        if (servletConfig instanceof EnvironmentServletConfig envConfig) {
+            return envConfig.resolveResource(path);
+        }
+        ServletContext context =
+            (servletConfig != null) ? servletConfig.getServletContext() : null;
+        return (context != null) ? context.getResource(path) : null;
     }
 
     /**
