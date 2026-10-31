@@ -32,3 +32,8 @@ site/
 
 # ZCode local workspace (slash commands, skills, settings)
 .zcode/
+
+# Local tool workspaces (agent hooks, scan state, skills)
+.mimosa/
+.opencode/
+.dsh/
