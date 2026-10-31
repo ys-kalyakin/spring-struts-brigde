@@ -45,7 +45,7 @@ public final class SubscriptionAction extends BaseAction {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(SubscriptionAction.class);
 
     // --- Public Constants --
@@ -55,25 +55,25 @@ public final class SubscriptionAction extends BaseAction {
      * Name of autoConnect field ["autoConnect"].
      * </p>
      */
-    public final static String AUTO_CONNECT = "autoConnect";
+    public static final String AUTO_CONNECT = "autoConnect";
 
     /**
      * <p>
      * Name of host field ["host"].
      * </p>
      */
-    public final static String HOST = "host";
+    public static final String HOST = "host";
 
     /**
      * <p>
      * Name of type field ["type"].
      * </p>
      */
-    public final static String TYPE = "type";
+    public static final String TYPE = "type";
 
     // ---- Private Methods ----
 
-    final String LOG_SUBSCRIPTION_POPULATE = "SubscriptionForm.populate";
+    private static final String LOG_SUBSCRIPTION_POPULATE = "SubscriptionForm.populate";
 
     /**
      * <p>
@@ -91,8 +91,7 @@ public final class SubscriptionAction extends BaseAction {
 
         try {
             subscription = user.findSubscription(host);
-        }
-        catch (NullPointerException e) {
+        } catch (NullPointerException e) {
             subscription = null;
         }
 
@@ -188,13 +187,13 @@ public final class SubscriptionAction extends BaseAction {
         final String method = Constants.DELETE;
         doLogProcess(mapping, method);
 
-        LOG.trace(" Deleting subscription to mail server '{}' for user '{}'",
-            subscription.getHost(), user.getUsername());
-
         boolean missingAttributes = ((user == null) || (subscription == null));
         if (missingAttributes) {
             return doFindLogon(mapping);
         }
+
+        LOG.trace(" Deleting subscription to mail server '{}' for user '{}'",
+            subscription.getHost(), user.getUsername());
 
         user.removeSubscription(subscription);
         session.removeAttribute(Constants.SUBSCRIPTION_KEY);

@@ -251,7 +251,7 @@ public class DefinitionsFactoryConfig implements Serializable {
      * @param properties Map keyed by property name, with the
      *  corresponding (String or String[]) value(s) to be set.
      */
-    static public void linkOldPropertyNames(Map<String, Object> properties) {
+    public static void linkOldPropertyNames(Map<String, Object> properties) {
         Map<String, Object> toAdd = new HashMap<>();
         for (Map.Entry<String, ?> entry : properties.entrySet()) {
             if (DEFINITIONS_CONFIG_PARAMETER_NAME.equals(entry.getKey())) {

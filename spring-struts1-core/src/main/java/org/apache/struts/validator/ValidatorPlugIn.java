@@ -37,13 +37,13 @@ public class ValidatorPlugIn implements PlugIn {
     /**
      * Delimitter for Validator resources.
      */
-    private final static String RESOURCE_DELIM = ",";
+    private static final String RESOURCE_DELIM = ",";
 
     /**
      * Application scope key that <code>ValidatorResources</code> is stored
      * under.
      */
-    public final static String VALIDATOR_KEY =
+    public static final String VALIDATOR_KEY =
         "org.apache.commons.validator.VALIDATOR_RESOURCES";
 
     /**
@@ -51,7 +51,7 @@ public class ValidatorPlugIn implements PlugIn {
      *
      * @since Struts 1.2
      */
-    public final static String STOP_ON_ERROR_KEY =
+    public static final String STOP_ON_ERROR_KEY =
         "org.apache.struts.validator.STOP_ON_ERROR";
 
     /*

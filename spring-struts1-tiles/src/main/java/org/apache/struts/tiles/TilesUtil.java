@@ -22,6 +22,10 @@ import jakarta.servlet.jsp.PageContext;
  */
 public class TilesUtil {
 
+    /** Non-instantiable utility class; protected because DefinitionsUtil extends it. */
+    protected TilesUtil() {
+    }
+
     /** The implementation of tilesUtilImpl */
     protected static TilesUtilImpl tilesUtilImpl = new TilesUtilImpl();
 
@@ -29,7 +33,7 @@ public class TilesUtil {
      * Get the real implementation.
      * @return The underlying implementation object.
      */
-    static public TilesUtilImpl getTilesUtil() {
+    public static TilesUtilImpl getTilesUtil() {
         return tilesUtilImpl;
     }
 
@@ -39,7 +43,7 @@ public class TilesUtil {
      * Successive calls have no effect.
      * @param tilesUtil The implementation.
      */
-    static public void setTilesUtil(TilesUtilImpl tilesUtil) {
+    public static void setTilesUtil(TilesUtilImpl tilesUtil) {
         if (implAlreadySet) {
             return;
         }

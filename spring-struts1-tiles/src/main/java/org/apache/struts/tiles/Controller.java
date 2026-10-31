@@ -27,7 +27,7 @@ public interface Controller extends Serializable {
      *             Struts 1.2.
      */
     @Deprecated
-    public void perform(
+    void perform(
             ComponentContext tileContext,
             HttpServletRequest request,
             HttpServletResponse response,
@@ -43,7 +43,7 @@ public interface Controller extends Serializable {
      * @param response       Current response
      * @param servletContext Current servlet context
      */
-    public void execute(
+    void execute(
             ComponentContext tileContext,
             HttpServletRequest request,
             HttpServletResponse response,

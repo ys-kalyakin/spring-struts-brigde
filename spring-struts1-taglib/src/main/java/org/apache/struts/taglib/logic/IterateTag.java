@@ -90,10 +90,6 @@ public class IterateTag extends SpringBodyTagSupport {
      */
     protected Object collection = null;
 
-    /**
-     * The name of the scripting variable to be exposed.
-     */
-    protected String id = null;
 
     /**
      * The name of the scripting variable to be exposed as the current index.

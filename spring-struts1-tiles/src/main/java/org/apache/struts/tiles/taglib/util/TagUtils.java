@@ -15,7 +15,6 @@ import org.apache.struts.tiles.ComponentDefinition;
 import org.apache.struts.tiles.DefinitionsFactoryException;
 import org.apache.struts.tiles.FactoryNotFoundException;
 import org.apache.struts.tiles.NoSuchDefinitionException;
-import org.apache.struts.tiles.TilesUtil;
 
 /**
  * Collection of utilities.
@@ -26,6 +25,10 @@ import org.apache.struts.tiles.TilesUtil;
  */
 public class TagUtils {
 
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private TagUtils() {
+    }
+
     /** Debug flag */
     public static final boolean debug = true;
 
@@ -33,17 +36,17 @@ public class TagUtils {
      * Maps lowercase JSP scope names to their PageContext integer constant
      * values.
      */
-    private static final Map<String, Integer> scopes = new HashMap<>();
+    private static final Map<String, Integer> SCOPES = new HashMap<>();
 
     /**
      * Initialize the scope names map and the encode variable with the
      * Java 1.4 method if available.
      */
     static {
-        scopes.put("page", PageContext.PAGE_SCOPE);
-        scopes.put("request", PageContext.REQUEST_SCOPE);
-        scopes.put("session", PageContext.SESSION_SCOPE);
-        scopes.put("application", PageContext.APPLICATION_SCOPE);
+        SCOPES.put("page", PageContext.PAGE_SCOPE);
+        SCOPES.put("request", PageContext.REQUEST_SCOPE);
+        SCOPES.put("session", PageContext.SESSION_SCOPE);
+        SCOPES.put("application", PageContext.APPLICATION_SCOPE);
     }
 
 
@@ -81,11 +84,11 @@ public class TagUtils {
      * @throws JspException if the scopeName is not a valid name.
      */
     public static int getScope(String scopeName) throws JspException {
-        Integer scope = scopes.get(scopeName.toLowerCase());
+        Integer scope = SCOPES.get(scopeName.toLowerCase());
 
         if (scope == null) {
             //throw new JspException(messages.getMessage("lookup.scope", scope));
-            throw new JspException("Unable to retrieve the scope "+scopeName);
+            throw new JspException("Unable to retrieve the scope " + scopeName);
         }
 
         return scope.intValue();
@@ -134,7 +137,7 @@ public class TagUtils {
             }
         }
 
-        // Search in pageContext scopes
+        // Search in pageContext SCOPES
         return pageContext.findAttribute(beanName);
     }
 
@@ -242,17 +245,17 @@ public class TagUtils {
         String scope)
         throws JspException {
 
-        if (scope == null)
+        if (scope == null) {
             pageContext.setAttribute(name, value, PageContext.REQUEST_SCOPE);
-        else if (scope.equalsIgnoreCase("page"))
+        } else if (scope.equalsIgnoreCase("page")) {
             pageContext.setAttribute(name, value, PageContext.PAGE_SCOPE);
-        else if (scope.equalsIgnoreCase("request"))
+        } else if (scope.equalsIgnoreCase("request")) {
             pageContext.setAttribute(name, value, PageContext.REQUEST_SCOPE);
-        else if (scope.equalsIgnoreCase("session"))
+        } else if (scope.equalsIgnoreCase("session")) {
             pageContext.setAttribute(name, value, PageContext.SESSION_SCOPE);
-        else if (scope.equalsIgnoreCase("application"))
+        } else if (scope.equalsIgnoreCase("application")) {
             pageContext.setAttribute(name, value, PageContext.APPLICATION_SCOPE);
-        else {
+        } else {
             throw new JspException("Error - bad scope name '" + scope + "'");
         }
     }
@@ -306,8 +309,7 @@ public class TagUtils {
             throw new JspException(ex);
 
         } catch (DefinitionsFactoryException ex) {
-            if (debug)
-                ex.printStackTrace();
+            if (debug) ex.printStackTrace();
             // Save exception to be able to show it later
             saveException(pageContext, ex);
             throw new JspException(ex);

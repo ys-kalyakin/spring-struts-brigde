@@ -5,7 +5,6 @@ import java.net.URL;
 import java.nio.file.Path;
 
 import jakarta.servlet.ServletConfig;
-import jakarta.servlet.ServletContext;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -15,7 +14,6 @@ import org.springframework.mock.web.MockServletConfig;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.web.context.support.GenericWebApplicationContext;
 
-import org.apache.struts.action.Action;
 import org.apache.struts.fixtures.FixtureAction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

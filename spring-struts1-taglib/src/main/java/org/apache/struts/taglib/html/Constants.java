@@ -25,6 +25,10 @@ package org.apache.struts.taglib.html;
  * Manifest constants for this package.
  */
 public class Constants {
+
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private Constants() {
+    }
     /**
      * The name of this package.
      */

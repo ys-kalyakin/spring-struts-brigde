@@ -17,14 +17,14 @@ public interface FormFile extends Serializable {
      *
      * @return A String representing content type.
      */
-    public String getContentType();
+    String getContentType();
 
     /**
      * Sets the content type for this file.
      *
      * @param contentType The content type for the file.
      */
-    public void setContentType(String contentType);
+    void setContentType(String contentType);
 
     /**
      * Returns the size of this file.
@@ -38,7 +38,7 @@ public interface FormFile extends Serializable {
      * @deprecated use {@link #getFileLength()}
      */
     @Deprecated
-    public int getFileSize();
+    int getFileSize();
 
     /**
      * Sets the file size.
@@ -50,21 +50,21 @@ public interface FormFile extends Serializable {
      * @deprecated use {@link #setFileLength(long)}
      */
     @Deprecated
-    public void setFileSize(int size);
+    void setFileSize(int size);
 
     /**
      * Returns the length of this file.
      *
      * @return The length of the file, in bytes.
      */
-    public long getFileLength();
+    long getFileLength();
 
     /**
      * Sets the file length.
      *
      * @param fileLength The length of the file, in bytes.
      */
-    public void setFileLength(long fileLength);
+    void setFileLength(long fileLength);
 
     /**
      * Returns the file name of this file. This is the base name of the file,
@@ -72,14 +72,14 @@ public interface FormFile extends Serializable {
      *
      * @return The base file name.
      */
-    public String getFileName();
+    String getFileName();
 
     /**
      * Sets the file name of this file.
      *
      * @param fileName The base file name.
      */
-    public void setFileName(String fileName);
+    void setFileName(String fileName);
 
     /**
      * Returns the data for the entire file as byte array. Care is needed when
@@ -95,7 +95,7 @@ public interface FormFile extends Serializable {
      * @throws IOException           if an error occurred while reading the
      *                               file.
      */
-    public byte[] getFileData()
+    byte[] getFileData()
         throws FileNotFoundException, IOException;
 
     /**
@@ -108,7 +108,7 @@ public interface FormFile extends Serializable {
      * @throws IOException           if an error occurred while reading the
      *                               file.
      */
-    public InputStream getInputStream()
+    InputStream getInputStream()
         throws FileNotFoundException, IOException;
 
     /**
@@ -118,5 +118,5 @@ public interface FormFile extends Serializable {
      * @throws IOException           if an error occurred while destroying all
      *                               content.
      */
-    public void destroy() throws IOException;
+    void destroy() throws IOException;
 }

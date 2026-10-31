@@ -44,7 +44,7 @@ public class I18nFactorySet extends FactorySet {
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(I18nFactorySet.class);
 
     /**
@@ -68,11 +68,11 @@ public class I18nFactorySet extends FactorySet {
     /**
      * Possible definition filenames.
      */
-    public static final String DEFAULT_DEFINITION_FILENAMES[] =
+    public static final String []DEFAULT_DEFINITION_FILENAMES  =
         {
-            "/WEB-INF/tileDefinitions.xml",
-            "/WEB-INF/componentDefinitions.xml",
-            "/WEB-INF/instanceDefinitions.xml" };
+        "/WEB-INF/tileDefinitions.xml",
+        "/WEB-INF/componentDefinitions.xml",
+        "/WEB-INF/instanceDefinitions.xml" };
 
     /**
      * Default filenames extension.
@@ -156,7 +156,7 @@ public class I18nFactorySet extends FactorySet {
         value = (String) properties.get(PARSER_DETAILS_PARAMETER_NAME);
         if (value != null) {
             try {
-                parserDetailLevel = Integer.valueOf(value).intValue();
+                parserDetailLevel = Integer.parseInt(value);
 
             } catch (NumberFormatException ex) {
                 log.error("Bad format for parameter '{}'. Integer expected.",
@@ -216,7 +216,7 @@ public class I18nFactorySet extends FactorySet {
                 log.warn("Factory initialization - ignore empty file");
                 continue;
             } else if (fn.contains("\u0000")) {
-                log.warn("Factory initialization - ignore file with nul-characters '{}'", fn.replace('\u0000', '_') );
+                log.warn("Factory initialization - ignore file with nul-characters '{}'", fn.replace('\u0000', '_'));
                 continue;
             }
 
@@ -470,6 +470,7 @@ public class I18nFactorySet extends FactorySet {
                         input = new FileInputStream(realPath);
                     }
                 } catch (Exception e) {
+                    // ignore: real-path lookup failed, the class loader attempt below is used
                 }
             }
 

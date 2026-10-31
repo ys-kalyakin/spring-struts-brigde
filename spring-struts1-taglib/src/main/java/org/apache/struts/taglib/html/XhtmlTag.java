@@ -40,7 +40,7 @@ public class XhtmlTag extends SpringTagSupport {
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(XhtmlTag.class);
 
     /**

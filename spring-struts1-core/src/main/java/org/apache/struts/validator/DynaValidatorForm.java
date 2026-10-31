@@ -42,7 +42,7 @@ public class DynaValidatorForm extends DynaActionForm implements DynaBean,
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(DynaValidatorForm.class);
 
     /**
@@ -216,6 +216,6 @@ public class DynaValidatorForm extends DynaActionForm implements DynaBean,
      */
     public Map<String, Object> getResultValueMap() {
         return ((validatorResults != null)
-        ? validatorResults.getResultValueMap() : null);
+            ? validatorResults.getResultValueMap() : null);
     }
 }

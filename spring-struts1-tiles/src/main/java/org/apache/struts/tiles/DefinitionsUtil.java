@@ -89,8 +89,7 @@ public class DefinitionsUtil extends TilesUtil implements ComponentConstants {
         }
 
         // Add classname
-        if (classname != null)
-            factoryConfig.setFactoryClassname(classname);
+        if (classname != null) factoryConfig.setFactoryClassname(classname);
 
         // Create factory using config object
         return createDefinitionsFactory(servletContext, factoryConfig);
@@ -116,7 +115,8 @@ public class DefinitionsUtil extends TilesUtil implements ComponentConstants {
      * Create configuration object from servlet web.xml file, then create
      * ConfigurableDefinitionsFactory and initialized it with object.
      * <p>
-     * Convenience method. Calls createDefinitionsFactory(ServletContext servletContext, DefinitionsFactoryConfig factoryConfig)
+     * Convenience method. Calls createDefinitionsFactory(ServletContext
+     * servletContext, DefinitionsFactoryConfig factoryConfig)
      *
      * @param servletContext Servlet Context passed to newly created factory.
      * @param servletConfig Servlet config containing parameters to be passed to factory configuration object.
@@ -143,7 +143,8 @@ public class DefinitionsUtil extends TilesUtil implements ComponentConstants {
      * <p>
      * If checkIfExist is false, factory is always created.
      * <p>
-     * Convenience method. Calls createDefinitionsFactory(ServletContext servletContext, DefinitionsFactoryConfig factoryConfig)
+     * Convenience method. Calls createDefinitionsFactory(ServletContext
+     * servletContext, DefinitionsFactoryConfig factoryConfig)
      *
      * @param servletContext Servlet Context passed to newly created factory.
      * @param servletConfig Servlet config containing parameters to be passed to factory configuration object.
@@ -161,8 +162,7 @@ public class DefinitionsUtil extends TilesUtil implements ComponentConstants {
         if (checkIfExist) {
             // Check if already exist in context
             DefinitionsFactory factory = getDefinitionsFactory(servletContext);
-            if (factory != null)
-                return factory;
+            if (factory != null) return factory;
         }
 
         return createDefinitionsFactory(servletContext, servletConfig);

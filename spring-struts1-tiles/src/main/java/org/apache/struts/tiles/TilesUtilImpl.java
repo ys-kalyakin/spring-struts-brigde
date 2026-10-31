@@ -27,9 +27,9 @@ public class TilesUtilImpl implements Serializable {
     /**
      * The {@code Log} instances for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(TilesUtilImpl.class);
-    private transient final Logger log =
+    private final transient Logger log =
             LoggerFactory.getLogger(TilesUtilImpl.class);
 
     /** Constant name used to store factory in servlet context */
@@ -114,12 +114,12 @@ public class TilesUtilImpl implements Serializable {
         } catch (IllegalAccessException e) {
             log.debug("Could not find JSP 2.0 include method.  Using old one.", e);
         } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof ServletException){
-               throw ((ServletException)e.getCause());
-            } else if (e.getCause() instanceof IOException){
-               throw ((IOException)e.getCause());
+            if (e.getCause() instanceof ServletException) {
+                throw ((ServletException)e.getCause());
+            } else if (e.getCause() instanceof IOException) {
+                throw ((IOException)e.getCause());
             } else {
-               throw new ServletException(e);
+                throw new ServletException(e);
             }
         }
 

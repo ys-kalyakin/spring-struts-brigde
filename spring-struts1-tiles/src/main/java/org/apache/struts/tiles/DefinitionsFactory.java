@@ -21,8 +21,7 @@ import jakarta.servlet.ServletRequest;
  * Implementation must be Serializable, in order to be compliant with web Container
  * having this constraint (Weblogic 6.x).
  */
-public interface DefinitionsFactory extends Serializable
-{
+public interface DefinitionsFactory extends Serializable {
 
    /**
      * Get a definition by its name.
@@ -33,8 +32,8 @@ public interface DefinitionsFactory extends Serializable
      * @throws NoSuchDefinitionException No definition found for specified name
      * Implementation can throw more accurate exception as a subclass of this exception
    */
-   public ComponentDefinition getDefinition(String name, ServletRequest request, ServletContext servletContext)
-     throws NoSuchDefinitionException,DefinitionsFactoryException;
+    ComponentDefinition getDefinition(String name, ServletRequest request, ServletContext servletContext)
+        throws NoSuchDefinitionException,DefinitionsFactoryException;
 
    /**
     * Init definition factory.
@@ -45,14 +44,14 @@ public interface DefinitionsFactory extends Serializable
     * @param servletContext Servlet Context passed to factory.
     * @throws DefinitionsFactoryException An error occur during initialization.
     */
-   public void init(DefinitionsFactoryConfig config, ServletContext servletContext)
-     throws DefinitionsFactoryException;
+    void init(DefinitionsFactoryConfig config, ServletContext servletContext)
+        throws DefinitionsFactoryException;
 
     /**
      * <p>Receive notification that the factory is being
      * shut down.</p>
      */
-    public void destroy();
+    void destroy();
 
    /**
     * Set factory configuration.
@@ -64,14 +63,14 @@ public interface DefinitionsFactory extends Serializable
     * @param servletContext Servlet Context passed to factory.
     * @throws DefinitionsFactoryException An error occur during initialization.
     */
-   public void setConfig(DefinitionsFactoryConfig config, ServletContext servletContext)
-     throws DefinitionsFactoryException;
+    void setConfig(DefinitionsFactoryConfig config, ServletContext servletContext)
+        throws DefinitionsFactoryException;
 
    /**
     * Get factory configuration.
     * @return TilesConfig
     */
-   public DefinitionsFactoryConfig getConfig();
+    DefinitionsFactoryConfig getConfig();
 
 
 }

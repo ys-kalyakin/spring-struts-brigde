@@ -22,7 +22,7 @@
 package org.apache.struts.webapp.examples;
 
 
-import org.apache.struts.action.*;
+import org.apache.struts.action.ActionForward;
 
 
 /**

@@ -17,7 +17,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.boot.webmvc.autoconfigure.DispatcherServletPath;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 import org.springframework.web.filter.RequestContextFilter;
@@ -28,7 +27,6 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.spring.StrutsEngineConfiguration;
-import org.apache.struts.taglib.spring.StrutsTagServicesConfiguration;
 
 /**
  * Spring Boot auto-configuration of the Struts 1 engine: imports the engine

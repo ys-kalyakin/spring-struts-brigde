@@ -127,8 +127,8 @@ public class ActionDispatcher {
      */
     protected Class<?>[] types =
         {
-            ActionMapping.class, ActionForm.class, HttpServletRequest.class,
-            HttpServletResponse.class
+        ActionMapping.class, ActionForm.class, HttpServletRequest.class,
+        HttpServletResponse.class
         };
 
     /**

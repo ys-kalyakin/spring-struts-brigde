@@ -145,7 +145,8 @@ public class StrutsHandlerMapping extends AbstractHandlerMapping {
         if (!(config instanceof ActionMapping)) {
             throw new ServletException(
                 "ActionConfig of path " + actionPath
-                    + " is not an ActionMapping: the action-mappings type must extend org.apache.struts.action.ActionMapping");
+                    + " is not an ActionMapping: the action-mappings type must extend"
+                + " org.apache.struts.action.ActionMapping");
         }
         return config;
     }

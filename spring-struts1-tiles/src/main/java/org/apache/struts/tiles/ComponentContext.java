@@ -86,7 +86,7 @@ public class ComponentContext implements Serializable {
      * @return the value of the attribute
      */
     public Object getAttribute(String name) {
-        if (attributes == null){
+        if (attributes == null) {
             return null;
         }
 
@@ -147,7 +147,7 @@ public class ComponentContext implements Serializable {
         int scope,
         PageContext pageContext) {
 
-        if (scope == ComponentConstants.COMPONENT_SCOPE){
+        if (scope == ComponentConstants.COMPONENT_SCOPE) {
             return getAttribute(beanName);
         }
 
@@ -160,10 +160,11 @@ public class ComponentContext implements Serializable {
      * @return ComponentContext or null if context is not found or an
      * jspException is present in the request.
      */
-    static public ComponentContext getContext(ServletRequest request) {
-       if (request.getAttribute("jakarta.servlet.jsp.jspException") != null) {
-           return null;
-        }        return (ComponentContext) request.getAttribute(
+    public static ComponentContext getContext(ServletRequest request) {
+        if (request.getAttribute("jakarta.servlet.jsp.jspException") != null) {
+            return null;
+        }
+        return (ComponentContext) request.getAttribute(
             ComponentConstants.COMPONENT_CONTEXT);
     }
 
@@ -172,7 +173,7 @@ public class ComponentContext implements Serializable {
      * @param context ComponentContext to store.
      * @param request Request to store ComponentContext.
      */
-    static public void setContext(
+    public static void setContext(
         ComponentContext context,
         ServletRequest request) {
 

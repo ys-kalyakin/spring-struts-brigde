@@ -8,45 +8,42 @@ import org.slf4j.LoggerFactory;
 /**
   *A definition read from an XML definitions file.
   */
-public class XmlDefinition extends ComponentDefinition
-{
-  private static final long serialVersionUID = -5843791058928194033L;
+public class XmlDefinition extends ComponentDefinition {
+    private static final long serialVersionUID = -5843791058928194033L;
 
   /**
    * Extends attribute value.
    */
-  private String inherit;
+    private String inherit;
 
   /**
    * The {@code Log} instance for this class.
    */
-  private transient final Logger log =
-    LoggerFactory.getLogger(XmlDefinition.class);
+    private final transient Logger log =
+        LoggerFactory.getLogger(XmlDefinition.class);
 
   /**
    * Used for resolving inheritance.
    */
-  private boolean isVisited=false;
+    private boolean isVisited = false;
 
 
      /**
       * Constructor.
       */
-   public XmlDefinition()
-   {
-   super();
+    public XmlDefinition() {
+        super();
    //if(debug)
      //System.out.println( "create definition" );
-   }
+    }
 
   /**
    * Add an attribute to this component.
    *
    * @param attribute Attribute to add.
    */
-  public void addAttribute( XmlAttribute attribute)
-    {
-    putAttribute( attribute.getName(), attribute.getValue() );
+    public void addAttribute(XmlAttribute attribute) {
+        putAttribute(attribute.getName(), attribute.getValue());
     }
 
   /**
@@ -54,9 +51,8 @@ public class XmlDefinition extends ComponentDefinition
    *
    * @param name Name of the extended definition.
    */
-  public void setExtends(String name)
-    {
-    inherit = name;
+    public void setExtends(String name) {
+        inherit = name;
     }
 
   /**
@@ -64,27 +60,24 @@ public class XmlDefinition extends ComponentDefinition
    *
    * @return Name of the extended definition.
    */
-  public String getExtends()
-    {
-    return inherit;
+    public String getExtends() {
+        return inherit;
     }
 
   /**
    * Get extends flag.
    *
    */
-  public boolean isExtending( )
-    {
-    return inherit!=null;
+    public boolean isExtending() {
+        return inherit != null;
     }
 
   /**
    * Set isVisited.
    *
    */
-  public void setIsVisited( boolean isVisited )
-    {
-    this.isVisited = isVisited;
+    public void setIsVisited(boolean isVisited) {
+        this.isVisited = isVisited;
     }
 
     /**
@@ -94,50 +87,42 @@ public class XmlDefinition extends ComponentDefinition
      * If instance doesn't extend anything, do nothing.
      * @throws NoSuchDefinitionException If an inheritance can not be solved.
      */
-  public void resolveInheritance( XmlDefinitionsSet definitionsSet )
-    throws NoSuchDefinitionException
-    {
+    public void resolveInheritance(XmlDefinitionsSet definitionsSet)
+        throws NoSuchDefinitionException {
       // Already done, or not needed ?
-    if( isVisited || !isExtending() )
-      return;
+        if (isVisited || !isExtending()) return;
 
-    log.debug("Resolve definition for child name='{}' extends='{}'.",
-      getName(), getExtends());
+        log.debug("Resolve definition for child name='{}' extends='{}'.",
+            getName(), getExtends());
 
       // Set as visited to avoid endless recurisvity.
-    setIsVisited( true );
+        setIsVisited(true);
 
       // Resolve parent before itself.
-    XmlDefinition parent = definitionsSet.getDefinition( getExtends() );
-    if( parent == null )
-      { // error
-      String msg = "Error while resolving definition inheritance: child '"
+        XmlDefinition parent = definitionsSet.getDefinition(getExtends());
+        if (parent == null) {
+            String msg = "Error while resolving definition inheritance: child '"
                            + getName() +    "' can't find its ancestor '"
                            + getExtends() +
                            "'. Please check your description file.";
-      log.error( msg );
+            log.error(msg);
         // to do : find better exception
-      throw new NoSuchDefinitionException( msg );
-      }
+            throw new NoSuchDefinitionException(msg);
+        }
 
-    parent.resolveInheritance( definitionsSet );
+        parent.resolveInheritance(definitionsSet);
 
       // Iterate on each parent's attribute and add it if not defined in child.
-    for( String name : parent.getAttributes().keySet() )
-      {
-      if( !getAttributes().containsKey(name) )
-        putAttribute( name, parent.getAttribute(name) );
-      }
+        for (String name : parent.getAttributes().keySet()) {
+            if (!getAttributes().containsKey(name)) putAttribute(name, parent.getAttribute(name));
+        }
       // Set path and role if not setted
-    if( path == null )
-      setPath( parent.getPath() );
-    if( role == null )
-      setRole( parent.getRole() );
-    if( controller==null )
-      {
-      setController( parent.getController());
-      setControllerType( parent.getControllerType());
-      }
+        if (path == null) setPath(parent.getPath());
+        if (role == null) setRole(parent.getRole());
+        if (controller == null) {
+            setController(parent.getController());
+            setControllerType(parent.getControllerType());
+        }
     }
 
   /**
@@ -148,26 +133,21 @@ public class XmlDefinition extends ComponentDefinition
    * in child.
    * @param child Child used to overload this definition.
    */
-  public void overload( XmlDefinition child )
-    {
-    if( child.getPath() != null )
-      {
-      path = child.getPath();
-      }
-    if( child.getExtends() != null )
-      {
-      inherit = child.getExtends();
-      }
-    if( child.getRole() != null )
-      {
-      role = child.getRole();
-      }
-    if( child.getController()!=null )
-      {
-      controller = child.getController();
-      controllerType =  child.getControllerType();
-      }
+    public void overload(XmlDefinition child) {
+        if (child.getPath() != null) {
+            path = child.getPath();
+        }
+        if (child.getExtends() != null) {
+            inherit = child.getExtends();
+        }
+        if (child.getRole() != null) {
+            role = child.getRole();
+        }
+        if (child.getController() != null) {
+            controller = child.getController();
+            controllerType =  child.getControllerType();
+        }
       // put all child attributes in parent.
-    attributes.putAll( child.getAttributes());
+        attributes.putAll(child.getAttributes());
     }
 }

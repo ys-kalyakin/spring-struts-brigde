@@ -11,40 +11,40 @@ public interface MenuItem extends Serializable {
     /**
      * Set value property.
      */
-    public void setValue(String value);
+    void setValue(String value);
 
     /**
      * Get value property.
      */
-    public String getValue();
+    String getValue();
 
     /**
      * Set link property.
      */
-    public void setLink(String link);
+    void setLink(String link);
 
     /**
      * Get link property.
      */
-    public String getLink();
+    String getLink();
 
     /**
      * Set icon property.
      */
-    public void setIcon(String link);
+    void setIcon(String link);
 
     /**
      * Get icon property.
      */
-    public String getIcon();
+    String getIcon();
 
     /**
      * Set tooltip property.
      */
-    public void setTooltip(String link);
+    void setTooltip(String link);
 
     /**
      * Get tooltip property.
      */
-    public String getTooltip();
+    String getTooltip();
 }

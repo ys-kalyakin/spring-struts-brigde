@@ -70,7 +70,7 @@ public abstract class CompareTagBase extends ConditionalTagBase {
      * The value to which the variable specified by other attributes of this
      * tag will be compared.
      */
-    public String value = null;
+    protected String value = null;
 
     public String getValue() {
         return (this.value);
@@ -125,7 +125,7 @@ public abstract class CompareTagBase extends ConditionalTagBase {
                 doubleValue = Double.parseDouble(value);
                 type = DOUBLE_COMPARE;
             } catch (NumberFormatException e) {
-                ;
+                // ignore: unparsable value leaves the comparison type unchanged
             }
         }
 
@@ -134,7 +134,7 @@ public abstract class CompareTagBase extends ConditionalTagBase {
                 longValue = Long.parseLong(value);
                 type = LONG_COMPARE;
             } catch (NumberFormatException e) {
-                ;
+                // ignore: unparsable value leaves the comparison type unchanged
             }
         }
 

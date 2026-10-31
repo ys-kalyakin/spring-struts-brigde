@@ -8,6 +8,10 @@ import java.io.Serializable;
  * <p>Ported from weblegacy/struts1 1.5.x (org.apache.struts.Globals).</p>
  */
 public class Globals implements Serializable {
+
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private Globals() {
+    }
     private static final long serialVersionUID = 5585920111597892090L;
 
     /**

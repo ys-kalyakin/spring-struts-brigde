@@ -54,8 +54,8 @@ public class BaseTag extends SpringTagSupport {
     protected static MessageResources messages =
         MessageResources.getMessageResources(Constants.Package
             + ".LocalStrings");
-    protected final String REF_SITE = "site";
-    protected final String REF_PAGE = "page";
+    protected static final String REF_SITE = "site";
+    protected static final String REF_PAGE = "page";
 
     /**
      * The server name to use instead of request.getServerName().

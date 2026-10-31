@@ -46,13 +46,12 @@ public class ReloadDefinitionsAction extends Action {
                                  ActionForm form,
                                  HttpServletRequest request,
                                  HttpServletResponse response)
-        throws Exception
-    {
+        throws Exception {
         response.setContentType("text/plain");
         PrintWriter writer = response.getWriter();
 
         try {
-          ServletContext context = getServlet().getServletContext();
+            ServletContext context = getServlet().getServletContext();
             DefinitionsFactory factory = TilesUtil.getDefinitionsFactory(request, context);
             factory.setConfig(factory.getConfig(), context);
             writer.println("OK");

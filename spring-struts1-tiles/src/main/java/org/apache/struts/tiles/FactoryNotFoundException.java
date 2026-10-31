@@ -3,24 +3,21 @@ package org.apache.struts.tiles;
   /**
    * Exception thrown when definitions factory is not found.
    */
-public class FactoryNotFoundException extends DefinitionsFactoryException
-{
+public class FactoryNotFoundException extends DefinitionsFactoryException {
     private static final long serialVersionUID = 2856113784339675593L;
 
     /**
      * Constructor.
      */
-  public FactoryNotFoundException()
-    {
-    super();
+    public FactoryNotFoundException() {
+        super();
     }
     /**
      * Constructor.
      * @param msg Message.
      */
-  public FactoryNotFoundException( String msg )
-    {
-    super(msg);
+    public FactoryNotFoundException(String msg) {
+        super(msg);
     }
 
     /**

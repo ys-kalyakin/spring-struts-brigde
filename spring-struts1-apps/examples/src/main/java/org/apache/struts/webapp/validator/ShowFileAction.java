@@ -22,6 +22,7 @@
 package org.apache.struts.webapp.validator;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.io.InputStreamReader;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,7 +46,7 @@ public class ShowFileAction extends Action {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(ShowFileAction.class);
 
     public ActionForward execute(ActionMapping mapping,
@@ -58,13 +59,14 @@ public class ShowFileAction extends Action {
         String fileName = mapping.getParameter();
         StringBuilder fileContents = new StringBuilder();
 
-        if(fileName != null) {
+        if (fileName != null) {
 
             try (InputStream input = servlet.getServletContext().getResourceAsStream(fileName)) {
                 if (input == null) {
                     LOG.warn("File Not Found: {}", fileName);
                 } else {
-                    try (InputStreamReader inputReader = new InputStreamReader(input)) {
+                    try (InputStreamReader inputReader =
+                            new InputStreamReader(input, Charset.defaultCharset())) {
                         char[] buffer = new char[1000];
                         while (true) {
                             int lth = inputReader.read(buffer);

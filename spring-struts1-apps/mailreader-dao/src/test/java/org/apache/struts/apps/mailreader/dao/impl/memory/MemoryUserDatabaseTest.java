@@ -55,7 +55,7 @@ public class MemoryUserDatabaseTest extends BaseTestUserDatabase {
         return memoryUserDatabase;
 
     }
-    protected User getNewUser(UserDatabase db, String userName){
+    protected User getNewUser(UserDatabase db, String userName) {
         // using default impl
         return db.createUser(userName);
     }
@@ -67,7 +67,7 @@ public class MemoryUserDatabaseTest extends BaseTestUserDatabase {
     protected void setUp() throws Exception {
         super.setUp();
         // force write to disk
-       userDatabase.close();
+        userDatabase.close();
     }
 
     @AfterEach

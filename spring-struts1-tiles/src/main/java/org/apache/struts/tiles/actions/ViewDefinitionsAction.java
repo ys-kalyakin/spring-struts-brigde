@@ -43,16 +43,15 @@ public class ViewDefinitionsAction extends Action {
                                  ActionForm form,
                                  HttpServletRequest request,
                                  HttpServletResponse response)
-        throws Exception
-    {
+        throws Exception {
         response.setContentType("text/plain");
         PrintWriter writer = response.getWriter();
 
         try {
-          ServletContext context = getServlet().getServletContext();
+            ServletContext context = getServlet().getServletContext();
             DefinitionsFactory factory =
-                TilesUtil.getDefinitionsFactory(request, context );
-            writer.println( factory.toString() );
+                TilesUtil.getDefinitionsFactory(request, context);
+            writer.println(factory.toString());
         } catch (Exception e) {
             writer.println("FAIL - " + e.toString());
             getServlet().log("ReloadAction", e);

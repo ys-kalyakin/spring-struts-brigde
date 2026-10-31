@@ -41,13 +41,13 @@ public interface User {
     /**
      * Return the {@link UserDatabase} with which we are associated.
      */
-    public UserDatabase getDatabase();
+    UserDatabase getDatabase();
 
 
     /**
      * Return the from address.
      */
-    public String getFromAddress();
+    String getFromAddress();
 
 
     /**
@@ -55,13 +55,13 @@ public interface User {
      *
      * @param fromAddress The new from address
      */
-    public void setFromAddress(String fromAddress);
+    void setFromAddress(String fromAddress);
 
 
     /**
      * Return the full name.
      */
-    public String getFullName();
+    String getFullName();
 
 
     /**
@@ -69,13 +69,13 @@ public interface User {
      *
      * @param fullName The new full name
      */
-    public void setFullName(String fullName);
+    void setFullName(String fullName);
 
 
     /**
      * Return the password.
      */
-    public String getPassword();
+    String getPassword();
 
 
     /**
@@ -83,13 +83,13 @@ public interface User {
      *
      * @param password The new password
      */
-    public void setPassword(String password);
+    void setPassword(String password);
 
 
     /**
      * Return the reply-to address.
      */
-    public String getReplyToAddress();
+    String getReplyToAddress();
 
 
     /**
@@ -97,20 +97,20 @@ public interface User {
      *
      * @param replyToAddress The new reply-to address
      */
-    public void setReplyToAddress(String replyToAddress);
+    void setReplyToAddress(String replyToAddress);
 
 
     /**
      * Find and return all {@link Subscription}s associated with this user.
      * If there are none, a zero-length array is returned.
      */
-    public Subscription[] getSubscriptions();
+    Subscription[] getSubscriptions();
 
 
     /**
      * Return the username.
      */
-    public String getUsername();
+    String getUsername();
 
 
     // --------------------------------------------------------- Public Methods
@@ -125,7 +125,7 @@ public interface User {
      * @exception IllegalArgumentException if the host name is not unique
      *  for this user
      */
-    public Subscription createSubscription(String host);
+    Subscription createSubscription(String host);
 
 
     /**
@@ -134,7 +134,7 @@ public interface User {
      *
      * @param host Host name to look up
      */
-    public Subscription findSubscription(String host);
+    Subscription findSubscription(String host);
 
 
     /**
@@ -146,7 +146,7 @@ public interface User {
      * @exception IllegalArgumentException if the specified subscription is not
      *  associated with this User
      */
-    public void removeSubscription(Subscription subscription);
+    void removeSubscription(Subscription subscription);
 
 
 }

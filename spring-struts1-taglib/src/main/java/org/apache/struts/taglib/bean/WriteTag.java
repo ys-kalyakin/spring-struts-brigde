@@ -361,7 +361,7 @@ public class WriteTag extends SpringTagSupport {
                     } else if (value instanceof java.sql.Time) {
                         formatString =
                             retrieveFormatString(SQL_TIME_FORMAT_KEY);
-                    } else if (value instanceof java.util.Date) {
+                    } else {
                         formatString = retrieveFormatString(DATE_FORMAT_KEY);
                     }
                 }

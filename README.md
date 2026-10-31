@@ -67,6 +67,18 @@ Optionally, annotate your actions and forms with `@StrutsAction` / `@StrutsForm`
 
 Then follow the step-by-step [migration guide](docs/MIGRATION.md), or look at [spring-struts1-apps/demo](spring-struts1-apps/demo/) — a working migrated application.
 
+## Code quality checks
+
+The build enforces code style (Checkstyle) and bug patterns (SpotBugs) on every module during `./mvnw verify`; any violation or finding fails the build. The ruleset lives in [config/checkstyle.xml](config/checkstyle.xml) (with documented exclusions in [config/checkstyle-suppressions.xml](config/checkstyle-suppressions.xml)), the SpotBugs exclusion policy in [config/spotbugs-exclude.xml](config/spotbugs-exclude.xml) — every exclusion carries a written rationale and is scoped as tightly as possible. CI uploads the Checkstyle and SpotBugs reports as run artifacts.
+
+To run the checks alone:
+
+```bash
+./mvnw checkstyle:check spotbugs:check
+```
+
+Generated code (the ANTLR validwhen parser, JMH-generated benchmark classes) is not analyzed.
+
 ## Notes
 
 Form population runs on the engine's Spring `ConversionService` with the semantics of the default commons-beanutils registry (Boolean literals, zero values for malformed numbers, JDBC formats for `java.sql` dates; the behavior is pinned by fixture tests) — converters an application registers in the static `ConvertUtils` registry do not affect form filling. commons-beanutils remains a dependency for the public API (the `DynaBean` hierarchy of dynamic forms) and the validator.

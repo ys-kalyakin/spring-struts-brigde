@@ -18,7 +18,7 @@ import org.apache.struts.config.ModuleConfig;
 
 /**
  * Spring component of the tag libraries: locates beans — most notably the
- * form bean of the current action — in the page scopes, converts scope
+ * form bean of the current action — in the page SCOPES, converts scope
  * names and resolves module configurations. The application may override
  * the <code>tagFormLocator</code> bean to change these lookups for every
  * tag.
@@ -28,18 +28,18 @@ public class TagFormLocator {
     /**
      * The message resources of the tag libraries, used for exception texts.
      */
-    protected static final org.apache.struts.util.MessageResources messages =
+    protected static final org.apache.struts.util.MessageResources MESSAGES =
         org.apache.struts.util.MessageResources.getMessageResources(
             "org.apache.struts.taglib.LocalStrings");
 
     /** Lowercase JSP scope names to their PageContext constants. */
-    private static final Map<String, Integer> scopes = new HashMap<>();
+    private static final Map<String, Integer> SCOPES = new HashMap<>();
 
     static {
-        scopes.put("page", PageContext.PAGE_SCOPE);
-        scopes.put("request", PageContext.REQUEST_SCOPE);
-        scopes.put("session", PageContext.SESSION_SCOPE);
-        scopes.put("application", PageContext.APPLICATION_SCOPE);
+        SCOPES.put("page", PageContext.PAGE_SCOPE);
+        SCOPES.put("request", PageContext.REQUEST_SCOPE);
+        SCOPES.put("session", PageContext.SESSION_SCOPE);
+        SCOPES.put("application", PageContext.APPLICATION_SCOPE);
     }
 
     /**
@@ -73,9 +73,9 @@ public class TagFormLocator {
             JspException e;
             if (scope == null) {
                 e = new JspException(
-                    messages.getMessage("lookup.bean.any", name));
+                    MESSAGES.getMessage("lookup.bean.any", name));
             } else {
-                e = new JspException(messages.getMessage("lookup.bean", name,
+                e = new JspException(MESSAGES.getMessage("lookup.bean", name,
                     scope));
             }
             TagUtils.getInstance().saveException(pageContext, e);
@@ -91,11 +91,11 @@ public class TagFormLocator {
             return PropertyUtils.getProperty(bean, property);
         } catch (IllegalAccessException e) {
             TagUtils.getInstance().saveException(pageContext, e);
-            throw new JspException(messages.getMessage("lookup.access",
+            throw new JspException(MESSAGES.getMessage("lookup.access",
                 property, name), e);
         } catch (IllegalArgumentException e) {
             TagUtils.getInstance().saveException(pageContext, e);
-            throw new JspException(messages.getMessage("lookup.argument",
+            throw new JspException(MESSAGES.getMessage("lookup.argument",
                 property, name), e);
         } catch (InvocationTargetException e) {
             Throwable t = e.getTargetException();
@@ -103,7 +103,7 @@ public class TagFormLocator {
                 t = e;
             }
             TagUtils.getInstance().saveException(pageContext, t);
-            throw new JspException(messages.getMessage("lookup.target",
+            throw new JspException(MESSAGES.getMessage("lookup.target",
                 property, name), e);
         } catch (NoSuchMethodException e) {
             TagUtils.getInstance().saveException(pageContext, e);
@@ -120,7 +120,7 @@ public class TagFormLocator {
                 }
             }
 
-            throw new JspException(messages.getMessage("lookup.method",
+            throw new JspException(MESSAGES.getMessage("lookup.method",
                 property, beanName), e);
         }
     }
@@ -130,9 +130,9 @@ public class TagFormLocator {
      * value.
      */
     public int getScope(String scopeName) throws JspException {
-        Integer scope = scopes.get(scopeName.toLowerCase());
+        Integer scope = SCOPES.get(scopeName.toLowerCase());
         if (scope == null) {
-            throw new JspException(messages.getMessage("lookup.scope", scope));
+            throw new JspException(MESSAGES.getMessage("lookup.scope", scopeName));
         }
         return scope;
     }

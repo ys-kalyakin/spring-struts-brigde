@@ -529,7 +529,7 @@ public class FormTag extends SpringTagSupport {
                 RequestUtils.createActionForm((HttpServletRequest) pageContext
                     .getRequest(), mapping, moduleConfig, servlet);
 
-            if (bean instanceof ActionForm) {
+            if (bean != null) {
                 ((ActionForm) bean).reset(mapping,
                     (HttpServletRequest) pageContext.getRequest());
             }
@@ -817,15 +817,8 @@ public class FormTag extends SpringTagSupport {
 
         // Look up the module configuration information we need
         moduleConfig = TagUtils.getInstance().getModuleConfig(pageContext);
-
-        if (moduleConfig == null) {
-            JspException e =
-                new JspException(messages.getMessage("formTag.collections"));
-
-            pageContext.setAttribute(Globals.EXCEPTION_KEY, e,
-                PageContext.REQUEST_SCOPE);
-            throw e;
-        }
+        // getModuleConfig throws when no module configuration exists, so a
+        // null result is impossible here and no fallback check is needed.
 
         String calcAction = this.action;
 

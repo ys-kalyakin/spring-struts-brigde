@@ -30,7 +30,7 @@ public class TagUrlBuilder {
     /**
      * The message resources of the tag libraries, used for exception texts.
      */
-    protected static final org.apache.struts.util.MessageResources messages =
+    protected static final org.apache.struts.util.MessageResources MESSAGES =
         org.apache.struts.util.MessageResources.getMessageResources(
             "org.apache.struts.taglib.LocalStrings");
 
@@ -210,7 +210,7 @@ public class TagUrlBuilder {
 
         if (n != 1) {
             throw new MalformedURLException(
-                messages.getMessage("computeURL.specifier"));
+                MESSAGES.getMessage("computeURL.specifier"));
         }
 
         // Look up the module configuration for this request
@@ -230,7 +230,7 @@ public class TagUrlBuilder {
 
             if (forwardConfig == null) {
                 throw new MalformedURLException(
-                    messages.getMessage("computeURL.forward", forward));
+                    MESSAGES.getMessage("computeURL.forward", forward));
             }
 
             if (forwardConfig.getPath().startsWith("/")) {
@@ -248,15 +248,13 @@ public class TagUrlBuilder {
             String actionIdPath = RequestUtils.actionIdURL(action,
                 moduleConfig, servlet);
             if (actionIdPath != null) {
-                action = actionIdPath;
                 url.append(request.getContextPath());
                 url.append(actionIdPath);
             } else {
                 url.append(getActionMappingURL(action, module, pageContext,
                     false));
             }
-        } else /* if (page != null) */
-        {
+        } else /* if (page != null) */ {
             url.append(request.getContextPath());
             url.append(this.pageURL(request, page, moduleConfig));
         }
@@ -342,8 +340,7 @@ public class TagUrlBuilder {
                         url.append('=');
                         url.append(encodeURL(values[i], charEncoding));
                     }
-                } else /* Convert other objects to a string */
-                {
+                } else /* Convert other objects to a string */ {
                     if (!question) {
                         url.append('?');
                         question = true;
@@ -472,10 +469,9 @@ public class TagUrlBuilder {
             if (queryString != null) {
                 value.append(queryString);
             }
-        }
         // Otherwise, assume extension mapping is in use and extension is
         // already included in the action property
-        else {
+        } else {
             if (!action.startsWith("/")) {
                 value.append("/");
             }
@@ -509,23 +505,23 @@ public class TagUrlBuilder {
 
                 if (dollar) {
                     switch (ch) {
-                    case 'M':
-                        sb.append(moduleConfig.getPrefix());
+                        case 'M':
+                            sb.append(moduleConfig.getPrefix());
 
-                        break;
+                            break;
 
-                    case 'P':
-                        sb.append(page);
+                        case 'P':
+                            sb.append(page);
 
-                        break;
+                            break;
 
-                    case '$':
-                        sb.append('$');
+                        case '$':
+                            sb.append('$');
 
-                        break;
+                            break;
 
-                    default:
-                        ; // Silently swallow
+                        default:
+                         // Silently swallow
                     }
 
                     dollar = false;

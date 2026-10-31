@@ -65,4 +65,4 @@ public class NestedBean implements Serializable {
         this.stringValue = stringValue;
     }
 
- }
+}

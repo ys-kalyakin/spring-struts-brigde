@@ -79,22 +79,22 @@ final class StrutsExpressionParser {
         for (int i = 0; i < name.length(); i++) {
             char ch = name.charAt(i);
             switch (ch) {
-            case '(':
-            case '[':
-                depth++;
-                break;
-            case ')':
-            case ']':
-                depth--;
-                break;
-            case '.':
-                if (depth == 0) {
-                    parts.add(name.substring(start, i));
-                    start = i + 1;
-                }
-                break;
-            default:
-                break;
+                case '(':
+                case '[':
+                    depth++;
+                    break;
+                case ')':
+                case ']':
+                    depth--;
+                    break;
+                case '.':
+                    if (depth == 0) {
+                        parts.add(name.substring(start, i));
+                        start = i + 1;
+                    }
+                    break;
+                default:
+                    break;
             }
         }
         parts.add(name.substring(start));

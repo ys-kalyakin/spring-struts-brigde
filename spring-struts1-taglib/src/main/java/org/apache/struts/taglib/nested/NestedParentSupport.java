@@ -39,5 +39,5 @@ public interface NestedParentSupport extends NestedNameSupport {
      * @return String of the qaulified nested property to this implementing
      *         tag
      */
-    public String getNestedProperty();
+    String getNestedProperty();
 }

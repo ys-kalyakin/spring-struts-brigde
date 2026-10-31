@@ -45,7 +45,7 @@ public final class LocaleAction extends BaseAction {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(LocaleAction.class);
 
     /**

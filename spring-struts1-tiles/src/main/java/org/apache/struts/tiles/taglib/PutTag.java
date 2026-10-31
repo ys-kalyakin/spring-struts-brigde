@@ -322,7 +322,7 @@ public class PutTag extends SpringBodyTagSupport implements ComponentConstants {
         // Then, evaluate valueType, and create requested typed attribute.
         // If valueType is not set, use the value "as is".
         if (valueType == null && direct != null) {
-            if (Boolean.valueOf(direct).booleanValue() == true) {
+            if (Boolean.parseBoolean(direct)) {
                 valueType = "string";
             } else {
                 valueType = "page";

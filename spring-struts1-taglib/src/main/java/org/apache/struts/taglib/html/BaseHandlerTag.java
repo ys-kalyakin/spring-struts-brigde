@@ -51,7 +51,7 @@ public abstract class BaseHandlerTag extends SpringBodyTagSupport {
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(BaseHandlerTag.class);
 
     // ----------------------------------------------------- Instance Variables
@@ -875,6 +875,7 @@ public abstract class BaseHandlerTag extends SpringBodyTagSupport {
             } catch (ClassNotFoundException ex) {
                 // These just mean that JSTL isn't loaded, so ignore
             } catch (NoSuchMethodException ex) {
+                // ignore: JSTL-enhanced attribute handling is simply skipped
             }
         }
 

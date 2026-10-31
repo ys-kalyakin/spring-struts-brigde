@@ -44,7 +44,7 @@ public final class MultiRegistrationAction extends Action {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(MultiRegistrationAction.class);
 
     /**
@@ -85,20 +85,22 @@ public final class MultiRegistrationAction extends Action {
         ActionMessages errors = info.validate(mapping, request);
 
         if (errors != null && errors.isEmpty()) {
-            if (info.getPage() == 1)
+            if (info.getPage() == 1) {
                 return mapping.findForward("input2");
+            }
 
-            if (info.getPage() == 2)
+            if (info.getPage() == 2) {
                 return mapping.findForward("success");
+            }
 
         } else {
             this.saveErrors(request, errors);
 
-            if (info.getPage() == 1){
+            if (info.getPage() == 1) {
                 return mapping.findForward("input" + info.getPage());
             }
 
-            if (info.getPage() == 2){
+            if (info.getPage() == 2) {
                 return mapping.findForward("input" + info.getPage());
             }
         }

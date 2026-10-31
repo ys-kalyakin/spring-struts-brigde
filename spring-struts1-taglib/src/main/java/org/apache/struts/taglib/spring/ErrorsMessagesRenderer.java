@@ -18,14 +18,14 @@ import org.apache.struts.action.ActionMessages;
  * prefix/suffix around each message, texts resolved through the message
  * resolver). The application may override the
  * <code>errorsMessagesRenderer</code> bean to change the output of the
- * errors and messages tags.
+ * errors and MESSAGES tags.
  */
 public class ErrorsMessagesRenderer {
 
     /**
      * The message resources of the tag libraries, used for exception texts.
      */
-    protected static final org.apache.struts.util.MessageResources messages =
+    protected static final org.apache.struts.util.MessageResources MESSAGES =
         org.apache.struts.util.MessageResources.getMessageResources(
             "org.apache.struts.taglib.LocalStrings");
 
@@ -58,14 +58,14 @@ public class ErrorsMessagesRenderer {
                 } else if (value instanceof ActionMessages) {
                     am = (ActionMessages) value;
                 } else {
-                    throw new JspException(messages.getMessage(
+                    throw new JspException(MESSAGES.getMessage(
                         "actionMessages.errors",
                         value.getClass().getName()));
                 }
             } catch (JspException e) {
                 throw e;
             } catch (Exception e) {
-                // Unconvertible value: treat as no messages.
+                // Unconvertible value: treat as no MESSAGES.
             }
         }
 
@@ -73,8 +73,8 @@ public class ErrorsMessagesRenderer {
     }
 
     /**
-     * Render the specified error messages if there are any: each report is
-     * wrapped in the prefix/suffix messages, the list in header/footer.
+     * Render the specified error MESSAGES if there are any: each report is
+     * wrapped in the prefix/suffix MESSAGES, the list in header/footer.
      *
      * @return the rendered list, or <code>null</code> when there are no
      *         errors to render
@@ -109,7 +109,7 @@ public class ErrorsMessagesRenderer {
         boolean suffixPresent =
             resolver.present(pageContext, bundle, locale, suffix);
 
-        // Render the error messages appropriately
+        // Render the error MESSAGES appropriately
         StringBuilder results = new StringBuilder();
         boolean headerDone = false;
         String message = null;

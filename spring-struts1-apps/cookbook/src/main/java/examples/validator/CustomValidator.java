@@ -41,10 +41,10 @@ public class CustomValidator {
     // ------------------------------------------------------------ Constructors
 
     /**
-     * Constructor for CustomValidator.
+     * Non-instantiable: the validator framework calls the static check methods
+     * directly via reflection (see WEB-INF/validation.xml).
      */
-    public CustomValidator() {
-        super();
+    private CustomValidator() {
     }
 
     // ---------------------------------------------------------- Public Methods

@@ -21,7 +21,7 @@ public class ComponentDefinition implements Serializable {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
             LoggerFactory.getLogger(ComponentDefinition.class);
 
     /**
@@ -259,7 +259,8 @@ public class ComponentDefinition implements Serializable {
      * Attribute can be used as content for tag get.
      * @param name Attribute name
      * @param content Attribute value
-     * @param direct Determines how content is handled by get tag: true means content is printed directly; false, the default, means content is included
+     * @param direct Determines how content is handled by get tag: true means
+     * content is printed directly; false, the default, means content is included
      */
     public void put(String name, Object content, boolean direct) {
         put(name, content, direct, null);
@@ -270,11 +271,12 @@ public class ComponentDefinition implements Serializable {
      * Attribute can be used as content for tag get.
      * @param name Attribute name
      * @param content Attribute value
-     * @param direct Determines how content is handled by get tag: true means content is printed directly; false, the default, means content is included
+     * @param direct Determines how content is handled by get tag: true means
+     * content is printed directly; false, the default, means content is included
      * @param role Determine if content is used by get tag. If user is in role, content is used.
      */
     public void put(String name, Object content, boolean direct, String role) {
-        if (direct == true) { // direct String
+        if (direct) { // direct String
             put(name, content, "string", role);
         } else {
             put(name, content, "template", role);
@@ -521,26 +523,26 @@ public class ComponentDefinition implements Serializable {
         } catch (IllegalArgumentException ex) {
             InstantiationException e2 = new InstantiationException(
                     "Error - Illegal class argument :" + classname);
-                e2.initCause(ex);
-                throw e2;
+            e2.initCause(ex);
+            throw e2;
 
         } catch (InvocationTargetException ex) {
             InstantiationException e2 = new InstantiationException(
                     "Error - Invocation class target :" + classname);
-                e2.initCause(ex);
-                throw e2;
+            e2.initCause(ex);
+            throw e2;
 
         } catch (NoSuchMethodException ex) {
             InstantiationException e2 = new InstantiationException(
                     "Error - No such method in class:" + classname);
-                e2.initCause(ex);
-                throw e2;
+            e2.initCause(ex);
+            throw e2;
 
         } catch (SecurityException ex) {
             InstantiationException e2 = new InstantiationException(
                     "Error - Security exception in class :" + classname);
-                e2.initCause(ex);
-                throw e2;
+            e2.initCause(ex);
+            throw e2;
 
         } catch (InstantiationException ex) {
             throw ex;

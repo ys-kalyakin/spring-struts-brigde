@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionForm;
-import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.config.MessageResourcesConfig;
 import org.apache.struts.config.ModuleConfig;

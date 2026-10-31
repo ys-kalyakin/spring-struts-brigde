@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  Pragmatic style ruleset for spring-struts1 (design D4, change add-checkstyle-spotbugs).
+
+  The ruleset mirrors the existing codebase style so that enforcement requires
+  only genuine fixes, not a mass reformat. Deliberate exclusions from the
+  original D4 rule list are recorded here:
+
+  - ImportOrder: NOT enforced. Full mechanical reordering of ~500 files has low
+    defect value for this port; hygiene rules below still apply.
+  - Javadoc rules, MagicNumber, FinalParameters, AbbreviationAsWordInName: NOT
+    enforced. High churn on a ported Struts 1 API with little defect value.
+
+  Enforced-but-tuned rules:
+  - Indentation is enforced with Checkstyle defaults (4-space basic offset,
+    lineWrappingIndentation 4, lenient continuation lines). The follow-up fix
+    pass corrected the continuation-line misindents it flagged (833 across
+    52 files, tests included) by adjusting leading whitespace only; the two
+    hand-split call sites the check oscillates on were rewrapped by hand.
+  - RightCurly uses option "same" for if/else/do/try/catch/finally: the codebase
+    places "} else {" and "} catch (...) {" on one line (hundreds of occurrences
+    across main and test sources), like Google style. Class/method brace
+    placement is not additionally policed.
+  - ConstantName additionally allows "log": the codebase names its SLF4J loggers
+    "log" (20 occurrences).
+-->
+<module name="Checker">
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="error"/>
+  <property name="fileExtensions" value="java"/>
+
+  <!-- Documented exclusions (see config/checkstyle-suppressions.xml header) -->
+  <module name="SuppressionFilter">
+    <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/>
+    <property name="optional" value="false"/>
+  </module>
+
+  <!-- Layout -->
+  <module name="LineLength">
+    <property name="max" value="120"/>
+    <property name="ignorePattern" value="^(package|import) .*"/>
+  </module>
+  <module name="FileTabCharacter"/>
+  <module name="NewlineAtEndOfFile"/>
+
+  <module name="TreeWalker">
+    <module name="OuterTypeFilename"/>
+    <module name="OneTopLevelClass"/>
+
+    <!-- Indentation: 4-space basic offset, Checkstyle defaults otherwise
+         (lenient continuation lines, lineWrappingIndentation 4) -->
+    <module name="Indentation"/>
+
+    <!-- Import hygiene (ordering intentionally not enforced, see header) -->
+    <module name="UnusedImports"/>
+    <module name="RedundantImport"/>
+    <module name="AvoidStarImport"/>
+    <module name="IllegalImport"/>
+
+    <!-- Naming -->
+    <module name="TypeName"/>
+    <module name="MethodName"/>
+    <module name="MemberName"/>
+    <module name="LocalVariableName"/>
+    <module name="ParameterName"/>
+    <module name="ConstantName">
+      <property name="format" value="^([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|log)$"/>
+    </module>
+    <module name="PackageName"/>
+    <module name="ClassTypeParameterName"/>
+    <module name="MethodTypeParameterName"/>
+    <module name="InterfaceTypeParameterName"/>
+    <module name="CatchParameterName"/>
+    <module name="LambdaParameterName"/>
+
+    <!-- Coding -->
+    <module name="EqualsHashCode"/>
+    <module name="StringLiteralEquality"/>
+    <module name="EmptyStatement"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="EmptyCatchBlock">
+      <property name="commentFormat" value=".*"/>
+    </module>
+    <module name="HideUtilityClassConstructor"/>
+    <module name="ArrayTypeStyle"/>
+    <module name="DefaultComesLast">
+      <property name="skipIfLastAndSharedWithCase" value="true"/>
+    </module>
+    <module name="FallThrough"/>
+
+    <!-- Blocks / modifiers -->
+    <module name="NeedBraces">
+      <property name="allowSingleLineStatement" value="true"/>
+    </module>
+    <module name="LeftCurly"/>
+    <module name="RightCurly">
+      <property name="option" value="same"/>
+      <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_DO"/>
+    </module>
+    <module name="ModifierOrder"/>
+    <module name="RedundantModifier"/>
+
+    <!-- Whitespace -->
+    <module name="WhitespaceAround"/>
+    <module name="GenericWhitespace"/>
+    <module name="ParenPad"/>
+  </module>
+</module>

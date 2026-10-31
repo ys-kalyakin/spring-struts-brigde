@@ -77,13 +77,13 @@ public class PrepareOptionsAction extends Action {
         /* An array */
         String[] fruits =
             {
-                "Strawberry",
-                "Apple",
-                "Orange",
-                "Pear",
-                "Mango",
-                "Banana",
-                "Pineapple" };
+            "Strawberry",
+            "Apple",
+            "Orange",
+            "Pear",
+            "Mango",
+            "Banana",
+            "Pineapple" };
         request.setAttribute("fruits", fruits);
 
         /* Two arrays - one for labels and one for values */
@@ -93,13 +93,13 @@ public class PrepareOptionsAction extends Action {
 
         String[] colorCodes =
             {
-                "#FF0000",
-                "#FFA500",
-                "#FFFF00",
-                "#00FF00",
-                "#0000FF",
-                "#4B0082",
-                "#EE82EE" };
+            "#FF0000",
+            "#FFA500",
+            "#FFFF00",
+            "#00FF00",
+            "#0000FF",
+            "#4B0082",
+            "#EE82EE" };
         request.setAttribute("colorCodes", colorCodes);
 
         /* A Collection */

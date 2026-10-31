@@ -33,6 +33,10 @@ package org.apache.struts.apps.mailreader;
 
 public final class Constants {
 
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private Constants() {
+    }
+
     // --- Tokens ----
 
     /**

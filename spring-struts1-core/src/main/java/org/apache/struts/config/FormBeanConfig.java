@@ -25,7 +25,7 @@ public class FormBeanConfig extends BaseConfig {
     protected String type;
 
     /** Has this component been completely configured? */
-    protected boolean configured = false;
+    protected volatile boolean configured = false;
 
     /** The set of form properties for this form bean, keyed by property name. */
     protected Map<String, FormPropertyConfig> formProperties =
@@ -60,7 +60,7 @@ public class FormBeanConfig extends BaseConfig {
     protected String inherit;
 
     /** Whether the inheritance of this config has been processed. */
-    protected boolean extensionProcessed = false;
+    protected volatile boolean extensionProcessed = false;
 
     public String getExtends() {
         return inherit;
@@ -273,7 +273,7 @@ public class FormBeanConfig extends BaseConfig {
     }
 
     /** The cached DynaActionFormClass for dynamic forms. */
-    private transient org.apache.struts.action.DynaActionFormClass
+    private transient volatile org.apache.struts.action.DynaActionFormClass
         dynaActionFormClass;
 
     /**

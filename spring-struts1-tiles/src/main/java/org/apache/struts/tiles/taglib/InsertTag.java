@@ -50,7 +50,7 @@ public class InsertTag extends DefinitionTagSupport
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(InsertTag.class);
 
     /* JSP Tag attributes */
@@ -114,10 +114,6 @@ public class InsertTag extends DefinitionTagSupport
      */
     protected TagHandler tagHandler = null;
 
-    /**
-     * Trick to allows inner classes to access pageContext.
-     */
-    protected PageContext pageContext = null;
 
     /**
      * Reset member values for reuse. This method calls super.release(),
@@ -328,7 +324,8 @@ public class InsertTag extends DefinitionTagSupport
 
         // Check if a name is defined
         if (nestedTag.getName() == null) {
-            throw new JspException("Error - PutList : attribute name is not defined. It is mandatory as the list is added as attribute of 'insert'.");
+            throw new JspException("Error - PutList : attribute name is not defined. "
+                    + "It is mandatory as the list is added as attribute of 'insert'.");
         }
 
         // now add attribute to enclosing parent (i.e. : this object).
@@ -399,7 +396,7 @@ public class InsertTag extends DefinitionTagSupport
     public int doStartTag() throws JspException {
 
             // Additional fix for Bug 20034 (2005-04-28)
-            cachedCurrentContext = null;
+        cachedCurrentContext = null;
 
         // Check role immediately to avoid useless stuff.
         // In case of insertion of a "definition", definition's role still checked later.
@@ -460,7 +457,8 @@ public class InsertTag extends DefinitionTagSupport
         } else if (page != null) {
             return processUrl(page);
         } else {
-            throw new JspException("Error - Tag Insert : At least one of the following attribute must be defined : template|page|attribute|definition|name|beanName. Check tag syntax");
+            throw new JspException("Error - Tag Insert : At least one of the following attribute "
+                    + "must be defined : template|page|attribute|definition|name|beanName. Check tag syntax");
         }
     }
 
@@ -745,15 +743,15 @@ public class InsertTag extends DefinitionTagSupport
         /**
          * Create ComponentContext for type depicted by implementation class.
          */
-        public int doStartTag() throws JspException;
+        int doStartTag() throws JspException;
         /**
          * Do include for type depicted by implementation class.
          */
-        public int doEndTag() throws JspException;
+        int doEndTag() throws JspException;
         /**
          * Add a component parameter (attribute) to subContext.
          */
-        public void putAttribute(String name, Object value);
+        void putAttribute(String name, Object value);
     } // end inner interface
 
     /////////////////////////////////////////////////////////////////////////////
@@ -953,7 +951,7 @@ public class InsertTag extends DefinitionTagSupport
      * @param role Comma-delimited list of roles.
      * @param request The request.
      */
-    static public boolean userHasRole(
+    public static boolean userHasRole(
         HttpServletRequest request,
         String role) {
         StringTokenizer st = new StringTokenizer(role, ",");

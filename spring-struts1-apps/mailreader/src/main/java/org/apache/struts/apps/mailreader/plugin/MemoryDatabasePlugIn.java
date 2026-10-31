@@ -71,7 +71,7 @@ public final class MemoryDatabasePlugIn implements PlugIn {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(MemoryDatabasePlugIn.class);
 
 
@@ -198,7 +198,7 @@ public final class MemoryDatabasePlugIn implements PlugIn {
                 servlet.getServletContext().getResourceAsStream(pathname), 1024);
                 BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file), 1024)) {
 
-            byte buffer[] = new byte[1024];
+            byte []buffer  = new byte[1024];
             while (true) {
                 int n = bis.read(buffer);
                 if (n <= 0) {

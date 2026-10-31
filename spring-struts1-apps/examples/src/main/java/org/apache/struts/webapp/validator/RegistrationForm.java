@@ -46,7 +46,7 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
 
 
     public String getAction() {
-  return action;
+        return action;
     }
 
     public void setAction(String action) {
@@ -54,7 +54,7 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
     }
 
     public String getFirstName() {
-       return sFirstName;
+        return sFirstName;
     }
 
     public void setFirstName(String sFirstName) {
@@ -62,7 +62,7 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
     }
 
     public String getLastName() {
-       return sLastName;
+        return sLastName;
     }
 
     public void setLastName(String sLastName) {
@@ -70,7 +70,7 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
     }
 
     public String getAddr() {
-       return sAddr;
+        return sAddr;
     }
 
     public void setAddr(String sAddr) {
@@ -78,7 +78,7 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
     }
 
     public CityStateZip getCityStateZip() {
-       return csz;
+        return csz;
     }
 
     public void setCityStateZip(CityStateZip csz) {
@@ -86,7 +86,7 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
     }
 
     public String getPhone() {
-       return sPhone;
+        return sPhone;
     }
 
     public void setPhone(String sPhone) {
@@ -94,7 +94,7 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
     }
 
     public String getEmail() {
-       return sEmail;
+        return sEmail;
     }
 
     public void setEmail(String sEmail) {
@@ -108,13 +108,13 @@ public final class RegistrationForm extends ValidatorForm implements Serializabl
      * @param request The servlet request we are processing
      */
     public void reset(ActionMapping mapping, HttpServletRequest request) {
-       action = null;
-       sFirstName = null;
-       sLastName = null;
-       sAddr = null;
-       csz = new CityStateZip();
-       sPhone = null;
-       sEmail = null;
+        action = null;
+        sFirstName = null;
+        sLastName = null;
+        sAddr = null;
+        csz = new CityStateZip();
+        sPhone = null;
+        sEmail = null;
     }
 
 }

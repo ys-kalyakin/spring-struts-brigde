@@ -336,8 +336,7 @@ public class OptionTag extends SpringBodyTagSupport {
 
         if (filter) {
             results.append(TagUtils.getInstance().filter(this.value));
-        }
-        else {
+        } else {
             results.append(this.value);
         }
         results.append("\"");

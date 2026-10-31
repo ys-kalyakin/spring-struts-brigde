@@ -45,7 +45,7 @@ public class JavascriptValidatorTag extends BodyTagSupport {
     /**
      * A Comparator to use when sorting ValidatorAction objects.
      */
-    private static final Comparator<ValidatorAction> actionComparator =
+    private static final Comparator<ValidatorAction> ACTION_COMPARATOR =
         (va1, va2) -> {
             if (((va1.getDepends() == null)
                 || (va1.getDepends().length() == 0))
@@ -64,7 +64,7 @@ public class JavascriptValidatorTag extends BodyTagSupport {
                 return -1;
             } else {
                 return va1.getDependencyList().size()
-                - va2.getDependencyList().size();
+                    - va2.getDependencyList().size();
             }
         };
 
@@ -680,7 +680,7 @@ public class JavascriptValidatorTag extends BodyTagSupport {
             }
         }
 
-        Collections.sort(actions, actionComparator);
+        Collections.sort(actions, ACTION_COMPARATOR);
 
         return actions;
     }

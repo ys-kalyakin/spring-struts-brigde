@@ -186,7 +186,10 @@ final class FormPopulator {
         }
         List<Segment> parsed = StrutsExpressionParser.parse(name);
         if (PARSED_NAMES.size() < MAX_CACHED_ENTRIES) {
-            PARSED_NAMES.putIfAbsent(name, parsed);
+            List<Segment> winner = PARSED_NAMES.putIfAbsent(name, parsed);
+            if (winner != null) {
+                return winner;
+            }
         }
         return parsed;
     }

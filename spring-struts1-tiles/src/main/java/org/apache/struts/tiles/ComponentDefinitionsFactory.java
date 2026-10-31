@@ -15,8 +15,7 @@ import jakarta.servlet.ServletRequest;
  * @deprecated Use DefinitionsFactory instead.
 */
 @Deprecated
-public interface ComponentDefinitionsFactory extends Serializable
-{
+public interface ComponentDefinitionsFactory extends Serializable {
 
    /**
      * Get a definition by its name.
@@ -27,7 +26,9 @@ public interface ComponentDefinitionsFactory extends Serializable
      * @throws NoSuchDefinitionException No definition found for specified name
      * Implementation can throw more accurate exception as a subclass of this exception
    */
-   public ComponentDefinition getDefinition(String name, ServletRequest request, ServletContext servletContext) throws NoSuchDefinitionException,DefinitionsFactoryException;
+    ComponentDefinition getDefinition(String name, ServletRequest request,
+        ServletContext servletContext)
+        throws NoSuchDefinitionException, DefinitionsFactoryException;
 
    /**
      * Init factory.
@@ -38,5 +39,5 @@ public interface ComponentDefinitionsFactory extends Serializable
      * Map can contains more properties than requested.
      * @throws DefinitionsFactoryException An error occur during initialization.
    */
-   public void initFactory(ServletContext servletContext, Map<String, Object> properties) throws DefinitionsFactoryException;
+    void initFactory(ServletContext servletContext, Map<String, Object> properties) throws DefinitionsFactoryException;
 }

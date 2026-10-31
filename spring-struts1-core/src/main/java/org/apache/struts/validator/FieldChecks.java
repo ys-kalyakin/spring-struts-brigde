@@ -31,12 +31,16 @@ import org.slf4j.LoggerFactory;
  * @since Struts 1.1
  */
 public class FieldChecks implements Serializable {
+
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private FieldChecks() {
+    }
     private static final long serialVersionUID = 6466045187316462715L;
 
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(FieldChecks.class);
 
     /**
@@ -261,7 +265,7 @@ public class FieldChecks implements Serializable {
             String mask =
                 Resources.getVarValue("mask", field, validator, request, true);
 
-            if (value != null && value.length()>0
+            if (value != null && value.length() > 0
                 && !GenericValidator.matchRegexp(value, mask)) {
                 errors.add(field.getKey(),
                     Resources.getActionMessage(validator, request, va, field));

@@ -68,7 +68,7 @@ public enum ValidWhenComparison {
     /**
      * {@code Map} to get the correct Comparison for Token-Number.
      */
-    private final static Map<Integer, ValidWhenComparison> COMP_MAPPER = new HashMap<>();
+    private static final Map<Integer, ValidWhenComparison> COMP_MAPPER = new HashMap<>();
 
     static {
         for (ValidWhenComparison comp : ValidWhenComparison.values()) {
@@ -99,7 +99,7 @@ public enum ValidWhenComparison {
      *
      * @param tokenNum the token-number
      */
-    private ValidWhenComparison(int tokenNum) {
+    ValidWhenComparison(int tokenNum) {
         this.tokenNum = tokenNum;
     }
 

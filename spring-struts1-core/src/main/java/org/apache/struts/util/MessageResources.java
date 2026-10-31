@@ -47,13 +47,13 @@ public abstract class MessageResources {
      * Indicates whether a <code>null</code> String is returned instead of an
      * error message string when an unknown Locale or key is requested.
      */
-    protected boolean returnNull = false;
+    protected volatile boolean returnNull = false;
 
     /**
      * Indicates whether 'escape' processing is performed on the message
      * string before a <code>MessageFormat</code> is applied.
      */
-    private boolean escape = true;
+    private volatile boolean escape = true;
 
     public MessageResources(MessageResourcesFactory factory, String config) {
         this(factory, config, false);
@@ -255,7 +255,7 @@ public abstract class MessageResources {
      * Create and return an instance of <code>MessageResources</code> of the
      * appropriate class for the specified configuration parameter.
      */
-    public synchronized static MessageResources getMessageResources(
+    public static synchronized MessageResources getMessageResources(
         String config) {
         return MessageResourcesFactory.createFactory()
             .createResources(config);

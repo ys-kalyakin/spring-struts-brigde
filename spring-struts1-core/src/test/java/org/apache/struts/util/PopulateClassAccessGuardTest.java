@@ -18,7 +18,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
  */
 class PopulateClassAccessGuardTest {
 
-    /** A form with a readable nested <code>servlet</code> property: the guard must fire even when navigation would succeed. */
+    /** A form with a readable nested <code>servlet</code> property: the guard must
+ * fire even when navigation would succeed. */
     public static class GuardForm {
         private String name;
         private Nested servlet = new Nested();

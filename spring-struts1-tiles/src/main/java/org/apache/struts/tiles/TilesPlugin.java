@@ -45,7 +45,7 @@ public class TilesPlugin implements PlugIn {
     /**
      * Marker for logging of fatal errors.
      */
-    private final static Marker FATAL = MarkerFactory.getMarker("FATAL");
+    private static final Marker FATAL = MarkerFactory.getMarker("FATAL");
 
     /**
      * The {@code Log} instance for this class.
@@ -73,7 +73,7 @@ public class TilesPlugin implements PlugIn {
      * The plugin config object provided by the ActionServlet initializing
      * this plugin.
      */
-    protected PlugInConfig currentPlugInConfigObject=null;
+    protected PlugInConfig currentPlugInConfigObject = null;
 
     /**
      * Get the module aware flag.

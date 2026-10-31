@@ -78,14 +78,14 @@ public abstract class BaseAction extends MappingDispatchAction {
      * Name of task field ["task"].
      * </p>
      */
-    public final static String TASK = "task";
+    public static final String TASK = "task";
 
     // ---- Protected Variables ----
 
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(BaseAction.class);
 
     // ---- Protected Methods ----

@@ -39,7 +39,7 @@ public class ValidatorForm extends ActionForm implements Serializable {
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(ValidatorForm.class);
 
     /**
@@ -189,6 +189,6 @@ public class ValidatorForm extends ActionForm implements Serializable {
      */
     public Map<String, Object> getResultValueMap() {
         return ((validatorResults != null)
-        ? validatorResults.getResultValueMap() : null);
+            ? validatorResults.getResultValueMap() : null);
     }
 }

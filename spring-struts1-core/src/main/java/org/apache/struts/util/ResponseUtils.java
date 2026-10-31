@@ -61,46 +61,46 @@ public class ResponseUtils {
             filtered = null;
 
             switch (value.charAt(i)) {
-            case '<':
-                filtered = "&lt;";
+                case '<':
+                    filtered = "&lt;";
 
-                break;
+                    break;
 
-            case '>':
-                filtered = "&gt;";
+                case '>':
+                    filtered = "&gt;";
 
-                break;
+                    break;
 
-            case '&':
-                if (entityMatcher == null) {
-                    entityMatcher = XML_ENTITY_PATTERN.matcher(value);
-                }
-                entityMatcher.region(i, length);
-                if (entityMatcher.lookingAt()) {
-                    filtered = value.substring(entityMatcher.start(),
-                        entityMatcher.end());
-                    i += filtered.length() - 1;
-                    if (result == null) {
-                        continue;
+                case '&':
+                    if (entityMatcher == null) {
+                        entityMatcher = XML_ENTITY_PATTERN.matcher(value);
                     }
-                } else {
-                    filtered = "&amp;";
-                }
+                    entityMatcher.region(i, length);
+                    if (entityMatcher.lookingAt()) {
+                        filtered = value.substring(entityMatcher.start(),
+                        entityMatcher.end());
+                        i += filtered.length() - 1;
+                        if (result == null) {
+                            continue;
+                        }
+                    } else {
+                        filtered = "&amp;";
+                    }
 
-                break;
+                    break;
 
-            case '"':
-                filtered = "&quot;";
+                case '"':
+                    filtered = "&quot;";
 
-                break;
+                    break;
 
-            case '\'':
-                filtered = "&#39;";
+                case '\'':
+                    filtered = "&#39;";
 
-                break;
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
             }
 
             if (result == null) {
@@ -151,8 +151,8 @@ public class ResponseUtils {
             try {
                 str = URLEncoder.encode(url,
                     Charset.defaultCharset().toString());
-            } catch (UnsupportedEncodingException e1) {
-                LOG.debug("The default-encoding is not supported: {}", enc, e1);
+            } catch (UnsupportedEncodingException ex) {
+                LOG.debug("The default-encoding is not supported: {}", enc, ex);
 
                 str = url;
             }

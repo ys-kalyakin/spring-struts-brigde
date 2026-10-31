@@ -27,6 +27,7 @@ import jakarta.servlet.jsp.JspException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.io.InputStreamReader;
 import org.apache.struts.taglib.spring.SpringTagSupport;
 
@@ -54,11 +55,6 @@ public class ResourceTag extends SpringTagSupport {
         MessageResources.getMessageResources(
             "org.apache.struts.taglib.bean.LocalStrings");
 
-    /**
-     * The name of the scripting variable that will be exposed as a page scope
-     * attribute.
-     */
-    protected String id = null;
 
     /**
      * Return an InputStream to the specified resource if this is non-null.
@@ -121,7 +117,7 @@ public class ResourceTag extends SpringTagSupport {
 
             // Accumulate the contents of this resource into a StringBuilder
             StringBuilder sb = new StringBuilder();
-            try (InputStreamReader reader = new InputStreamReader(stream)) {
+            try (InputStreamReader reader = new InputStreamReader(stream, Charset.defaultCharset())) {
                 char[] buffer = new char[BUFFER_SIZE];
                 int n = 0;
 

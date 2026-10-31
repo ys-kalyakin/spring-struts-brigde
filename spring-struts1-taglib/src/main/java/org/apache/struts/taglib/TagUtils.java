@@ -50,7 +50,7 @@ import org.apache.struts.util.ResponseUtils;
  * Provides helper methods for JSP tags. The classic static API is a facade:
  * the shared logic lives in the Spring components of
  * {@link org.apache.struts.taglib.spring} — the message resolver, the URL
- * builder, the form locator and the errors/messages renderer — resolved for
+ * builder, the form locator and the errors/MESSAGES renderer — resolved for
  * the current request from the application context, with the engine default
  * implementations used when no bean is registered. Overriding a service
  * bean changes the behavior of every tag that uses it.
@@ -110,9 +110,9 @@ public class TagUtils {
 
     /**
      * The message resources for this package. TODO We need to move the
-     * relevant messages out of this properties file.
+     * relevant MESSAGES out of this properties file.
      */
-    private static final MessageResources messages =
+    private static final MessageResources MESSAGES =
         MessageResources.getMessageResources(
             "org.apache.struts.taglib.LocalStrings");
 
@@ -133,11 +133,12 @@ public class TagUtils {
     /**
      * Set the instance.
      * This blatantly violates the Singleton pattern, but then some say Singletons are an anti-pattern.
-     * @since 1.3.5 Changed to non-final and added setInstance() so TagUtils may be overridden, use at your own risk (you've been warned!!)
+     * @since 1.3.5 Changed to non-final and added setInstance() so TagUtils
+     * may be overridden, use at your own risk (you've been warned!!)
      * @param instance The instance to set.
      */
-    public static void setInstance(TagUtils instance){
-      TagUtils.instance = instance;
+    public static void setInstance(TagUtils instance) {
+        TagUtils.instance = instance;
     }
 
     private TagMessageResolver messageResolver(PageContext pageContext) {
@@ -430,7 +431,7 @@ public class TagUtils {
             writer.print(text);
         } catch (IOException e) {
             saveException(pageContext, e);
-            throw new JspException(messages.getMessage("write.io", e.toString()), e);
+            throw new JspException(MESSAGES.getMessage("write.io", e.toString()), e);
         }
     }
 
@@ -450,7 +451,7 @@ public class TagUtils {
             writer.print(text);
         } catch (IOException e) {
             saveException(pageContext, e);
-            throw new JspException(messages.getMessage("write.io", e.toString()), e);
+            throw new JspException(MESSAGES.getMessage("write.io", e.toString()), e);
         }
     }
 }

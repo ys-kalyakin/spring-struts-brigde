@@ -21,7 +21,6 @@
 package org.apache.struts.taglib.html;
 
 import org.apache.struts.Globals;
-import org.apache.struts.action.ActionMessages;
 import org.apache.struts.taglib.TagUtils;
 import org.apache.struts.taglib.spring.ErrorsMessagesRenderer;
 import org.apache.struts.taglib.spring.SpringTagSupport;
@@ -29,7 +28,6 @@ import org.apache.struts.util.MessageResources;
 
 import jakarta.servlet.jsp.JspException;
 
-import java.util.Iterator;
 
 /**
  * Custom tag that renders error messages if an appropriate request attribute

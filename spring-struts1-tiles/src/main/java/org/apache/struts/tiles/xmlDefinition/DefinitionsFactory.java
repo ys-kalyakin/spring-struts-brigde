@@ -14,12 +14,11 @@ import org.apache.struts.tiles.NoSuchDefinitionException;
  * A factory for definitions.
  * This factory allows to retrieve definitions by their keys.
  */
-public class DefinitionsFactory implements Serializable
-{
-   private static final long serialVersionUID = -1606414944612676291L;
+public class DefinitionsFactory implements Serializable {
+    private static final long serialVersionUID = -1606414944612676291L;
 
      /** Underlying map containing all definitions.*/
-   protected HashMap<String, ComponentDefinition> definitions;
+    protected HashMap<String, ComponentDefinition> definitions;
 
    /**
      * Get a definition by its name.
@@ -32,20 +31,18 @@ public class DefinitionsFactory implements Serializable
      * Implementation can throw more accurate exception as a subclass of this
      * exception.
      */
-   public ComponentDefinition getDefinition(String name, ServletRequest request, ServletContext servletContext)
-             throws NoSuchDefinitionException, DefinitionsFactoryException
-   {
-   return definitions.get(name);
-   }
+    public ComponentDefinition getDefinition(String name, ServletRequest request, ServletContext servletContext)
+             throws NoSuchDefinitionException, DefinitionsFactoryException {
+        return definitions.get(name);
+    }
 
   /**
    * Put definition in set.
    * @param definition Definition to put.
    */
-  public void putDefinition(ComponentDefinition definition)
-  {
-  definitions.put( definition.getName(), definition );
-  }
+    public void putDefinition(ComponentDefinition definition) {
+        definitions.put(definition.getName(), definition);
+    }
 
    /**
     * Constructor.
@@ -53,26 +50,23 @@ public class DefinitionsFactory implements Serializable
     * @param xmlDefinitions Resolved definition from XmlDefinitionSet.
     * @throws NoSuchDefinitionException If an error occurs while resolving inheritance
     */
-   public DefinitionsFactory(XmlDefinitionsSet xmlDefinitions)
-    throws NoSuchDefinitionException
-    {
-    definitions = new HashMap<>();
+    public DefinitionsFactory(XmlDefinitionsSet xmlDefinitions)
+        throws NoSuchDefinitionException {
+        definitions = new HashMap<>();
 
       // First, resolve inheritance
-    xmlDefinitions.resolveInheritances();
+        xmlDefinitions.resolveInheritances();
 
       // Walk thru xml set and copy each definitions.
-    for( XmlDefinition xmlDefinition : xmlDefinitions.getDefinitions().values() )
-      {
-        putDefinition( new ComponentDefinition( xmlDefinition) );
-      }  // end loop
-   }
+        for (XmlDefinition xmlDefinition : xmlDefinitions.getDefinitions().values()) {
+            putDefinition(new ComponentDefinition(xmlDefinition));
+        }  // end loop
+    }
     /**
      * Return String representation.
      * @return String representation.
      */
-  public String toString()
-    {
-    return definitions.toString();
+    public String toString() {
+        return definitions.toString();
     }
 }

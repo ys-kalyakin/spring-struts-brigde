@@ -18,12 +18,11 @@ import org.apache.struts.tiles.NoSuchDefinitionException;
  * factory and then calls its getDefinition().
  */
 @SuppressWarnings("deprecation")
-public abstract class FactorySet implements org.apache.struts.tiles.ComponentDefinitionsFactory
-{
+public abstract class FactorySet implements org.apache.struts.tiles.ComponentDefinitionsFactory {
     private static final long serialVersionUID = -3005016733922480701L;
 
     /** Loaded factories */
-  protected HashMap<Object, Object> factories = null;
+    protected HashMap<Object, Object> factories = null;
 
   /**
    * Extract key that will be used to get the sub factory.
@@ -32,13 +31,14 @@ public abstract class FactorySet implements org.apache.struts.tiles.ComponentDef
    * @param servletContext Current servlet context.
    * @return Object.
    */
-  abstract protected Object getDefinitionsFactoryKey(String name, ServletRequest request, ServletContext servletContext);
+    protected abstract Object getDefinitionsFactoryKey(String name, ServletRequest request,
+        ServletContext servletContext);
 
   /**
    * Get default factory.
    * @return Default factory.
    */
-  abstract protected DefinitionsFactory getDefaultFactory();
+    protected abstract DefinitionsFactory getDefaultFactory();
 
   /**
    * Get a factory by its key.
@@ -50,30 +50,25 @@ public abstract class FactorySet implements org.apache.struts.tiles.ComponentDef
    * @param servletContext Current servlet context.
    * @throws DefinitionsFactoryException If an error occur while creating factory.
    */
-  protected DefinitionsFactory getFactory(Object key, ServletRequest request, ServletContext servletContext)
-    throws DefinitionsFactoryException
-  {
-  if(key == null )
-    return getDefaultFactory();
+    protected DefinitionsFactory getFactory(Object key, ServletRequest request, ServletContext servletContext)
+        throws DefinitionsFactoryException {
+        if (key == null) return getDefaultFactory();
 
-  Object factory = factories.get( key );
-  if( factory == null )
-    {
+        Object factory = factories.get(key);
+        if (factory == null) {
       // synchronize creation to avoid double creation by separate threads.
       // Also, check if factory hasn't been created while waiting for synchronized
       // section.
-    synchronized(factories)
-      {
-      factory = factories.get( key );
-      if( factory == null )
-        {
-        factory = createFactory( key, request, servletContext);
-        factories.put( key, factory );
+            synchronized (factories) {
+                factory = factories.get(key);
+                if (factory == null) {
+                    factory = createFactory(key, request, servletContext);
+                    factories.put(key, factory);
+                } // end if
+            } // end synchronized
         } // end if
-      } // end synchronized
-    } // end if
-  return (DefinitionsFactory)factory;
-  }
+        return (DefinitionsFactory)factory;
+    }
 
   /**
    * Get a definition by its name.
@@ -84,16 +79,16 @@ public abstract class FactorySet implements org.apache.struts.tiles.ComponentDef
    * @throws NoSuchDefinitionException No definition found for specified name
    * @throws DefinitionsFactoryException General exception
    */
-  public ComponentDefinition getDefinition(String name, ServletRequest request, ServletContext servletContext)
-    throws NoSuchDefinitionException, DefinitionsFactoryException
-  {
-  if( factories == null )
-    throw new FactoryNotFoundException( "No definitions factory defined" );
+    public ComponentDefinition getDefinition(String name, ServletRequest request, ServletContext servletContext)
+        throws NoSuchDefinitionException, DefinitionsFactoryException {
+        if (factories == null) {
+            throw new FactoryNotFoundException("No definitions factory defined");
+        }
 
-  Object key = getDefinitionsFactoryKey( name, request, servletContext);
-  DefinitionsFactory factory = getFactory( key, request, servletContext);
-  return factory.getDefinition( name, request, servletContext );
-  }
+        Object key = getDefinitionsFactoryKey(name, request, servletContext);
+        DefinitionsFactory factory = getFactory(key, request, servletContext);
+        return factory.getDefinition(name, request, servletContext);
+    }
 
   /**
    * Create a factory for specified key.
@@ -105,36 +100,34 @@ public abstract class FactorySet implements org.apache.struts.tiles.ComponentDef
    * @param servletContext Current servlet context
    * @throws DefinitionsFactoryException If an error occur while creating factory.
    */
-  abstract protected DefinitionsFactory createFactory(Object key, ServletRequest request, ServletContext servletContext)
-          throws DefinitionsFactoryException;
+    protected abstract DefinitionsFactory createFactory(
+        Object key, ServletRequest request, ServletContext servletContext)
+        throws DefinitionsFactoryException;
 
   /**
    * Init factory set.
    * @param servletContext Current servlet context
    * @param properties properties used to initialized factory set;
    */
-  abstract public void initFactory(ServletContext servletContext, Map<String, Object> properties)
-    throws DefinitionsFactoryException;
+    public abstract void initFactory(ServletContext servletContext, Map<String, Object> properties)
+        throws DefinitionsFactoryException;
 
   /**
    * Constructor.
    */
-  public FactorySet()
-  {
-  factories = new HashMap<>();
-  }
+    public FactorySet() {
+        factories = new HashMap<>();
+    }
 
     /**
      * Return String representation.
      * @return String representation.
      */
-  public String toString()
-    {
-    StringBuilder buff = new StringBuilder( "all FactorySet's factory : \n" );
-    for (Object factory : factories.values())
-      {
-      buff.append( factory.toString() ).append("\n");
-      }
-    return buff.toString();
+    public String toString() {
+        StringBuilder buff = new StringBuilder("all FactorySet's factory : \n");
+        for (Object factory : factories.values()) {
+            buff.append(factory.toString()).append("\n");
+        }
+        return buff.toString();
     }
 }

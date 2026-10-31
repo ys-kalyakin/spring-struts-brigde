@@ -32,6 +32,10 @@ import org.slf4j.LoggerFactory;
  */
 public class Resources {
 
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private Resources() {
+    }
+
     /**
      * The message resources for this package.
      */
@@ -42,7 +46,7 @@ public class Resources {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(Resources.class);
 
     /**

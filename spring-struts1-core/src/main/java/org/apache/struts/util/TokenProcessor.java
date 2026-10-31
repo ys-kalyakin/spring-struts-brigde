@@ -20,6 +20,7 @@
  */
 package org.apache.struts.util;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -205,7 +206,7 @@ public class TokenProcessor {
             byte[] now = String.valueOf(current).getBytes(StandardCharsets.US_ASCII);
             MessageDigest md = MessageDigest.getInstance("SHA-256");
 
-            md.update(id.getBytes());
+            md.update(id.getBytes(Charset.defaultCharset()));
             md.update(now);
 
             return toHex(md.digest());

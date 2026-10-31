@@ -36,7 +36,7 @@ public class CityStateZip implements java.io.Serializable {
 
 
     public String getCity() {
-       return sCity;
+        return sCity;
     }
 
     public void setCity(String sCity) {
@@ -44,7 +44,7 @@ public class CityStateZip implements java.io.Serializable {
     }
 
     public String getStateProv() {
-       return sStateProv;
+        return sStateProv;
     }
 
     public void setStateProv(String sStateProv) {
@@ -52,7 +52,7 @@ public class CityStateZip implements java.io.Serializable {
     }
 
     public String getZipPostal(int index) {
-       return sZipPostal[index];
+        return sZipPostal[index];
     }
 
     public void setZipPostal(int index, String value) {

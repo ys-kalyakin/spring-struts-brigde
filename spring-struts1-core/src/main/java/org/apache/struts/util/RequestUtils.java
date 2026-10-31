@@ -44,6 +44,10 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
  */
 public class RequestUtils {
 
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private RequestUtils() {
+    }
+
     /**
      * The <code>Log</code> instance for this class.
      */
@@ -325,20 +329,20 @@ public class RequestUtils {
                 LOG.error("MultipartRequestHandler class \"{}\" "
                     + "in mapping class not found, "
                     + "defaulting to global multipart class", multipartClass);
-            } catch (InstantiationException ie) {
+            } catch (InstantiationException e) {
                 LOG.error("InstantiationException when instantiating "
                     + "MultipartRequestHandler \"{}\", "
                     + "defaulting to global multipart class, exception: {}",
-                    multipartClass, ie.getMessage());
+                    multipartClass, e.getMessage());
             } catch (IllegalAccessException iae) {
                 LOG.error("IllegalAccessException when instantiating "
                     + "MultipartRequestHandler \"{}\", "
                     + "defaulting to global multipart class, exception: {}",
                     multipartClass, iae.getMessage());
-            } catch (ReflectiveOperationException re) {
+            } catch (ReflectiveOperationException e) {
                 LOG.error("Cannot instantiate MultipartRequestHandler "
                     + "\"{}\", defaulting to global multipart class, "
-                    + "exception: {}", multipartClass, re.getMessage());
+                    + "exception: {}", multipartClass, e.getMessage());
             }
 
             if (multipartHandler != null) {
@@ -356,9 +360,9 @@ public class RequestUtils {
             try {
                 multipartHandler =
                     (MultipartRequestHandler) applicationInstance(multipartClass);
-            } catch (ReflectiveOperationException re) {
+            } catch (ReflectiveOperationException e) {
                 throw new ServletException("Cannot instantiate multipart "
-                    + "class \"" + multipartClass + "\"", re);
+                    + "class \"" + multipartClass + "\"", e);
             }
         }
 
@@ -430,9 +434,6 @@ public class RequestUtils {
             instance = config.createActionForm();
         } catch (IllegalStateException e) {
             throw new IllegalArgumentException(e.getMessage(), e.getCause());
-        }
-        if (instance == null) {
-            return null;
         }
         if ("request".equals(mapping.getScope())) {
             request.setAttribute(attribute, instance);
@@ -516,20 +517,20 @@ public class RequestUtils {
 
                 if (dollar) {
                     switch (ch) {
-                    case 'M':
-                        sb.append(prefix);
-                        break;
-                    case 'P':
-                        if (!path.startsWith("/")) {
-                            sb.append("/");
-                        }
-                        sb.append(path);
-                        break;
-                    case '$':
-                        sb.append('$');
-                        break;
-                    default:
-                        break;
+                        case 'M':
+                            sb.append(prefix);
+                            break;
+                        case 'P':
+                            if (!path.startsWith("/")) {
+                                sb.append("/");
+                            }
+                            sb.append(path);
+                            break;
+                        case '$':
+                            sb.append('$');
+                            break;
+                        default:
+                            break;
                     }
                     dollar = false;
                 } else if (ch == '$') {

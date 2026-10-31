@@ -48,7 +48,7 @@ public class HtmlTag extends SpringTagSupport {
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(HtmlTag.class);
 
     /**
@@ -159,19 +159,17 @@ public class HtmlTag extends SpringTagSupport {
                 sb.append(" xmlns=\"http://www.w3.org/1999/xhtml\"");
                 sb.append(" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
                 sb.append(" xsi:schemaLocation=\"http://www.w3.org/MarkUp/SCHEMA/xhtml11.xsd\"");
-            }
             // 2.0
-            else if (xhtmlVersion.equals(TagUtils.XHTML_2_0)) {
+            } else if (xhtmlVersion.equals(TagUtils.XHTML_2_0)) {
                 sb.append(" xmlns=\"http://www.w3.org/2002/06/xhtml2/\"");
                 sb.append(" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-                sb.append(" xsi:schemaLocation=\"http://www.w3.org/2002/06/xhtml2/ http://www.w3.org/MarkUp/SCHEMA/xhtml2.xsd\"");
-            }
+                sb.append(" xsi:schemaLocation=\"http://www.w3.org/2002/06/xhtml2/"
+                    + " http://www.w3.org/MarkUp/SCHEMA/xhtml2.xsd\"");
             // 5.0
-            else if (xhtmlVersion.equals(TagUtils.XHTML_5_0)) {
+            } else if (xhtmlVersion.equals(TagUtils.XHTML_5_0)) {
                 sb.append(" xmlns=\"http://www.w3.org/1999/xhtml\"");
-            }
             // 1.0/Default
-            else {
+            } else {
                 if (!xhtmlVersion.equals(TagUtils.XHTML_1_0)) {
                     log.warn("Defaulting to XHTML 1.0. Unknown version: {}", xhtmlVersion);
                     xhtmlVersion = TagUtils.XHTML_1_0;

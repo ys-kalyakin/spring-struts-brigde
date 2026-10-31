@@ -6,7 +6,6 @@ import java.util.Iterator;
 
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.TagSupport;
 
 import org.apache.struts.tiles.taglib.util.TagUtils;
 import org.apache.struts.tiles.ComponentContext;
@@ -42,7 +41,7 @@ public class ImportAttributeTag extends SpringTagSupport {
      * Default value is <code>false</code>, which throws an exception.
      * Only "attribute not found" - errors are ignored.
      */
-  protected boolean isErrorIgnored = false;
+    protected boolean isErrorIgnored = false;
 
 
     /**
@@ -61,38 +60,34 @@ public class ImportAttributeTag extends SpringTagSupport {
      * Get the name.
      * @return Name.
      */
-    public String getName()
-     {
-     return (this.name);
-     }
+    public String getName() {
+        return (this.name);
+    }
 
 
     /**
      * Set the name.
      * @param name The new name
      */
-    public void setName(String name)
-     {
-     this.name = name;
-     }
+    public void setName(String name) {
+        this.name = name;
+    }
 
     /**
      * Set the scope.
      * @param scope Scope.
      */
-    public void setScope(String scope)
-      {
-      this.scopeName = scope;
-      }
+    public void setScope(String scope) {
+        this.scopeName = scope;
+    }
 
     /**
      * Get scope.
      * @return Scope.
      */
-  public String getScope()
-  {
-  return scopeName;
-  }
+    public String getScope() {
+        return scopeName;
+    }
 
     /**
      * Set ignore flag.
@@ -100,9 +95,8 @@ public class ImportAttributeTag extends SpringTagSupport {
      * attribute is not found, set to <code>
      * true</code> to ignore missing attributes silently
      */
-  public void setIgnore(boolean ignore)
-    {
-    this.isErrorIgnored = ignore;
+    public void setIgnore(boolean ignore) {
+        this.isErrorIgnored = ignore;
     }
 
     /**
@@ -111,10 +105,9 @@ public class ImportAttributeTag extends SpringTagSupport {
      * is not found, set to <code>
      * true</code> to ignore missing attributes silently
      */
-  public boolean getIgnore()
-  {
-  return isErrorIgnored;
-  }
+    public boolean getIgnore() {
+        return isErrorIgnored;
+    }
 
     // --------------------------------------------------------- Public Methods
 
@@ -124,65 +117,58 @@ public class ImportAttributeTag extends SpringTagSupport {
      *
      * @exception JspException On errors processing tag.
      */
-public int doStartTag() throws JspException
-    {
+    public int doStartTag() throws JspException {
       // retrieve component context
-    ComponentContext compContext =
-        (ComponentContext)pageContext.getAttribute(
+        ComponentContext compContext =
+            (ComponentContext)pageContext.getAttribute(
             ComponentConstants.COMPONENT_CONTEXT, PageContext.REQUEST_SCOPE);
-    if( compContext == null )
-        throw new JspException ( "Error - tag importAttribute : "
-            + "no tiles context found." );
+        if (compContext == null) {
+            throw new JspException ("Error - tag importAttribute : "
+                + "no tiles context found.");
+        }
 
       // set scope
-    scope = TagUtils.getScope( scopeName, PageContext.PAGE_SCOPE );
+        scope = TagUtils.getScope(scopeName, PageContext.PAGE_SCOPE);
 
       // push attribute in requested context.
-    if( name != null )
-      {
-      Object value = compContext.getAttribute(name);
+        if (name != null) {
+            Object value = compContext.getAttribute(name);
         // Check if value exist and if we must send a runtime exception
-      if( value == null )
-        {
-        if(!isErrorIgnored)
-          {
-          throw new JspException ( "Error - tag importAttribute : property '"+
-              name + "' not found in context. Check tag syntax" );
-          }
-        }
-       else
-        {
-        pageContext.setAttribute(name, value, scope);
-        }
-      }
-     else
-      { // set all attributes
-      Iterator<String> names = compContext.getAttributeNames();
-      while(names.hasNext())
-        {
-        String name = names.next();
-        if(name == null ) {
-          if(!isErrorIgnored)
-            throw new JspException ( "Error - tag importAttribute : "
-                + "encountered an attribute with key 'null'" );
-          else
-            return SKIP_BODY;
-        }
+            if (value == null) {
+                if (!isErrorIgnored) {
+                    throw new JspException ("Error - tag importAttribute : property '" +
+              name + "' not found in context. Check tag syntax");
+                }
+            } else {
+                pageContext.setAttribute(name, value, scope);
+            }
+        } else {
+            Iterator<String> names = compContext.getAttributeNames();
+            while (names.hasNext()) {
+                String name = names.next();
+                if (name == null) {
+                    if (!isErrorIgnored) {
+                        throw new JspException ("Error - tag importAttribute : "
+                            + "encountered an attribute with key 'null'");
+                    } else {
+                        return SKIP_BODY;
+                    }
+                }
 
-        Object value = compContext.getAttribute(name);
+                Object value = compContext.getAttribute(name);
         // Check if value exist and if we must send a runtime exception
-        if( value == null ) {
-          if(!isErrorIgnored) {
-            throw new JspException ( "Error - tag importAttribute : property '"
-                + name + "' has a value of 'null'" );
-          }
-        }
-        pageContext.setAttribute(name, value, scope);
-        } // end loop
-      } // end else
+                if (value == null) {
+                    if (!isErrorIgnored) {
+                        throw new JspException ("Error - tag importAttribute : property '"
+                + name + "' has a value of 'null'");
+                    }
+                }
+                pageContext.setAttribute(name, value, scope);
+            } // end loop
+        } // end else
 
       // Continue processing this page
-    return SKIP_BODY;
+        return SKIP_BODY;
     }
 
     /**
@@ -190,9 +176,8 @@ public int doStartTag() throws JspException
      *
      * @exception JspException On errors processing tag.
      */
-  public int doEndTag() throws JspException
-    {
-    return (EVAL_PAGE);
+    public int doEndTag() throws JspException {
+        return (EVAL_PAGE);
     }
 
 }

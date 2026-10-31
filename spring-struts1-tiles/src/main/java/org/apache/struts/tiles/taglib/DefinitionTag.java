@@ -119,7 +119,8 @@ public class DefinitionTag
 
         // Check if a name is defined
         if (nestedTag.getName() == null) {
-            throw new JspException("Error - PutList : attribute name is not defined. It is mandatory as the list is added to a 'definition'.");
+            throw new JspException("Error - PutList : attribute name is not defined. "
+                    + "It is mandatory as the list is added to a 'definition'.");
         }
 
         // now add attribute to enclosing parent (i.e. : this object).

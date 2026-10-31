@@ -1,6 +1,5 @@
 package org.apache.struts.spring;
 
-import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;

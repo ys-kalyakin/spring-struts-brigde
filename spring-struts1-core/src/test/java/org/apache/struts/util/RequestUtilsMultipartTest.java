@@ -19,7 +19,6 @@ import org.apache.struts.config.ControllerConfig;
 import org.apache.struts.config.impl.ModuleConfigImpl;
 import org.apache.struts.fixtures.MultipartForm;
 import org.apache.struts.upload.MultipartRequestHandler;
-import org.apache.struts.upload.MultipartRequestWrapper;
 
 /**
  * Unit tests for the multipart branch of <code>RequestUtils.populate</code>:

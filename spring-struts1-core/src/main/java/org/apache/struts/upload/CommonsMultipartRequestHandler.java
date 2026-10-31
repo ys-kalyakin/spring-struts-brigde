@@ -104,7 +104,7 @@ public class CommonsMultipartRequestHandler implements MultipartRequestHandler {
     /**
      * Indicator if we run on a windows-system.
      */
-    private final static boolean WIN_SYSTEM =
+    private static final boolean WIN_SYSTEM =
             System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("windows");
 
     // ---------------------------------------- MultipartRequestHandler Methods
@@ -171,7 +171,8 @@ public class CommonsMultipartRequestHandler implements MultipartRequestHandler {
         factory.setFile(getRepositoryFile(ac));
 
         // Create a new file upload handler
-        JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload = new JakartaServletFileUpload<>(factory.get());
+        JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload =
+                new JakartaServletFileUpload<>(factory.get());
 
         // The following line is to support an "EncodingFilter"
         // see http://issues.apache.org/bugzilla/show_bug.cgi?id=23255
@@ -632,7 +633,7 @@ public class CommonsMultipartRequestHandler implements MultipartRequestHandler {
          *
          * @param fileItem The Commons file item to be wrapped.
          */
-        public CommonsFormFile(FileItem<?> fileItem) {
+        CommonsFormFile(FileItem<?> fileItem) {
             this.fileItem = fileItem;
         }
 

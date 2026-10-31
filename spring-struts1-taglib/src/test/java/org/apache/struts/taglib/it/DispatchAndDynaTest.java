@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.apache.struts.spring.testsupport.TomcatTestServer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Dispatch actions and DynaActionForm integration tests: the classic

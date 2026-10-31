@@ -49,6 +49,10 @@ import java.util.StringTokenizer;
  * @since Struts 1.1
  */
 public class NestedPropertyHelper {
+
+    /** Suppresses default constructor, non-instantiable utility class. */
+    private NestedPropertyHelper() {
+    }
     /* key that the tags can rely on to set the details against */
     public static final String NESTED_INCLUDES_KEY = "<nested-includes-key/>";
 
@@ -206,7 +210,7 @@ public class NestedPropertyHelper {
      * @param request object to manipulate the reference into
      * @return current nesting reference as stored in the request object
      */
-    private static final NestedReference referenceInstance(
+    private static NestedReference referenceInstance(
         HttpServletRequest request) {
         /* get the old one if any */
         NestedReference nr =

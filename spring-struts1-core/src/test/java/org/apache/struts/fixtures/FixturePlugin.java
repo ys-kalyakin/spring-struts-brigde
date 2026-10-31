@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 
 import org.apache.struts.config.ModuleConfig;
 
-import org.apache.struts.Globals;
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.PlugIn;
 

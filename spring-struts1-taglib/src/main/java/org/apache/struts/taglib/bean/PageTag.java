@@ -45,11 +45,6 @@ public class PageTag extends SpringTagSupport {
 
     // ------------------------------------------------------------- Properties
 
-    /**
-     * The name of the scripting variable that will be exposed as a page scope
-     * attribute.
-     */
-    protected String id = null;
 
     /**
      * The name of the page context property to be retrieved.

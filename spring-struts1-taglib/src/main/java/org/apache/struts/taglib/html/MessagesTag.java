@@ -63,10 +63,6 @@ public class MessagesTag extends SpringBodyTagSupport {
      */
     protected boolean processed = false;
 
-    /**
-     * The name of the scripting variable to be exposed.
-     */
-    protected String id = null;
 
     /**
      * The servlet context attribute key for our resources.
@@ -330,20 +326,20 @@ public class MessagesTag extends SpringBodyTagSupport {
      * @param values The message values to be filtered
      */
     private Object[] filterMessageReplacementValues(Object[] values) {
-       if (values == null) {
-           return (null);
-       }
+        if (values == null) {
+            return (null);
+        }
 
-       Object[] filteredArgs = new Object[values.length];
-       for (int i = 0; i < values.length; ++i) {
-           if (values[i] instanceof String) {
-               filteredArgs[i] = TagUtils.getInstance().filter((String) values[i]);
-           } else {
-               filteredArgs[i] = values[i];
-           }
-       }
+        Object[] filteredArgs = new Object[values.length];
+        for (int i = 0; i < values.length; ++i) {
+            if (values[i] instanceof String) {
+                filteredArgs[i] = TagUtils.getInstance().filter((String) values[i]);
+            } else {
+                filteredArgs[i] = values[i];
+            }
+        }
 
-       return filteredArgs;
+        return filteredArgs;
     }
 
     /**

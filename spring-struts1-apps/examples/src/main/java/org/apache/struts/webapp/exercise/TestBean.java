@@ -89,7 +89,7 @@ public class TestBean extends ActionForm {
         return (this.beanCollectionSelect);
     }
 
-    public void setBeanCollectionSelect(String beanCollectionSelect[]) {
+    public void setBeanCollectionSelect(String []beanCollectionSelect) {
         this.beanCollectionSelect = beanCollectionSelect;
     }
 
@@ -118,7 +118,7 @@ public class TestBean extends ActionForm {
         return (this.collectionSelect);
     }
 
-    public void setCollectionSelect(String collectionSelect[]) {
+    public void setCollectionSelect(String []collectionSelect) {
         this.collectionSelect = collectionSelect;
     }
 
@@ -168,17 +168,17 @@ public class TestBean extends ActionForm {
     /**
      * Integer arrays that are accessed as an array as well as indexed.
      */
-    private int intArray[] = { 0, 10, 20, 30, 40 };
+    private int []intArray  = { 0, 10, 20, 30, 40 };
 
     public int[] getIntArray() {
         return (this.intArray);
     }
 
-    public void setIntArray(int intArray[]) {
+    public void setIntArray(int []intArray) {
         this.intArray = intArray;
     }
 
-    private int intIndexed[] = { 0, 10, 20, 30, 40 };
+    private int []intIndexed  = { 0, 10, 20, 30, 40 };
 
     public int getIntIndexed(int index) {
         return (intIndexed[index]);
@@ -189,13 +189,13 @@ public class TestBean extends ActionForm {
     }
 
 
-    private int intMultibox[] = new int[0];
+    private int []intMultibox  = new int[0];
 
     public int[] getIntMultibox() {
         return (this.intMultibox);
     }
 
-    public void setIntMultibox(int intMultibox[]) {
+    public void setIntMultibox(int []intMultibox) {
         this.intMultibox = intMultibox;
     }
 
@@ -237,7 +237,7 @@ public class TestBean extends ActionForm {
         return (this.multipleSelect);
     }
 
-    public void setMultipleSelect(String multipleSelect[]) {
+    public void setMultipleSelect(String []multipleSelect) {
         this.multipleSelect = multipleSelect;
     }
 
@@ -248,8 +248,7 @@ public class TestBean extends ActionForm {
     private TestBean nested = null;
 
     public TestBean getNested() {
-        if (nested == null)
-            nested = new TestBean();
+        if (nested == null) nested = new TestBean();
         return (nested);
     }
 
@@ -299,18 +298,18 @@ public class TestBean extends ActionForm {
     /**
      * String arrays that are accessed as an array as well as indexed.
      */
-    private String stringArray[] =
+    private String []stringArray  =
     { "String 0", "String 1", "String 2", "String 3", "String 4" };
 
     public String[] getStringArray() {
         return (this.stringArray);
     }
 
-    public void setStringArray(String stringArray[]) {
+    public void setStringArray(String []stringArray) {
         this.stringArray = stringArray;
     }
 
-    private String stringIndexed[] =
+    private String []stringIndexed  =
     { "String 0", "String 1", "String 2", "String 3", "String 4" };
 
     public String getStringIndexed(int index) {
@@ -322,13 +321,13 @@ public class TestBean extends ActionForm {
     }
 
 
-    private String stringMultibox[] = new String[0];
+    private String []stringMultibox  = new String[0];
 
     public String[] getStringMultibox() {
         return (this.stringMultibox);
     }
 
-    public void setStringMultibox(String stringMultibox[]) {
+    public void setStringMultibox(String []stringMultibox) {
         this.stringMultibox = stringMultibox;
     }
 
@@ -468,8 +467,7 @@ public class TestBean extends ActionForm {
         intMultibox = new int[0];
         multipleSelect = new String[0];
         stringMultibox = new String[0];
-        if (nested != null)
-            nested.reset(mapping, request);
+        if (nested != null) nested.reset(mapping, request);
 
     }
 

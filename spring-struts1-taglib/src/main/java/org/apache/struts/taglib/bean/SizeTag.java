@@ -55,11 +55,6 @@ public class SizeTag extends SpringTagSupport {
      */
     protected Object collection = null;
 
-    /**
-     * The name of the scripting variable that will be exposed as a page scope
-     * attribute.
-     */
-    protected String id = null;
 
     /**
      * The name of the bean owning the property to be counted.

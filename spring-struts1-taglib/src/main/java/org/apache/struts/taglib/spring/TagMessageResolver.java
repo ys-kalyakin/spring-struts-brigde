@@ -12,7 +12,7 @@ import org.apache.struts.util.MessageResources;
 import org.apache.struts.util.RequestUtils;
 
 /**
- * Spring component of the tag libraries: resolves bundle messages for the
+ * Spring component of the tag libraries: resolves bundle MESSAGES for the
  * tags (locale from the session, the classic <code>???ru_RU.key???</code>
  * format for missing keys). The application may override the
  * <code>tagMessageResolver</code> bean to change the message resolution of
@@ -23,7 +23,7 @@ public class TagMessageResolver {
     /**
      * The message resources of the tag libraries, used for exception texts.
      */
-    protected static final MessageResources messages =
+    protected static final MessageResources MESSAGES =
         MessageResources.getMessageResources(
             "org.apache.struts.taglib.LocalStrings");
 
@@ -105,7 +105,7 @@ public class TagMessageResolver {
 
         if (resources == null) {
             JspException e = new JspException(
-                messages.getMessage("message.bundle", bundle));
+                MESSAGES.getMessage("message.bundle", bundle));
             TagUtils.getInstance().saveException(pageContext, e);
             throw e;
         }

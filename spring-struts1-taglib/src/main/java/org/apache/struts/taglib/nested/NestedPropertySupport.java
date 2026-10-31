@@ -36,12 +36,12 @@ public interface NestedPropertySupport extends NestedTagSupport {
      *
      * @return String value of the tags' property property
      */
-    public String getProperty();
+    String getProperty();
 
     /**
      * The setter for the poroperty property
      *
      * @param newProperty new String value to set the property property to
      */
-    public void setProperty(String newProperty);
+    void setProperty(String newProperty);
 }

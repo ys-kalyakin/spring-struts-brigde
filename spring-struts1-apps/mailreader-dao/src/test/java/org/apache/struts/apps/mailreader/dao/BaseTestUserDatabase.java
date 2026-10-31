@@ -57,8 +57,8 @@ public abstract class BaseTestUserDatabase {
 
     @BeforeEach
     protected void setUp() throws Exception {
-            userDatabase = getNewUserDatabase();
-      generateUsers(userCt, subscriptionCt, "");
+        userDatabase = getNewUserDatabase();
+        generateUsers(userCt, subscriptionCt, "");
     }
 
 
@@ -67,18 +67,18 @@ public abstract class BaseTestUserDatabase {
      */
     private void generateUsers(int users, int subs, String prefix) {
         for (int i = 0; i < users; i++) {
-          User user = getNewUser(userDatabase, prefix + "user" + i);
-          user.setFromAddress(prefix + "fromAddress" + i);
-          user.setFullName(prefix + "fullName" + i);
-          user.setPassword(prefix + "password" + i);
+            User user = getNewUser(userDatabase, prefix + "user" + i);
+            user.setFromAddress(prefix + "fromAddress" + i);
+            user.setFullName(prefix + "fullName" + i);
+            user.setPassword(prefix + "password" + i);
 
-          for (int j = 0; j < subs; j++) {
-              Subscription subscription = getNewSubscription(user, prefix + "host" + j);
-              subscription.setAutoConnect(j % 1 == 0);
-              subscription.setUsername(prefix + "subscriptionUserName" + j);
-              subscription.setPassword(prefix + "subscriptionPassword" + j);
-              subscription.setType(prefix + "type" + j);
-          }
+            for (int j = 0; j < subs; j++) {
+                Subscription subscription = getNewSubscription(user, prefix + "host" + j);
+                subscription.setAutoConnect(j % 1 == 0);
+                subscription.setUsername(prefix + "subscriptionUserName" + j);
+                subscription.setPassword(prefix + "subscriptionPassword" + j);
+                subscription.setType(prefix + "type" + j);
+            }
         }
     }
 
@@ -238,36 +238,36 @@ public abstract class BaseTestUserDatabase {
         String newUserName = "newUser08";
         int subs = 5;
 
-      User newUser = userDatabase.createUser(newUserName);
-      newUser.setPassword("pass1");
-      newUser.setFromAddress("fromAddress1");
-      newUser.setReplyToAddress("replyToAddress1");
+        User newUser = userDatabase.createUser(newUserName);
+        newUser.setPassword("pass1");
+        newUser.setFromAddress("fromAddress1");
+        newUser.setReplyToAddress("replyToAddress1");
 
       // TODO fix me, this is not releasing the internal state on close
   //            userDatabase.save();
   //            userDatabase.close();
   //            userDatabase.open();
 
-      User newUser2 = userDatabase.findUser(newUserName);
-      assertEquals(newUserName, newUser2.getUsername(), "Check username");
-      assertEquals("fromAddress1", newUser2.getFromAddress(), "Check fromAddress");
-      assertEquals("replyToAddress1", newUser2.getReplyToAddress(), "Check replyToAddress");
-      assertEquals("pass1", newUser2.getPassword(), "Check password");
-      assertNull(newUser2.getFullName(), "Check fullName");
+        User newUser2 = userDatabase.findUser(newUserName);
+        assertEquals(newUserName, newUser2.getUsername(), "Check username");
+        assertEquals("fromAddress1", newUser2.getFromAddress(), "Check fromAddress");
+        assertEquals("replyToAddress1", newUser2.getReplyToAddress(), "Check replyToAddress");
+        assertEquals("pass1", newUser2.getPassword(), "Check password");
+        assertNull(newUser2.getFullName(), "Check fullName");
 
-      generateUsers(3, subs, "08");
+        generateUsers(3, subs, "08");
 
-      User newUser3 = userDatabase.findUser("08user1");
-      Subscription[] subscriptions = newUser3.getSubscriptions();
-      assertEquals(subs, subscriptions.length, "Testing subscriptions length");
+        User newUser3 = userDatabase.findUser("08user1");
+        Subscription[] subscriptions = newUser3.getSubscriptions();
+        assertEquals(subs, subscriptions.length, "Testing subscriptions length");
 
   //            userDatabase.save();
   //            userDatabase.close();
   //            userDatabase.open();
 
-      User newUser4 = userDatabase.findUser("08user1");
-      Subscription[] subscriptions2 = newUser4.getSubscriptions();
-      assertEquals(subs, subscriptions2.length, "Testing subscriptions length");
+        User newUser4 = userDatabase.findUser("08user1");
+        Subscription[] subscriptions2 = newUser4.getSubscriptions();
+        assertEquals(subs, subscriptions2.length, "Testing subscriptions length");
 
     }
 
@@ -279,8 +279,8 @@ public abstract class BaseTestUserDatabase {
 //            userDatabase.close();
 //            userDatabase.open();
 
-            User[] users = userDatabase.findUsers();
-            assertEquals(userCt, users.length, "Testing users count");
+        User[] users = userDatabase.findUsers();
+        assertEquals(userCt, users.length, "Testing users count");
 
     }
 
@@ -292,8 +292,8 @@ public abstract class BaseTestUserDatabase {
 //            userDatabase.close();
 //            userDatabase.open();
 
-            User user = userDatabase.findUser("bogus user");
-            assertNull(user, "Find non-existing user");
+        User user = userDatabase.findUser("bogus user");
+        assertNull(user, "Find non-existing user");
 
     }
 

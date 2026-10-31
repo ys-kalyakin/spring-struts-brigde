@@ -25,9 +25,9 @@ public class ModuleUtils {
         "jakarta.servlet.include.servlet_path";
 
     /**
-     * The Singleton instance.
+     * The Singleton INSTANCE.
      */
-    private static final ModuleUtils instance = new ModuleUtils();
+    private static final ModuleUtils INSTANCE = new ModuleUtils();
 
     private final Logger log = LoggerFactory.getLogger(ModuleUtils.class);
 
@@ -36,10 +36,10 @@ public class ModuleUtils {
     }
 
     /**
-     * Returns the Singleton instance of ModuleUtils.
+     * Returns the Singleton INSTANCE of ModuleUtils.
      */
     public static ModuleUtils getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     /**

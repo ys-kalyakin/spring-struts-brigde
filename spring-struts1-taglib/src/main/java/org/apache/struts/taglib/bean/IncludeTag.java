@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.jsp.JspException;
 
 import java.io.BufferedInputStream;
+import java.nio.charset.Charset;
 import java.io.InputStreamReader;
 
 import java.net.HttpURLConnection;
@@ -82,11 +83,6 @@ public class IncludeTag extends SpringTagSupport {
      */
     protected String href = null;
 
-    /**
-     * The name of the scripting variable that will be exposed as a page scope
-     * attribute.
-     */
-    protected String id = null;
 
     /**
      * The context-relative URI of the page or servlet to be included.
@@ -221,7 +217,7 @@ public class IncludeTag extends SpringTagSupport {
 
         // FIXME- encoding
         try (InputStreamReader in = new InputStreamReader(
-                new BufferedInputStream(conn.getInputStream()))) {
+                new BufferedInputStream(conn.getInputStream()), Charset.defaultCharset())) {
 
             char[] buffer = new char[BUFFER_SIZE];
             int n = 0;

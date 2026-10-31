@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  Documented Checkstyle exclusions (spec: Documented exclusions only, design D5).
+  Same policy as config/spotbugs-exclude.xml: exclude only when a fix would
+  change the Struts 1 public API or observable behavior; every entry carries a
+  written rationale.
+-->
+<suppressions>
+
+  <!-- Dispatch method names of the ported mailreader application: the JSP links
+       and action mappings address these methods by their URL-visible names
+       (Edit, Save, Delete). Renaming them would change the runtime dispatch
+       behavior of the ported app. -->
+  <suppress checks="MethodNameCheck"
+            files="actions[\\/]RegistrationAction\.java"/>
+  <suppress checks="MethodNameCheck"
+            files="actions[\\/]SubscriptionAction\.java"/>
+
+  <!-- Public constants of the ported Struts 1 API: names are part of the
+       drop-in-compatible surface (referenced across modules). -->
+  <suppress checks="ConstantNameCheck"
+            files="[\\/]taglib[\\/]html[\\/]Constants\.java"/>
+  <suppress checks="ConstantNameCheck"
+            files="[\\/]tiles[\\/]taglib[\\/]util[\\/]TagUtils\.java"/>
+
+  <!-- Documentation files: javadoc contains URLs and HTML examples that cannot
+       be wrapped without breaking the rendered documentation. -->
+  <suppress checks="LineLengthCheck"
+            files="[\\/]package-info\.java"/>
+
+</suppressions>

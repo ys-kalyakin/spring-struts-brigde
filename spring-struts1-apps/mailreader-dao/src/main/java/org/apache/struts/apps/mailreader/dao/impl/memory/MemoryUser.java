@@ -36,7 +36,7 @@ import org.apache.struts.apps.mailreader.dao.impl.AbstractUser;
  * @since Struts 1.1
  */
 
-public final class MemoryUser extends AbstractUser{
+public final class MemoryUser extends AbstractUser {
 
 
     // ----------------------------------------------------------- Constructors

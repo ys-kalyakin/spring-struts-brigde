@@ -40,7 +40,7 @@ public interface Subscription {
     /**
      * Return the auto-connect flag.
      */
-    public boolean getAutoConnect();
+    boolean getAutoConnect();
 
 
     /**
@@ -48,19 +48,19 @@ public interface Subscription {
      *
      * @param autoConnect The new auto-connect flag
      */
-    public void setAutoConnect(boolean autoConnect);
+    void setAutoConnect(boolean autoConnect);
 
 
     /**
      * Return the host name.
      */
-    public String getHost();
+    String getHost();
 
 
     /**
      * Return the password.
      */
-    public String getPassword();
+    String getPassword();
 
 
     /**
@@ -68,13 +68,13 @@ public interface Subscription {
      *
      * @param password The new password
      */
-    public void setPassword(String password);
+    void setPassword(String password);
 
 
     /**
      * Return the subscription type.
      */
-    public String getType();
+    String getType();
 
 
     /**
@@ -82,19 +82,19 @@ public interface Subscription {
      *
      * @param type The new subscription type
      */
-    public void setType(String type);
+    void setType(String type);
 
 
     /**
      * Return the {@link User} owning this Subscription.
      */
-    public User getUser();
+    User getUser();
 
 
     /**
      * Return the username.
      */
-    public String getUsername();
+    String getUsername();
 
 
     /**
@@ -102,7 +102,7 @@ public interface Subscription {
      *
      * @param username The new username
      */
-    public void setUsername(String username);
+    void setUsername(String username);
 
 
 }

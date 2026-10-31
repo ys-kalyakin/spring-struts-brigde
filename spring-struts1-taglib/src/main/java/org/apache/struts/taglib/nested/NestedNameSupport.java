@@ -36,12 +36,12 @@ public interface NestedNameSupport extends NestedPropertySupport {
      *
      * @return String value of the tags' name property
      */
-    public String getName();
+    String getName();
 
     /**
      * The setter for the <i>name</i> property
      *
      * @param newNamed new String value to set the name property to
      */
-    public void setName(String newNamed);
+    void setName(String newNamed);
 }

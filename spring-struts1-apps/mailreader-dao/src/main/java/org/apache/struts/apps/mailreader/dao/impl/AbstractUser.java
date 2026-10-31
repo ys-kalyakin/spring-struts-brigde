@@ -228,7 +228,7 @@ public abstract class AbstractUser implements User {
 
         if (!(this == subscription.getUser())) {
             throw new IllegalArgumentException
-                ("Subscription not associated with this user");
+            ("Subscription not associated with this user");
         }
         synchronized (subscriptions) {
             subscriptions.remove(subscription.getHost());

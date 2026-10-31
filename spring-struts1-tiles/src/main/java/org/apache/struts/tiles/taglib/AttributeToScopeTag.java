@@ -45,9 +45,8 @@ public  final  class  AttributeToScopeTag  extends  TagSupport  {
     /**
      * Return the property name.
      */
-    public String getProperty()
-    {
-    return  (this.property);
+    public String getProperty() {
+        return  (this.property);
     }
 
 
@@ -56,9 +55,8 @@ public  final  class  AttributeToScopeTag  extends  TagSupport  {
        *
        *  @param  property  The  property  name
        */
-    public  void  setProperty(String  property)
-    {
-    this.property  =  property;
+    public  void  setProperty(String  property) {
+        this.property  =  property;
     }
 
     /**
@@ -66,9 +64,8 @@ public  final  class  AttributeToScopeTag  extends  TagSupport  {
       *
       *  @param  scope  The  new  scope
       */
-    public  void  setScope(String  scope)
-    {
-    this.scopeName  =  scope;
+    public  void  setScope(String  scope) {
+        this.scopeName  =  scope;
     }
 
         //  ---------------------------------------------------------  Public  Methods
@@ -79,31 +76,33 @@ public  final  class  AttributeToScopeTag  extends  TagSupport  {
           *
           *  @exception  JspException  if  a  JSP  exception  has  occurred
           */
-    public  int  doStartTag()  throws  JspException
-        {
-        if(  id==null  )
-            id=property;
+    public  int  doStartTag()  throws  JspException {
+        if (id == null) id = property;
 
-        ComponentContext  compContext  =  (ComponentContext)pageContext.getAttribute(  ComponentConstants.COMPONENT_CONTEXT,  PageContext.REQUEST_SCOPE);
+        ComponentContext  compContext  =  (ComponentContext)pageContext.getAttribute(
+                ComponentConstants.COMPONENT_CONTEXT,  PageContext.REQUEST_SCOPE);
 
-        if(  compContext  ==  null  )
-            throw  new  JspException  (  "Error  -  tag.useProperty  :  component  context  is  not  defined.  Check  tag  syntax"  );
+        if (compContext  ==  null) {
+            throw  new  JspException  ("Error  -  tag.useProperty  :  component  context  is  not"
+                    +  "  defined.  Check  tag  syntax");
+        }
 
         Object  value  =  compContext.getAttribute(property);
-        if(  value  ==  null  )
-            throw  new  JspException  (  "Error  -  tag.useProperty  :  property  '"+  property  +  "'  not  found  in  context.  Check  tag  syntax"  );
+        if (value  ==  null) {
+            throw  new  JspException  ("Error  -  tag.useProperty  :  property  '" +  property
+                    +  "'  not  found  in  context.  Check  tag  syntax");
+        }
 
-        if(  scopeName  !=  null  )
-            {
-            scope  =  TagUtils.getScope(  scopeName,  PageContext.PAGE_SCOPE  );
+        if (scopeName  !=  null) {
+            scope  =  TagUtils.getScope(scopeName,  PageContext.PAGE_SCOPE);
             pageContext.setAttribute(id,  value,  scope);
-            }
-          else
+        } else {
             pageContext.setAttribute(id,  value);
+        }
 
           //  Continue  processing  this  page
         return  SKIP_BODY;
-        }
+    }
 
 
 
@@ -113,20 +112,19 @@ public  final  class  AttributeToScopeTag  extends  TagSupport  {
           *
           *  @exception  JspException  if  a  JSP  exception  has  occurred
           */
-    public  int  doEndTag()  throws  JspException
-        {
+    public  int  doEndTag()  throws  JspException {
         return  (EVAL_PAGE);
-        }
+    }
 
         /**
           *  Release  all  allocated  resources.
           */
-        public  void  release()  {
+    public  void  release()  {
 
-                super.release();
-                property  =  null;
-                scopeName  =  null;
-                scope  =  PageContext.PAGE_SCOPE;
-        }
+        super.release();
+        property  =  null;
+        scopeName  =  null;
+        scope  =  PageContext.PAGE_SCOPE;
+    }
 
 }

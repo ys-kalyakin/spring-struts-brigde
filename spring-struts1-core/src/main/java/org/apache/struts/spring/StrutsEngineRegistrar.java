@@ -10,7 +10,6 @@ import java.util.TreeMap;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.UnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

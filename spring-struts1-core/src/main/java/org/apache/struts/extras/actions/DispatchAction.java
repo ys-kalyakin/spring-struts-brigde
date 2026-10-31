@@ -63,10 +63,10 @@ public abstract class DispatchAction extends BaseAction {
      */
     protected Class<?>[] types =
         {
-            ActionMapping.class,
-            ActionForm.class,
-            HttpServletRequest.class,
-            HttpServletResponse.class
+        ActionMapping.class,
+        ActionForm.class,
+        HttpServletRequest.class,
+        HttpServletResponse.class
         };
 
     /**

@@ -33,8 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <p> Matches paths against pre-compiled wildcard expressions pulled from
- * action configs. It uses the wildcard matcher from the Apache Cocoon
+ * <p> Matches paths against pre-compiled WILDCARD expressions pulled from
+ * action configs. It uses the WILDCARD matcher from the Apache Cocoon
  * project. Patterns will be matched in the order they exist in the Struts
  * config file. The last match wins, so more specific patterns should be
  * defined after less specific patterns.
@@ -47,13 +47,13 @@ public class ActionConfigMatcher implements Serializable {
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(ActionConfigMatcher.class);
 
     /**
-     * <p> Handles all wildcard pattern matching. </p>
+     * <p> Handles all WILDCARD pattern matching. </p>
      */
-    private static final WildcardHelper wildcard = new WildcardHelper();
+    private static final WildcardHelper WILDCARD = new WildcardHelper();
 
     /**
      * <p> The compiled paths and their associated ActionConfig's </p>
@@ -61,10 +61,10 @@ public class ActionConfigMatcher implements Serializable {
     private ArrayList<Mapping> compiledPaths;
 
     /**
-     * <p> Finds and precompiles the wildcard patterns from the ActionConfig
+     * <p> Finds and precompiles the WILDCARD patterns from the ActionConfig
      * "path" attributes. ActionConfig's will be evaluated in the order they
      * exist in the Struts config file. Only paths that actually contain a
-     * wildcard will be compiled. </p>
+     * WILDCARD will be compiled. </p>
      *
      * @param configs An array of ActionConfig's to process
      */
@@ -84,14 +84,14 @@ public class ActionConfigMatcher implements Serializable {
 
                 log.debug("Compiling action config path '{}'", path);
 
-                pattern = wildcard.compilePattern(path);
+                pattern = WILDCARD.compilePattern(path);
                 compiledPaths.add(new Mapping(pattern, configs[x]));
             }
         }
     }
 
     /**
-     * <p> Matches the path against the compiled wildcard patterns. </p>
+     * <p> Matches the path against the compiled WILDCARD patterns. </p>
      *
      * @param path The portion of the request URI for selecting a config.
      * @return The action config if matched, else null
@@ -100,7 +100,7 @@ public class ActionConfigMatcher implements Serializable {
         ActionConfig config = null;
 
         if (compiledPaths.size() > 0) {
-            log.debug("Attempting to match '{}' to a wildcard pattern",
+            log.debug("Attempting to match '{}' to a WILDCARD pattern",
                 path);
 
             if ((path.length() > 0) && (path.charAt(0) == '/')) {
@@ -110,7 +110,7 @@ public class ActionConfigMatcher implements Serializable {
             HashMap<String, String> vars = new HashMap<>();
 
             for (Mapping m : compiledPaths) {
-                if (wildcard.match(vars, path, m.getPattern())) {
+                if (WILDCARD.match(vars, path, m.getPattern())) {
                     log.debug("Path matches pattern '{}'",
                         m.getActionConfig().getPath());
 
@@ -133,13 +133,13 @@ public class ActionConfigMatcher implements Serializable {
 
     /**
      * <p> Clones the ActionConfig and its children, replacing various
-     * properties with the values of the wildcard-matched strings. </p>
+     * properties with the values of the WILDCARD-matched strings. </p>
      *
      * @param path The requested path
      * @param orig The original ActionConfig
-     * @param vars A Map of wildcard-matched strings
+     * @param vars A Map of WILDCARD-matched strings
      * @return A cloned ActionConfig with appropriate properties replaced with
-     *         wildcard-matched values
+     *         WILDCARD-matched values
      * @throws IllegalStateException if a placeholder substitution is
      * impossible due to recursion
      */
@@ -216,7 +216,7 @@ public class ActionConfigMatcher implements Serializable {
      *
      * @param orig  The original properties set with placehold values
      * @param props The target properties to store the processed values
-     * @param vars  A Map of wildcard-matched strings
+     * @param vars  A Map of WILDCARD-matched strings
      * @throws IllegalStateException if a placeholder substitution is
      * impossible due to recursion
      */
@@ -228,11 +228,11 @@ public class ActionConfigMatcher implements Serializable {
     }
 
     /**
-     * <p> Inserts into a value wildcard-matched strings where specified.
+     * <p> Inserts into a value WILDCARD-matched strings where specified.
      * </p>
      *
      * @param val  The value to convert
-     * @param vars A Map of wildcard-matched strings
+     * @param vars A Map of WILDCARD-matched strings
      * @return The new value
      * @throws IllegalStateException if a placeholder substitution is
      * impossible due to recursion
@@ -270,10 +270,10 @@ public class ActionConfigMatcher implements Serializable {
     }
 
     /**
-     * <p> Stores a compiled wildcard pattern and the ActionConfig it came
+     * <p> Stores a compiled WILDCARD pattern and the ActionConfig it came
      * from. </p>
      */
-    private class Mapping implements Serializable {
+    private static class Mapping implements Serializable {
         private static final long serialVersionUID = -4524356639556048603L;
 
         /**
@@ -292,13 +292,13 @@ public class ActionConfigMatcher implements Serializable {
          * @param pattern The compiled pattern
          * @param config  The original ActionConfig
          */
-        public Mapping(int[] pattern, ActionConfig config) {
+        Mapping(int[] pattern, ActionConfig config) {
             this.pattern = pattern;
             this.config = config;
         }
 
         /**
-         * <p> Gets the compiled wildcard pattern. </p>
+         * <p> Gets the compiled WILDCARD pattern. </p>
          *
          * @return The compiled pattern
          */

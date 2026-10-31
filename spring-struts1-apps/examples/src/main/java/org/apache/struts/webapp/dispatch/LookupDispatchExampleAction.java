@@ -72,7 +72,7 @@ public class LookupDispatchExampleAction extends LookupDispatchAction {
         fooCount++;
 
         ActionMessages messages = new ActionMessages();
-        messages.add("foo", new ActionMessage("count.foo.message", fooCount+""));
+        messages.add("foo", new ActionMessage("count.foo.message", fooCount + ""));
         saveMessages(request, messages);
 
         return (mapping.findForward("success"));
@@ -97,7 +97,7 @@ public class LookupDispatchExampleAction extends LookupDispatchAction {
         barCount++;
 
         ActionMessages messages = new ActionMessages();
-        messages.add("bar", new ActionMessage("count.bar.message", barCount+""));
+        messages.add("bar", new ActionMessage("count.bar.message", barCount + ""));
         saveMessages(request, messages);
 
         return (mapping.findForward("success"));

@@ -49,11 +49,6 @@ public class HeaderTag extends SpringTagSupport {
 
     // ------------------------------------------------------------- Properties
 
-    /**
-     * The name of the scripting variable that will be exposed as a page scope
-     * attribute.
-     */
-    protected String id = null;
 
     /**
      * Return an array of header values if <code>multiple</code> is non-null.

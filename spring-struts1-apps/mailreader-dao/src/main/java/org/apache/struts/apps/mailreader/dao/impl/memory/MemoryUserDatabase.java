@@ -28,16 +28,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 
 import org.apache.commons.digester.Digester;
-import org.apache.commons.digester.ObjectCreationFactory;
 import org.apache.struts.apps.mailreader.dao.Subscription;
 import org.apache.struts.apps.mailreader.dao.User;
 import org.apache.struts.apps.mailreader.dao.UserDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
 
 
 /**
@@ -61,7 +60,7 @@ public final class MemoryUserDatabase implements UserDatabase {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(MemoryUserDatabase.class);
 
 
@@ -70,7 +69,7 @@ public final class MemoryUserDatabase implements UserDatabase {
      */
     private HashMap<String, MemoryUser> users = new HashMap<>();
 
-    private boolean open = false;
+    private volatile boolean open = false;
 
 
     // ------------------------------------------------------------- Properties
@@ -159,12 +158,10 @@ public final class MemoryUserDatabase implements UserDatabase {
             Digester digester = new Digester();
             digester.push(this);
             digester.setValidating(false);
-            digester.addFactoryCreate
-                ("database/user",
-                 new MemoryUserCreationFactory(this));
-            digester.addFactoryCreate
-                ("database/user/subscription",
-                 new MemorySubscriptionCreationFactory());
+            digester.addFactoryCreate("database/user",
+                new MemoryUserCreationFactory(this));
+            digester.addFactoryCreate("database/user/subscription",
+                new MemorySubscriptionCreationFactory());
 
             // Parse the input stream to initialize our database
             digester.parse(bis);
@@ -185,7 +182,7 @@ public final class MemoryUserDatabase implements UserDatabase {
 
         if (!(this == user.getDatabase())) {
             throw new IllegalArgumentException
-                ("User not associated with this database");
+            ("User not associated with this database");
         }
         LOG.trace("Removing user '{}'", user.getUsername());
         synchronized (users) {
@@ -204,18 +201,18 @@ public final class MemoryUserDatabase implements UserDatabase {
 
         // Configure our PrintWriter
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(
-                new FileOutputStream(fileNew)))) {
+                new FileOutputStream(fileNew), Charset.defaultCharset()))) {
 
             // Print the file prolog
             writer.println("<?xml version='1.0'?>");
             writer.println("<database>");
 
             // Print entries for each defined user and associated subscriptions
-            User yusers[] = findUsers();
+            User []yusers  = findUsers();
             for (int i = 0; i < yusers.length; i++) {
                 writer.print("  ");
                 writer.println(yusers[i]);
-                Subscription subscriptions[] =
+                Subscription []subscriptions  =
                     yusers[i].getSubscriptions();
                 for (int j = 0; j < subscriptions.length; j++) {
                     writer.print("    ");
@@ -233,7 +230,7 @@ public final class MemoryUserDatabase implements UserDatabase {
             // Check for errors that occurred while printing
             if (writer.checkError()) {
                 throw new IOException
-                    ("Saving database to '" + pathname + "'");
+                ("Saving database to '" + pathname + "'");
             }
 
         } catch (IOException e) {
@@ -243,8 +240,8 @@ public final class MemoryUserDatabase implements UserDatabase {
 
         } finally {
 
-            if (delFileNew) {
-                fileNew.delete();
+            if (delFileNew && !fileNew.delete()) {
+                LOG.warn("Could not delete temporary file {}", fileNew);
             }
 
         }
@@ -254,20 +251,24 @@ public final class MemoryUserDatabase implements UserDatabase {
         File fileOrig = new File(pathname);
         File fileOld = new File(pathnameOld);
         if (fileOrig.exists()) {
-            fileOld.delete();
+            if (!fileOld.delete()) {
+                LOG.warn("Could not delete old backup file {}", fileOld);
+            }
             if (!fileOrig.renameTo(fileOld)) {
                 throw new IOException
-                    ("Renaming '" + pathname + "' to '" + pathnameOld + "'");
+                ("Renaming '" + pathname + "' to '" + pathnameOld + "'");
             }
         }
         if (!fileNew.renameTo(fileOrig)) {
-            if (fileOld.exists()) {
-                fileOld.renameTo(fileOrig);
+            if (fileOld.exists() && !fileOld.renameTo(fileOrig)) {
+                LOG.warn("Could not restore backup file {}", fileOld);
             }
             throw new IOException
-                ("Renaming '" + pathnameNew + "' to '" + pathname + "'");
+            ("Renaming '" + pathnameNew + "' to '" + pathname + "'");
         }
-        fileOld.delete();
+        if (!fileOld.delete()) {
+            LOG.warn("Could not delete old backup file {}", fileOld);
+        }
 
     }
 
@@ -277,75 +278,3 @@ public final class MemoryUserDatabase implements UserDatabase {
 
 }
 
-
-/**
- * Digester object creation factory for subscription instances.
- */
-class MemorySubscriptionCreationFactory implements ObjectCreationFactory {
-    // Digester3: Subscription
-
-    private Digester digester = null;
-
-    public Digester getDigester() {
-        return (this.digester);
-    }
-
-    public void setDigester(Digester digester) {
-        this.digester = digester;
-    }
-
-    public Subscription createObject(Attributes attributes) {
-        String host = attributes.getValue("host");
-        User user = (User) digester.peek();
-        Subscription subscription = user.createSubscription(host);
-        String autoConnect = attributes.getValue("autoConnect");
-        if (autoConnect == null) {
-            autoConnect = "false";
-        }
-        if ("true".equalsIgnoreCase(autoConnect) ||
-            "yes".equalsIgnoreCase(autoConnect)) {
-            subscription.setAutoConnect(true);
-        } else {
-            subscription.setAutoConnect(false);
-        }
-        subscription.setPassword(attributes.getValue("password"));
-        subscription.setType(attributes.getValue("type"));
-        subscription.setUsername(attributes.getValue("username"));
-        return (subscription);
-    }
-
-}
-
-
-/**
- * Digester object creation factory for user instances.
- */
-class MemoryUserCreationFactory implements ObjectCreationFactory {
-    // Digester3: User
-
-    public MemoryUserCreationFactory(MemoryUserDatabase database) {
-        this.database = database;
-    }
-
-    private MemoryUserDatabase database = null;
-
-    private Digester digester = null;
-
-    public Digester getDigester() {
-        return (this.digester);
-    }
-
-    public void setDigester(Digester digester) {
-        this.digester = digester;
-    }
-
-    public User createObject(Attributes attributes) {
-        String username = attributes.getValue("username");
-        User user = database.createUser(username);
-        user.setFromAddress(attributes.getValue("fromAddress"));
-        user.setFullName(attributes.getValue("fullName"));
-        user.setPassword(attributes.getValue("password"));
-        user.setReplyToAddress(attributes.getValue("replyToAddress"));
-        return (user);
-    }
-}

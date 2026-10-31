@@ -245,7 +245,7 @@ public class ReloadableDefinitionsFactory implements org.apache.struts.tiles.Com
      * Object of this class is an HashMap containing parameters and values
      * defined in the servlet config file (web.xml).
      */
-    class ServletPropertiesMap extends HashMap<String, Object> {
+    static class ServletPropertiesMap extends HashMap<String, Object> {
         private static final long serialVersionUID = -1834721489197689992L;
 
         /**

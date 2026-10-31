@@ -20,19 +20,21 @@ public final class UseAttributeTei extends TagExtraInfo {
      */
     public VariableInfo[] getVariableInfo(TagData data) {
 
-      String classname = data.getAttributeString("classname");
-      if( classname == null )
-        classname = "java.lang.Object";
-      String id = data.getAttributeString("id");
-      if( id == null )
-        id = data.getAttributeString("name");
+        String classname = data.getAttributeString("classname");
+        if (classname == null) {
+            classname = "java.lang.Object";
+        }
+        String id = data.getAttributeString("id");
+        if (id == null) {
+            id = data.getAttributeString("name");
+        }
 
-      return new VariableInfo[] {
-      new VariableInfo(id,
+        return new VariableInfo[] {
+            new VariableInfo(id,
                        classname,
                        true,
                        VariableInfo.AT_END)
-  };
+        };
 
     }
 

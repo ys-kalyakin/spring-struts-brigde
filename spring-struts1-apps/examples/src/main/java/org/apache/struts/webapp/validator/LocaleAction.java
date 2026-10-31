@@ -50,7 +50,7 @@ public final class LocaleAction extends Action {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(LocaleAction.class);
 
     /**
@@ -84,17 +84,17 @@ public final class LocaleAction extends Action {
                  ActionForm form,
                  HttpServletRequest request,
                  HttpServletResponse response)
-    throws Exception {
+        throws Exception {
 
     // Extract attributes we will need
-    HttpSession session = request.getSession();
-    Locale locale = getLocale(request);
+        HttpSession session = request.getSession();
+        Locale locale = getLocale(request);
 
-    String language = null;
-    String country = null;
-    String page = null;
+        String language = null;
+        String country = null;
+        String page = null;
 
-    try {
+        try {
             language = (String)
               PropertyUtils.getSimpleProperty(form, "language");
             country = (String)
@@ -102,19 +102,19 @@ public final class LocaleAction extends Action {
             page = (String)
               PropertyUtils.getSimpleProperty(form, "page");
         } catch (Exception e) {
-           LOG.error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
         }
 
         if ((language != null && language.length() > 0) &&
             (country != null && country.length() > 0)) {
-           locale = new Locale(language, country);
+            locale = new Locale(language, country);
         } else if (language != null && language.length() > 0) {
-           locale = new Locale(language);
-    }
+            locale = new Locale(language);
+        }
 
         session.setAttribute(Globals.LOCALE_KEY, locale);
 
-        if (null==page || page.isEmpty()) return mapping.findForward("success");
+        if (null == page || page.isEmpty()) return mapping.findForward("success");
         else return new ActionForward(page);
 
     }

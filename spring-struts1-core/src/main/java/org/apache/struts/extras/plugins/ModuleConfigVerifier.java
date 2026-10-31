@@ -75,7 +75,7 @@ public class ModuleConfigVerifier implements PlugIn {
      * <p>Receive notification that our owning module is being shut down.</p>
      */
     public void destroy() {
-        ; // No action required
+         // No action required
     }
 
     // See interface for Javadoc.

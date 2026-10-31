@@ -44,7 +44,7 @@ import jakarta.servlet.jsp.JspException;
  * @since Struts 1.1
  */
 public class FrameTag extends LinkTag {
-private static final long serialVersionUID = -3149862407102709639L;
+    private static final long serialVersionUID = -3149862407102709639L;
 
     // ------------------------------------------------------------- Properties
 

@@ -55,7 +55,7 @@ public final class RegistrationAction extends BaseAction {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(RegistrationAction.class);
 
     // --- Public Constants --
@@ -65,28 +65,28 @@ public final class RegistrationAction extends BaseAction {
      * Name of fromAddress field ["fromAddress"].
      * </p>
      */
-    public final static String FROM_ADDRESS = "fromAddress";
+    public static final String FROM_ADDRESS = "fromAddress";
 
     /**
      * <p>
      * Name of fullName field ["fullName"].
      * </p>
      */
-    public final static String FULL_NAME = "fullName";
+    public static final String FULL_NAME = "fullName";
 
     /**
      * <p>
      * Name of password confirmation field ["password2"].
      * </p>
      */
-    public final static String PASSWORD2 = "password2";
+    public static final String PASSWORD2 = "password2";
 
     /**
      * <p>
      * Name of replyToAddress field ["replyToAddress"].
      * </p>
      */
-    public final static String REPLY_TO_ADDRESS = "replyToAddress";
+    public static final String REPLY_TO_ADDRESS = "replyToAddress";
 
     // ---- Private Methods ----
 
@@ -95,7 +95,7 @@ public final class RegistrationAction extends BaseAction {
      * The message prefix to use when populating a Registration Form.
      * </p>
      */
-    final String LOG_REGISTRATION_POPULATE = "RegistrationForm.populate";
+    private static final String LOG_REGISTRATION_POPULATE = "RegistrationForm.populate";
 
     /**
      * <p>
@@ -138,8 +138,7 @@ public final class RegistrationAction extends BaseAction {
             if (database.findUser(username) != null) {
                 errorUsernameUnique(username, errors);
             }
-        }
-        catch (ExpiredPasswordException e) {
+        } catch (ExpiredPasswordException e) {
             errorUsernameUnique(username, errors);
             errors.add("errors.literal", new ActionMessage(e.getMessage()));
         }

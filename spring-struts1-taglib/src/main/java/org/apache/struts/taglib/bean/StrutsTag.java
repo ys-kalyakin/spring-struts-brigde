@@ -46,11 +46,6 @@ public class StrutsTag extends SpringTagSupport {
 
     // ------------------------------------------------------------- Properties
 
-    /**
-     * The name of the scripting variable that will be exposed as a page scope
-     * attribute.
-     */
-    protected String id = null;
 
     /**
      * The name of the <code>ActionFormBean</code> object to be exposed.

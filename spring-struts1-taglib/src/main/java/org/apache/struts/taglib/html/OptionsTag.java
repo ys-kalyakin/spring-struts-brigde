@@ -241,9 +241,8 @@ public class OptionsTag extends SpringTagSupport {
                 addOption(sb, stringValue, label.toString(),
                     selectTag.isMatched(stringValue));
             }
-        }
         // Otherwise, use the separate iterators mode to render options
-        else {
+        } else {
             // Construct iterators for the values and labels collections
             Iterator<?> valuesIterator = getIterator(name, property);
             Iterator<?> labelsIterator = null;

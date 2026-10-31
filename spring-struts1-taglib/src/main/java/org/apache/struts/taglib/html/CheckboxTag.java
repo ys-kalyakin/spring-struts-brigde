@@ -162,8 +162,8 @@ public class CheckboxTag extends BaseHandlerTag {
         String checked = (String) result;
 
         return (checked.equalsIgnoreCase(this.value)
-        || checked.equalsIgnoreCase("true") || checked.equalsIgnoreCase("yes")
-        || checked.equalsIgnoreCase("on"));
+            || checked.equalsIgnoreCase("true") || checked.equalsIgnoreCase("yes")
+            || checked.equalsIgnoreCase("on"));
     }
 
     /**

@@ -50,7 +50,7 @@ public interface UserDatabase {
      * @exception IllegalArgumentException if the specified username
      *  is not unique
      */
-    public User createUser(String username);
+    User createUser(String username);
 
 
     /**
@@ -58,7 +58,7 @@ public interface UserDatabase {
      *
      * @exception Exception if a database access error occurs
      */
-    public void close() throws Exception;
+    void close() throws Exception;
 
 
     /**
@@ -69,13 +69,13 @@ public interface UserDatabase {
      * @throws ExpiredPasswordException if user password has expired
      * and must be changed
      */
-    public User findUser(String username) throws ExpiredPasswordException;
+    User findUser(String username) throws ExpiredPasswordException;
 
 
     /**
      * <p>Return the set of {@link User}s defined in this user database.</p>
      */
-    public User[] findUsers();
+    User[] findUsers();
 
 
     /**
@@ -83,7 +83,7 @@ public interface UserDatabase {
      *
      * @exception Exception if a database access error occurs
      */
-    public boolean isOpen();
+    boolean isOpen();
 
 
     /**
@@ -91,7 +91,7 @@ public interface UserDatabase {
      *
      * @exception Exception if a database access error occurs
      */
-    public void open() throws Exception;
+    void open() throws Exception;
 
 
     /**
@@ -102,7 +102,7 @@ public interface UserDatabase {
      * @exception IllegalArgumentException if the specified user is not
      *  associated with this database
      */
-    public void removeUser(User user);
+    void removeUser(User user);
 
 
     /**
@@ -110,7 +110,7 @@ public interface UserDatabase {
      *
      * @exception Exception if a database access error occurs
      */
-    public void save() throws Exception;
+    void save() throws Exception;
 
 
 }

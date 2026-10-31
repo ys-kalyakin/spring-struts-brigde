@@ -44,7 +44,7 @@ public final class EditTypeAction extends Action {
     /**
      * The {@code Log} instance for this class.
      */
-    private final static Logger LOG =
+    private static final Logger LOG =
         LoggerFactory.getLogger(EditTypeAction.class);
 
     /**

@@ -102,6 +102,9 @@ public class ValidWhenEvaluator extends ValidWhenBaseVisitor<ValidWhenResult<?>>
             case ValidWhenParser.ORSIGN:
                 ret = b1 || b2;
                 break;
+            default:
+                // unreachable: the grammar only produces ANDSIGN or ORSIGN here
+                break;
         }
 
         return new ValidWhenResultBoolean(ret);

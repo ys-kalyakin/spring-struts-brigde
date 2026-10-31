@@ -23,6 +23,7 @@ package org.apache.struts.webapp.upload;
 
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,8 +50,7 @@ import org.apache.struts.upload.FormFile;
  */
 
 
-public class UploadAction extends Action
-{
+public class UploadAction extends Action {
     private static final long serialVersionUID = 6492050366211798185L;
 
     public ActionForward execute(ActionMapping mapping,
@@ -64,8 +64,7 @@ public class UploadAction extends Action
             //this line is here for when the input page is upload-utf8.jsp,
             //it sets the correct character encoding for the response
             String encoding = request.getCharacterEncoding();
-            if ((encoding != null) && (encoding.equalsIgnoreCase("utf-8")))
-            {
+            if ((encoding != null) && (encoding.equalsIgnoreCase("utf-8"))) {
                 response.setContentType("text/html; charset=utf-8");
             }
 
@@ -93,7 +92,7 @@ public class UploadAction extends Action
             }
 
             //retrieve the file name
-            String fileName= file.getFileName();
+            String fileName = file.getFileName();
 
             //retrieve the content type
             String contentType = file.getContentType();
@@ -109,7 +108,7 @@ public class UploadAction extends Action
                 //retrieve the file data
                 if (!writeFile) {
                     //only write files out that are less than 4MB
-                    if (file.getFileLength() < (4*1024000)) {
+                    if (file.getFileLength() < (4 * 1024000)) {
 
                         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                             byte[] buffer = new byte[8192];
@@ -117,14 +116,14 @@ public class UploadAction extends Action
                             while ((bytesRead = stream.read(buffer, 0, 8192)) != -1) {
                                 baos.write(buffer, 0, bytesRead);
                             }
-                            data = new String(baos.toByteArray());
+                            data = new String(baos.toByteArray(), Charset.defaultCharset());
                         }
                     } else {
-                        data = new String("The file is greater than 4MB, " +
+                        data = "The file is greater than 4MB, " +
                                 " and has not been written to stream." +
                                 " File Size: " + file.getFileLength() + " bytes. This is a" +
                                 " limitation of this particular web application, hard-coded" +
-                                " in org.apache.struts.webapp.upload.UploadAction");
+                                " in org.apache.struts.webapp.upload.UploadAction";
                     }
                 } else {
                     //write the file to the file specified

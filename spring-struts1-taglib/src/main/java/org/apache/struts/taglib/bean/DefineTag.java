@@ -42,7 +42,7 @@ public class DefineTag extends SpringBodyTagSupport {
     /**
      * The {@code Log} instance for this class.
      */
-    private transient final Logger log =
+    private final transient Logger log =
         LoggerFactory.getLogger(DefineTag.class);
 
     // ---------------------------------------------------- Protected variables
@@ -61,11 +61,6 @@ public class DefineTag extends SpringBodyTagSupport {
 
     // ------------------------------------------------------------- Properties
 
-    /**
-     * The name of the scripting variable that will be exposed as a page scope
-     * attribute.
-     */
-    protected String id = null;
 
     /**
      * The name of the bean owning the property to be exposed.
@@ -176,10 +171,9 @@ public class DefineTag extends SpringBodyTagSupport {
 
             if (body != null) {
                 body = body.trim();
-            }
-
-            if (body.length() < 1) {
-                body = null;
+                if (body.length() < 1) {
+                    body = null;
+                }
             }
         }
 

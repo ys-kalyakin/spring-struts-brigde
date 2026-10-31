@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs exclusion policy for spring-struts1 (design D5, change add-checkstyle-spotbugs).
+
+  Rules of this file:
+  - Prefer fixing over excluding: an exclusion is only acceptable when a fix
+    would change the Struts 1 public API or observable behavior, or when the
+    analyzed code is generated.
+  - Every <Match> carries a written rationale (see spec: Documented exclusions
+    only) and is scoped as tightly as possible (pattern + class/package).
+
+  The recreated Struts 1 API (packages org.apache.struts.*) is a faithful port
+  of weblegacy/struts1 1.5.x: its contract passes and returns live mutable
+  objects, keeps non-final shared static fields, and uses lock-visible
+  synchronization. Making those things defensive-copied, final, or re-locked
+  would break the drop-in compatibility this project exists to provide, so
+  those pattern families are excluded for the ported packages. The test
+  applications under the examples/mailreader packages are ports of the
+  upstream applications and follow the same conventions.
+-->
+<FindBugsFilter>
+
+  <!-- ANTLR-generated validwhen parser: generated from the weblegacy grammar
+       (spring-struts1-core/src/main/antlr4), never hand-edited. Class-level
+       scoping keeps the hand-written classes of the same package checked. -->
+  <Match>
+    <Or>
+      <Class name="~org\.apache\.struts\.validator\.validwhen\.ValidWhenLexer(\$.*)?"/>
+      <Class name="~org\.apache\.struts\.validator\.validwhen\.ValidWhenParser(\$.*)?"/>
+      <Class name="~org\.apache\.struts\.validator\.validwhen\.ValidWhenVisitor(\$.*)?"/>
+      <Class name="~org\.apache\.struts\.validator\.validwhen\.ValidWhenBaseVisitor(\$.*)?"/>
+    </Or>
+  </Match>
+
+  <!-- JMH annotation-processor harness: generated benchmark infrastructure
+       (spring-struts1-benchmarks), never hand-edited. -->
+  <Match>
+    <Package name="~.*\.jmh_generated"/>
+  </Match>
+
+  <!-- Struts 1 API contract: configuration objects, forms, messages and
+       results are deliberately shared as live mutable objects between the
+       engine, the tag libraries and the application. Defensive copies would
+       change observable behavior of the recreated API. -->
+  <Match>
+    <Or>
+      <Bug pattern="EI_EXPOSE_REP"/>
+      <Bug pattern="EI_EXPOSE_REP2"/>
+      <Bug pattern="EI_EXPOSE_STATIC_REP2"/>
+      <Bug pattern="MS_EXPOSE_REP"/>
+    </Or>
+    <Or>
+      <Package name="~org\.apache\.struts\..*"/>
+      <Package name="~examples(\..*)?"/>
+    </Or>
+  </Match>
+
+  <!-- Upstream declares shared static fields non-final and public where the
+       recreated API must stay overridable/reassignable by subclasses
+       (MessageResources holders, factory singletons, tag message bundles).
+       Making them final or package-private would constrain the public API. -->
+  <Match>
+    <Or>
+      <Bug pattern="MS_SHOULD_BE_FINAL"/>
+      <Bug pattern="MS_PKGPROTECT"/>
+    </Or>
+    <Or>
+      <Package name="~org\.apache\.struts\..*"/>
+      <Package name="~examples(\..*)?"/>
+    </Or>
+  </Match>
+
+  <!-- Upstream synchronization is part of the observable contract: the
+       TokenProcessor and MessageResources monitors are reachable objects whose
+       lock identity external code may rely on; re-locking on private objects
+       would change locking behavior. -->
+  <Match>
+    <Or>
+      <Bug pattern="USO_UNSAFE_METHOD_SYNCHRONIZATION"/>
+      <Bug pattern="USO_UNSAFE_STATIC_METHOD_SYNCHRONIZATION"/>
+    </Or>
+    <Class name="~org\.apache\.struts\.(util\.TokenProcessor|util\.MessageResources)"/>
+  </Match>
+
+  <!-- Upstream singletons keep non-private constructors (TokenProcessor,
+       ModuleUtils, TagUtils) so that subclasses can hook the framework;
+       privatizing them would be an API change. -->
+  <Match>
+    <Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
+    <Or>
+      <Class name="~org\.apache\.struts\.util\.TokenProcessor"/>
+      <Class name="~org\.apache\.struts\.util\.ModuleUtils"/>
+      <Class name="~org\.apache\.struts\.taglib\.TagUtils"/>
+    </Or>
+  </Match>
+
+  <!-- Upstream constructors validate their configuration and throw
+       (DynaActionFormClass, the tiles definition factories); restructuring
+       them away would change the public construction contract. -->
+  <Match>
+    <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    <Or>
+      <Class name="~org\.apache\.struts\.action\.DynaActionFormClass"/>
+      <Class name="~org\.apache\.struts\.tiles\.definition\.ReloadableDefinitionsFactory"/>
+      <Class name="~org\.apache\.struts\.tiles\.xmlDefinition\.DefinitionsFactory"/>
+      <Class name="~org\.apache\.struts\.tiles\.xmlDefinition\.I18nFactorySet"/>
+    </Or>
+  </Match>
+
+  <!-- Serializable Struts 1 classes hold non-serializable runtime handles
+       (servlet context, session state, datasource) exactly as upstream does;
+       the container serializes what it can and upstream relies on that. -->
+  <Match>
+    <Or>
+      <Bug pattern="SE_BAD_FIELD"/>
+      <Bug pattern="SE_BAD_FIELD_STORE"/>
+      <Bug pattern="SE_INNER_CLASS"/>
+    </Or>
+    <Or>
+      <Class name="~org\.apache\.struts\.action\.ActionServlet"/>
+      <Class name="~org\.apache\.struts\.upload\.CommonsMultipartRequestHandler\$CommonsFormFile"/>
+      <Class name="~org\.apache\.struts\.taglib\.html\.MessagesTag"/>
+      <Class name="~org\.apache\.struts\.taglib\.logic\.IterateTag"/>
+      <Class name="~org\.apache\.struts\.tiles\.ActionController"/>
+    </Or>
+  </Match>
+
+  <!-- The ported mailreader application stores its DAO handle in the session
+       exactly as the upstream application does; the DAO is intentionally
+       non-serializable in this in-memory variant. -->
+  <Match>
+    <Bug pattern="J2EE_STORE_OF_NON_SERIALIZABLE_OBJECT_INTO_SESSION"/>
+    <Package name="~org\.apache\.struts\.apps\.mailreader\.actions"/>
+  </Match>
+
+  <!-- Dispatch method names of the ported mailreader application: the JSP
+       links and action mappings address these methods by their URL-visible
+       names (Edit, Save, Delete); renaming would change runtime dispatch. -->
+  <Match>
+    <Bug pattern="NM_METHOD_NAMING_CONVENTION"/>
+    <Or>
+      <Class name="~org\.apache\.struts\.apps\.mailreader\.actions\.RegistrationAction"/>
+      <Class name="~org\.apache\.struts\.apps\.mailreader\.actions\.SubscriptionAction"/>
+    </Or>
+  </Match>
+
+  <!-- Upstream deliberately catches NullPointerException where a failed
+       lookup is treated as an absent value (ValidatorForm, the ported
+       SubscriptionAction, BaseHandlerTag JSTL probing, TilesUtil); replacing
+       it with typed exceptions would change behavior. -->
+  <Match>
+    <Bug pattern="DCN_NULLPOINTER_EXCEPTION"/>
+    <Or>
+      <Class name="~org\.apache\.struts\.validator\.ValidatorForm"/>
+      <Class name="~org\.apache\.struts\.apps\.mailreader\.actions\.SubscriptionAction"/>
+      <Class name="~org\.apache\.struts\.taglib\.html\.BaseHandlerTag"/>
+      <Class name="~org\.apache\.struts\.tiles\.TilesUtil"/>
+    </Or>
+  </Match>
+
+  <!-- Upstream ActionConfig declares clone() without Cloneable; enabling
+       Cloneable would change the contract (clone() starts succeeding). -->
+  <Match>
+    <Bug pattern="CN_IMPLEMENTS_CLONE_BUT_NOT_CLONEABLE"/>
+    <Class name="~org\.apache\.struts\.config\.ActionConfig"/>
+  </Match>
+
+  <!-- Request-scoped by contract: ActionMessages is created per request and
+       never shared across threads; the upstream counter fields are not
+       synchronized and need not be. -->
+  <Match>
+    <Or>
+      <Bug pattern="AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE"/>
+      <Bug pattern="AT_STALE_THREAD_WRITE_OF_PRIMITIVE"/>
+    </Or>
+    <Class name="~org\.apache\.struts\.action\.ActionMessages"/>
+  </Match>
+
+  <!-- Defensive container-edge handling kept verbatim from upstream or from
+       Spring contracts: getServletPath()/getModuleConfig() results are
+       guarded even where the annotations make the check look redundant, and
+       the upload demo keeps the upstream null-flow for a missing file part. -->
+  <Match>
+    <Or>
+      <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+      <Bug pattern="NP_NULL_ON_SOME_PATH"/>
+      <Bug pattern="NP_LOAD_OF_KNOWN_NULL_VALUE"/>
+      <Bug pattern="NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE"/>
+    </Or>
+    <Or>
+      <Class name="~org\.apache\.struts\.spring\.StrutsHandlerMapping"/>
+      <Class name="~org\.apache\.struts\.webapp\.upload\.UploadAction"/>
+      <Class name="~org\.apache\.struts\.taglib\.bean\.MessageTag"/>
+      <Class name="~org\.apache\.struts\.util\.StrutsConversionService\$ArrayToArrayConverter"/>
+      <Class name="~org\.apache\.struts\.util\.StrutsConversionService\$ScalarToArrayConverter"/>
+    </Or>
+  </Match>
+
+</FindBugsFilter>

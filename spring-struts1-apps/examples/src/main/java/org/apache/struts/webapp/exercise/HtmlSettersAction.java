@@ -58,10 +58,11 @@ public class HtmlSettersAction extends Action {
                                  HttpServletResponse response)
         throws Exception {
 
-        if (isCancelled(request))
+        if (isCancelled(request)) {
             return (mapping.findForward("redirect-default"));
-        else
+        } else {
             return (mapping.findForward("input"));
+        }
 
     }
 }

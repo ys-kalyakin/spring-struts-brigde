@@ -62,24 +62,24 @@ public final class TypeForm extends ValidatorForm implements Serializable {
 
     private List<LabelValueBean> lNames = initNames();
 
-  public String getAction() {
- return action;
-   }
+    public String getAction() {
+        return action;
+    }
 
-   public void setAction(String action) {
-       this.action = action;
-   }
+    public void setAction(String action) {
+        this.action = action;
+    }
 
-  public String getName() {
- return name;
-   }
+    public String getName() {
+        return name;
+    }
 
-   public void setName(String name) {
-       this.name = name;
-   }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-     public String getByte() {
-       return sByte;
+    public String getByte() {
+        return sByte;
     }
 
     public void setByte(String sByte) {
@@ -87,7 +87,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getShort() {
-       return sShort;
+        return sShort;
     }
 
     public void setShort(String sShort) {
@@ -95,7 +95,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getInteger() {
-       return sInteger;
+        return sInteger;
     }
 
     public void setInteger(String sInteger) {
@@ -111,7 +111,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getLong() {
-       return sLong;
+        return sLong;
     }
 
     public void setLong(String sLong) {
@@ -119,7 +119,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getFloat() {
-       return sFloat;
+        return sFloat;
     }
 
     public void setFloat(String sFloat) {
@@ -131,7 +131,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     * @return the float field
     */
     public String getFloatRange() {
-       return sFloatRange;
+        return sFloatRange;
     }
 
    /**
@@ -139,11 +139,11 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     * @param sFloatRange
     */
     public void setFloatRange(String sFloatRange) {
-          this.sFloatRange = sFloatRange;
+        this.sFloatRange = sFloatRange;
     }
 
     public String getDouble() {
-       return sDouble;
+        return sDouble;
     }
 
     public void setDouble(String sDouble) {
@@ -151,7 +151,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getDate() {
-       return sDate;
+        return sDate;
     }
 
     public void setDate(String sDate) {
@@ -159,7 +159,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getCreditCard() {
-       return sCreditCard;
+        return sCreditCard;
     }
 
     public void setCreditCard(String sCreditCard) {
@@ -198,7 +198,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getSatisfaction() {
-       return sSatisfaction;
+        return sSatisfaction;
     }
 
     public void setSatisfaction(String sSatisfaction) {
@@ -206,7 +206,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String[] getOsList() {
-       return sOsList;
+        return sOsList;
     }
 
     public void setOsList(String[] anOsList) {
@@ -214,7 +214,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getOverallSatisfaction() {
-       return sOverallSatisfaction;
+        return sOverallSatisfaction;
     }
 
     public void setOverallSatisfaction(String anOverallSatisfaction) {
@@ -222,7 +222,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String getWouldRecommend() {
-       return sWouldRecommend;
+        return sWouldRecommend;
     }
 
     public void setWouldRecommend(String anWouldRecommend) {
@@ -230,7 +230,7 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public String[] getUsedLanguages() {
-       return sUsedLanguages;
+        return sUsedLanguages;
     }
 
     public void setUsedLanguages(String[] anUsedLanguages) {
@@ -238,11 +238,11 @@ public final class TypeForm extends ValidatorForm implements Serializable {
     }
 
     public List<LabelValueBean> getNameList() {
-       return lNames;
+        return lNames;
     }
 
     public void setNameList(List<LabelValueBean> lNames) {
-       this.lNames = lNames;
+        this.lNames = lNames;
     }
 
     /**
@@ -252,28 +252,30 @@ public final class TypeForm extends ValidatorForm implements Serializable {
      * @param request The servlet request we are processing
      */
     public void reset(ActionMapping mapping, HttpServletRequest request) {
-       String reset = (String)request.getAttribute("typeForm.reset");
-       if ((null != reset)|| ("true".equals(reset))) {
-           action = null;
-           sByte = null;
-           sShort = null;
-           sInteger = null;
-           sIntRange = null;
-           sLong = null;
-           sFloat = null;
-           sFloatRange = null;
-           sDouble = null;
-           sDate = null;
-           sCreditCard = null;
-           sMinMaxLength = null;
-           sEmail = null;
-           sUrl = null;
-           sMask = null;
-           sSatisfaction = null;
-           sOsList = null;
-           sOverallSatisfaction = null;
-           sUsedLanguages = null;
-       }
+        String reset = (String)request.getAttribute("typeForm.reset");
+       // The second clause of the upstream disjunction is provably dead
+       // (only evaluated when reset == null) and is dropped verbatim.
+        if (null != reset) {
+            action = null;
+            sByte = null;
+            sShort = null;
+            sInteger = null;
+            sIntRange = null;
+            sLong = null;
+            sFloat = null;
+            sFloatRange = null;
+            sDouble = null;
+            sDate = null;
+            sCreditCard = null;
+            sMinMaxLength = null;
+            sEmail = null;
+            sUrl = null;
+            sMask = null;
+            sSatisfaction = null;
+            sOsList = null;
+            sOverallSatisfaction = null;
+            sUsedLanguages = null;
+        }
        //lNames = initNames();
     }
 
@@ -282,12 +284,12 @@ public final class TypeForm extends ValidatorForm implements Serializable {
      * @return empty list of LabelValueBeans
     */
     private static List<LabelValueBean> initNames() {
-       List<LabelValueBean> lResults = new ArrayList<>();
+        List<LabelValueBean> lResults = new ArrayList<>();
 
-       for (int i = 0; i < 3; i++) {
-          lResults.add(new LabelValueBean(null, null));
-       }
+        for (int i = 0; i < 3; i++) {
+            lResults.add(new LabelValueBean(null, null));
+        }
 
-       return lResults;
+        return lResults;
     }
 }

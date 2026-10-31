@@ -36,7 +36,7 @@ import org.apache.struts.apps.mailreader.dao.impl.AbstractSubscription;
  * @version $Rev$ $Date$
  * @since Struts 1.1
  */
-public final class MemorySubscription extends AbstractSubscription{
+public final class MemorySubscription extends AbstractSubscription {
 
 
     // ----------------------------------------------------------- Constructors
