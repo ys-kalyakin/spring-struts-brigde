@@ -206,6 +206,18 @@ public class RequestUtils {
                     stripped.substring(0, stripped.length() - suffix.length());
             }
 
+            // CVE-2014-0114 security problem patch
+            if (CLASS_ACCESS_PATTERN.matcher(stripped).matches()) {
+                LOG.trace("ignore parameter: paramName={}", stripped);
+                continue;
+            }
+
+            // Populate parameters, except "standard" struts attributes
+            // such as 'org.apache.struts.action.CANCEL'
+            if (stripped.startsWith("org.apache.struts.")) {
+                continue;
+            }
+
             Object parameterValue = null;
 
             if (isMultipart) {
@@ -216,17 +228,7 @@ public class RequestUtils {
                 parameterValue = request.getParameterValues(name);
             }
 
-            // CVE-2014-0114 security problem patch
-            if (CLASS_ACCESS_PATTERN.matcher(stripped).matches()) {
-                LOG.trace("ignore parameter: paramName={}", stripped);
-                continue;
-            }
-
-            // Populate parameters, except "standard" struts attributes
-            // such as 'org.apache.struts.action.CANCEL'
-            if (!(stripped.startsWith("org.apache.struts."))) {
-                properties.put(stripped, parameterValue);
-            }
+            properties.put(stripped, parameterValue);
         }
 
         // Set the corresponding properties of our bean
@@ -258,8 +260,14 @@ public class RequestUtils {
         }
 
         final FormFile[] formFileValue = (FormFile[]) parameterValue;
-        final Class<?> propertyType =
-            new BeanWrapperImpl(bean).getPropertyType(name);
+        final Class<?> propertyType;
+        try {
+            propertyType = new BeanWrapperImpl(bean).getPropertyType(name);
+        } catch (org.springframework.beans.InvalidPropertyException e) {
+            // an unreadable or malformed property path: leave the value
+            // unchanged
+            return parameterValue;
+        }
 
         if (propertyType == null) {
             return parameterValue;

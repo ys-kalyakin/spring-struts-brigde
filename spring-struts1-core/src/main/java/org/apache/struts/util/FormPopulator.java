@@ -10,6 +10,7 @@ import org.apache.commons.beanutils.DynaProperty;
 import org.apache.commons.beanutils.LazyDynaBean;
 import org.apache.commons.beanutils.LazyDynaClass;
 
+import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.NotWritablePropertyException;
 import org.springframework.beans.NullValueInNestedPathException;
 import org.springframework.beans.BeanWrapper;
@@ -41,7 +42,10 @@ import jakarta.servlet.ServletException;
  * parameter element as a String;</li>
  * <li>assignment proceeds until the first conversion failure, which
  * surfaces as a <code>ServletException</code> with the compatibility
- * message, leaving earlier assignments in place.</li>
+ * message, leaving earlier assignments in place;</li>
+ * <li>a parameter name that uses <code>class</code> as a property name is
+ * skipped silently (CVE-2014-0114), as is a name with an unknown or
+ * unreadable intermediate property of a nested path.</li>
  * </ul>
  */
 final class FormPopulator {
@@ -80,6 +84,9 @@ final class FormPopulator {
         if (segments.isEmpty()) {
             return;
         }
+        if (hasClassAccess(segments)) {
+            return;
+        }
 
         Object target = bean;
         for (int i = 0; i < segments.size() - 1; i++) {
@@ -89,6 +96,25 @@ final class FormPopulator {
             }
         }
         assign(target, segments.get(segments.size() - 1), value);
+    }
+
+    /**
+     * The parameter name navigates through the reserved property name
+     * <code>class</code> (CVE-2014-0114): such access is ignored regardless
+     * of its position — bare, nested, indexed or mapped. The
+     * <code>RequestUtils</code> regex filter blocks the typical forms
+     * before populate; this second layer covers the remaining forms (a bare
+     * <code>class</code>, a trailing <code>x.class</code>, a mapped access)
+     * and direct callers of populate. A property named <code>class</code>
+     * cannot be populated by a request parameter.
+     */
+    private static boolean hasClassAccess(List<Segment> segments) {
+        for (Segment segment : segments) {
+            if ("class".equalsIgnoreCase(segment.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -107,8 +133,9 @@ final class FormPopulator {
         BeanWrapper wrapper = wrapperOf(target);
         try {
             return wrapper.getPropertyValue(segment.getName());
-        } catch (NotWritablePropertyException
-            | NullValueInNestedPathException e) {
+        } catch (InvalidPropertyException e) {
+            // an unknown or unreadable intermediate property: skipped
+            // silently, as the populate spec requires
             return null;
         }
     }
@@ -353,8 +380,7 @@ final class FormPopulator {
         String name) {
         try {
             return wrapper.getPropertyTypeDescriptor(name);
-        } catch (NullValueInNestedPathException
-            | NotWritablePropertyException e) {
+        } catch (InvalidPropertyException e) {
             return null;
         }
     }

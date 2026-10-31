@@ -178,4 +178,19 @@ class RequestUtilsMultipartTest {
         assertNull(form.getMultipartRequestHandler());
     }
 
+    @Test
+    void multipartClassAccessFieldIsIgnored() throws Exception {
+        MockHttpServletRequest request = rawMultipartRequest(1, "class.x");
+        request.setAttribute(Globals.MULTIPART_KEY,
+            "org.apache.struts.upload.CommonsMultipartRequestHandler");
+
+        MultipartForm form = new MultipartForm();
+        RequestUtils.populate(form, request);
+
+        assertEquals("hello", form.getTheText(),
+            "the remaining fields are populated");
+        assertNull(form.getTheFile(),
+            "the class-access field is ignored before type resolution");
+    }
+
 }
