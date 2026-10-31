@@ -29,3 +29,6 @@ target/
 
 # MkDocs site build output
 site/
+
+# ZCode local workspace (slash commands, skills, settings)
+.zcode/
