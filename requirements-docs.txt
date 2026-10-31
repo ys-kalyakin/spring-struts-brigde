@@ -1,0 +1,4 @@
+# Pinned build dependencies for the documentation site (built by .github/workflows/pages.yml).
+# Upgrade deliberately: change the version here, rebuild, and review the rendered diff.
+mkdocs==1.6.1
+mkdocs-material==9.8.0

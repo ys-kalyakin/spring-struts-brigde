@@ -1,6 +1,7 @@
 # spring-struts-bridge
 
 [![CI](https://github.com/ys-kalyakin/spring-struts-brigde/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ys-kalyakin/spring-struts-brigde/actions/workflows/ci.yml)
+[Documentation](https://ys-kalyakin.github.io/spring-struts-brigde/)
 
 A recreation of the **Struts 1** framework on top of modern Spring. An existing Struts 1 application migrates to a current stack by swapping the dependency, adding the Spring Boot starter, and making minimal code changes — annotations on forms and actions so they become Spring beans. The compatibility reference is [weblegacy/struts1](https://github.com/weblegacy/struts1) (the 1.5.x line, `jakarta.*`): its API, TLDs, and test applications serve as the yardstick for this implementation.
 

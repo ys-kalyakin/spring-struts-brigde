@@ -26,3 +26,6 @@ replay_pid*
 # Maven build output
 target/
 .mvn/wrapper/*.jar
+
+# MkDocs site build output
+site/

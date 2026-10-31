@@ -1,32 +1,34 @@
-# Миграция Struts 1 приложения на spring-struts1
+# Migrating a Struts 1 application to spring-struts1
 
-Руководство для существующего приложения Struts 1 (эталон совместимости —
-[weblegacy/struts1](https://github.com/weblegacy/struts1) 1.5.x, линия
-`jakarta.*`). Результат миграции: приложение работает на Spring Boot 4.0.x /
-Spring Framework 7 / embedded Tomcat 11, при этом `struts-config.xml`, JSP,
-тэг-библиотеки и message-resources остаются без изменений.
+A guide for an existing Struts 1 application (the compatibility reference is
+[weblegacy/struts1](https://github.com/weblegacy/struts1) 1.5.x, the
+`jakarta.*` line). The result of the migration: the application runs on
+Spring Boot 4.0.x / Spring Framework 7 / embedded Tomcat 11, while
+`struts-config.xml`, the JSPs, the tag libraries and the message-resources
+remain unchanged.
 
-Полный живой пример миграции — [spring-struts1-apps/demo](../spring-struts1-apps/demo/);
-раздел [«Проверка по демо»](#проверка-по-демо) показывает, что демо
-воспроизводится строго шагами этого руководства.
+A complete live example of the migration is
+[spring-struts1-apps/demo](https://github.com/ys-kalyakin/spring-struts-brigde/tree/main/spring-struts1-apps/demo);
+the section [Checking against the demo](#checking-against-the-demo) shows
+that the demo is reproduced strictly by the steps of this guide.
 
-## Шаг 1. Замена зависимости
+## Step 1. Swap the dependency
 
-Уберите артефакты Struts 1 (weblegacy: `struts1-core`, `struts1-taglib`,
-`struts1-tiles` и сопутствующие) и подключите артефакты `org.springstruts`:
+Remove the Struts 1 artifacts (weblegacy: `struts1-core`, `struts1-taglib`,
+`struts1-tiles` and companions) and add the `org.springstruts` artifacts:
 
-| Артефакт | Что заменяет | Обязательность |
+| Artifact | What it replaces | When required |
 |---|---|---|
-| `spring-struts1-core` | `struts1-core` — движок и конфигурационная модель | всегда (приходит транзитивно из стартера) |
-| `spring-struts1-taglib` | `struts1-taglib` — тэг-библиотеки bean/html/logic/nested + commons-validator | нужен, если приложение рендерит JSP тэгами Struts |
-| `spring-struts1-tiles` | `struts1-tiles` — Tiles-definitions и контроллеры | нужен, если приложение использует Tiles |
-| `spring-struts1-starter` | ручная настройка движка (ContextLoaderListener, web.xml) | всегда |
+| `spring-struts1-core` | `struts1-core` — the engine and the configuration model | always (comes transitively with the starter) |
+| `spring-struts1-taglib` | `struts1-taglib` — the bean/html/logic/nested tag libraries + commons-validator | needed if the application renders JSPs with Struts tags |
+| `spring-struts1-tiles` | `struts1-tiles` — Tiles definitions and controllers | needed if the application uses Tiles |
+| `spring-struts1-starter` | manual engine setup (ContextLoaderListener, web.xml) | always |
 
-Пакеты `org.apache.struts.*` и публичный API сохранены — код приложения
-компилируется без изменений. commons-зависимости (digester, beanutils,
-validator, fileupload2) приходят транзитивно.
+The `org.apache.struts.*` packages and the public API are preserved — the
+application code compiles unchanged. The commons dependencies (digester,
+beanutils, validator, fileupload2) come transitively.
 
-Минимальный набор для приложения с JSP:
+The minimal set for an application with JSPs:
 
 ```xml
 <dependency>
@@ -39,10 +41,10 @@ validator, fileupload2) приходят транзитивно.
 </dependency>
 ```
 
-## Шаг 2. Класс приложения Spring Boot
+## Step 2. The Spring Boot application class
 
-Добавьте один класс — он же точка входа `java -jar`, он же бутстрап в
-standalone-контейнере:
+Add a single class — it is the `java -jar` entry point and the bootstrap in
+a standalone container:
 
 ```java
 @SpringBootApplication
@@ -54,117 +56,123 @@ public class MyApplication extends SpringBootServletInitializer {
 }
 ```
 
-`web.xml` сокращается: декларация `ActionServlet` (или классического
-`servlet-class`), `servlet-mapping` и все `init-param` удаляются — движок
-настраивает стартер. Обычно остаются только `display-name` и
-`welcome-file-list`.
+`web.xml` shrinks: the `ActionServlet` declaration (or the classic
+`servlet-class`), the `servlet-mapping` and all `init-param`s are removed —
+the starter configures the engine. Usually only `display-name` and
+`welcome-file-list` remain.
 
-**Обязательно**: удалите `metadata-complete="true"` из корня `<web-app>`, если
-он есть — этот атрибут запрещает контейнеру сканировать
-`ServletContainerInitializer`-ы, через которые Boot разворачивает контекст,
-и приложение просто не стартует.
+**Mandatory**: remove `metadata-complete="true"` from the `<web-app>` root,
+if present — this attribute forbids the container from scanning
+`ServletContainerInitializer`s, through which Boot deploys the context, and
+the application simply does not start.
 
-## Шаг 3. Свойства конфигурации
+## Step 3. Configuration properties
 
-Классический init-param контракт читается из свойств Spring
-(`spring.struts1.*`); дефолты совпадают с классикой, поэтому пустое
-`application.properties` валидно:
+The classic init-param contract is read from Spring properties
+(`spring.struts1.*`); the defaults match the classic ones, so an empty
+`application.properties` is valid:
 
-| Свойство | Дефолт | Классический аналог |
+| Property | Default | Classic counterpart |
 |---|---|---|
-| `spring.struts1.config` | `/WEB-INF/struts-config.xml` | init-param `config` (список через запятую) |
-| `spring.struts1.config.<prefix>` | — | init-param `config/<prefix>` (модули) |
+| `spring.struts1.config` | `/WEB-INF/struts-config.xml` | init-param `config` (comma-separated list) |
+| `spring.struts1.config.<prefix>` | — | init-param `config/<prefix>` (modules) |
 | `spring.struts1.validating` | `true` | init-param `validating` |
-| `spring.struts1.mapping.url-pattern` | `*.do` | `servlet-mapping` (список: `*.do`, `/action/*`) |
+| `spring.struts1.mapping.url-pattern` | `*.do` | `servlet-mapping` (list: `*.do`, `/action/*`) |
 | `spring.struts1.servlet-name` | `action` | `<servlet-name>` |
-| `spring.struts1.enabled` | `true` | — (полное отключение стартера) |
+| `spring.struts1.enabled` | `true` | — (disables the starter entirely) |
 
-Поддерживается `classpath:`-путь: `spring.struts1.config=classpath:struts-config.xml`
-помещает конфиг в `src/main/resources` — так он одинаково доступен и
-executable-запуску, и WAR-развёртыванию (так сделано в демо). Модульные
-конфиги задаются свойствами с суффиксом-префиксом, например
+A `classpath:` path is supported:
+`spring.struts1.config=classpath:struts-config.xml` places the config in
+`src/main/resources` — this way it is equally available to the executable
+run and the WAR deployment (that is how the demo does it). Module configs
+are set with properties suffixed by the module prefix, for example
 `spring.struts1.config.admin=/WEB-INF/struts-config-admin.xml`.
 
-## Шаг 4. Аннотации над экшенами и формами (необязательно)
+## Step 4. Annotations on actions and forms (optional)
 
-Аннотации нужны только когда экшенам/формам нужна зависимость-инъекция Spring;
-без них приложение работает в классическом фолбэке — классы создаются
-напрямую по имени из конфига.
+The annotations are needed only when actions/forms need Spring dependency
+injection; without them the application works in the classic fallback —
+classes are created directly by name from the config.
 
 ```java
-@StrutsAction  // org.apache.struts.action.StrutsAction — singleton-бин
+@StrutsAction  // org.apache.struts.action.StrutsAction — singleton bean
 public class SubscribeAction extends Action {
 
     private final SubscribeService subscribeService;
 
-    public SubscribeAction(SubscribeService subscribeService) { // @Autowired-конструктор
+    public SubscribeAction(SubscribeService subscribeService) { // @Autowired constructor
         this.subscribeService = subscribeService;
     }
-    // execute(...) — классический контракт
+    // execute(...) — the classic contract
 }
 
-@StrutsForm  // org.apache.struts.action.StrutsForm — prototype-бин
+@StrutsForm  // org.apache.struts.action.StrutsForm — prototype bean
 public class SubscribeForm extends ActionForm {
-    // set/get-пары для populate, validate(...) — классический контракт
+    // set/get pairs for populate, validate(...) — the classic contract
 }
 ```
 
-Семантика: `@StrutsAction` — один экземпляр на приложение (переиспользуется
-между запросами, как классический синглтон-экшен); `@StrutsForm` — новый
-экземпляр на запрос (состояние формы не разделяется). `struts-config.xml`
-остаётся источником маппингов, форм, форвардов и message-resources — аннотации
-делают классы бинами Spring, а не заменяют конфигурацию.
+Semantics: `@StrutsAction` — one instance per application (reused between
+requests, like the classic singleton action); `@StrutsForm` — a new instance
+per request (form state is not shared). `struts-config.xml` remains the
+source of mappings, forms, forwards and message-resources — the annotations
+make the classes Spring beans, they do not replace the configuration.
 
-## Типовые правки
+## Common adjustments
 
-- **JSP-компиляция.** Для executable-режима добавьте `tomcat-embed-jasper`
-  (compile) и `spring-boot-starter-tomcat` (provided — Boot repackage
-  вернёт его в `WEB-INF/lib-provided`). В WAR-развёртывании на standalone
-  Tomcat JSP работает из коробки.
-- **JSP внутри jar не поддерживаются.** Контейнер компилирует JSP только из
-  webapp-каталога/WAR: JSP-страницы должны оставаться в
-  `src/main/webapp` (или в WAR), а не в jar-библиотеках.
-- **Статические ресурсы.** Во встроенном контейнере классический
-  default-servlet контейнера не зарегистрирован автоматически; стартер
-  регистрирует его сам (`DefaultServletInitializer`, Tomcat 11). Ничего
-  делать не нужно — `*.do`-маппинг со статикой не конфликтует.
-- **Ошибки 404.** Стартер добавляет в маппинг фронт-сервлета путь `/error`,
-  чтобы неклассифицированные запросы отдавали честный 404 через механизм
-  ошибок Boot, а не 405.
-- **Multipart/upload.** Движок парсит multipart сам (контракт
-  `FormFile`); стартер держит multipart-автоконфигурацию Boot выключенной —
-  загрузка работает как в классике.
-- **RequestContextFilter.** Стартер регистрирует его как Boot-фильтр —
-  request-context доступен и прямым JSP-запросам, не только форвардам.
-- **Не объявляйте tomcat-embed-\* вручную** в compile/test/optional-скоупах:
-  Maven «ближайший» маркер зависимости затеняет транзитивную, и Tomcat может
-  выпасть из собираемого WAR. Пусть Tomcat приходит из
+- **JSP compilation.** For executable mode add `tomcat-embed-jasper`
+  (compile) and `spring-boot-starter-tomcat` (provided — the Boot repackage
+  puts it into `WEB-INF/lib-provided`). In a WAR deployment on standalone
+  Tomcat, JSP works out of the box.
+- **JSPs inside a jar are not supported.** The container compiles JSPs only
+  from the webapp directory/WAR: JSP pages must remain in
+  `src/main/webapp` (or in the WAR), not in jar libraries.
+- **Static resources.** In the embedded container the classic container
+  default servlet is not registered automatically; the starter registers it
+  itself (`DefaultServletInitializer`, Tomcat 11). Nothing to do — the
+  `*.do` mapping does not conflict with static content.
+- **404 errors.** The starter adds the `/error` path to the front servlet
+  mapping so that unclassified requests return an honest 404 through the
+  Boot error mechanism, not a 405.
+- **Multipart/upload.** The engine parses multipart itself (the `FormFile`
+  contract); the starter keeps the Boot multipart auto-configuration
+  switched off — uploads work as in the classic.
+- **RequestContextFilter.** The starter registers it as a Boot filter — the
+  request context is available to direct JSP requests too, not only to
+  forwards.
+- **Do not declare `tomcat-embed-*` manually** in compile/test/optional
+  scopes: Maven's "nearest" dependency marker shades the transitive one, and
+  Tomcat may drop out of the assembled WAR. Let Tomcat come from
   `spring-boot-starter-tomcat`.
 
-## Проверка по демо
+## Checking against the demo
 
-Демо [spring-struts1-apps/demo](../spring-struts1-apps/demo/) — классическое
-Struts-приложение (форма подписки с валидацией и форвардами), мигрированное
-строго по шагам выше. Дельта миграции — четыре файла:
+The demo
+[spring-struts1-apps/demo](https://github.com/ys-kalyakin/spring-struts-brigde/tree/main/spring-struts1-apps/demo)
+is a classic Struts application (a subscription form with validation and
+forwards), migrated strictly by the steps above. The migration delta is
+four files:
 
-1. `pom.xml` — зависимости: стартер + taglib + jasper (+ provided
-   starter-tomcat и servlet-api), repackage-плагин Boot (шаг 1, типовая
-   правка jasper);
-2. `src/main/java/demo/DemoApplication.java` — класс приложения (шаг 2);
-3. `@StrutsAction` на `SubscribeAction` (внедряемый `SubscribeService`) и
-   `@StrutsForm` на `SubscribeForm` (шаг 4);
+1. `pom.xml` — dependencies: starter + taglib + jasper (+ provided
+   starter-tomcat and servlet-api), the Boot repackage plugin (step 1, the
+   jasper adjustment);
+2. `src/main/java/demo/DemoApplication.java` — the application class
+   (step 2);
+3. `@StrutsAction` on `SubscribeAction` (with an injected `SubscribeService`)
+   and `@StrutsForm` on `SubscribeForm` (step 4);
 4. `src/main/resources/application.properties` —
-   `spring.struts1.config=classpath:struts-config.xml` (шаг 3).
+   `spring.struts1.config=classpath:struts-config.xml` (step 3).
 
-Всё остальное — `struts-config.xml`, JSP, message-resources (`demo.Messages`)
-— классические артефакты без изменений.
+Everything else — `struts-config.xml`, the JSPs, the message-resources
+(`demo.Messages`) — are classic artifacts left unchanged.
 
-Проверить сборку и оба режима:
+To verify the build and both modes:
 
 ```bash
-./mvnw -pl spring-struts1-apps/demo verify          # интеграционные тесты WAR на Tomcat + Boot-запуск
+./mvnw -pl spring-struts1-apps/demo verify          # integration tests of the WAR on Tomcat + a Boot run
 ./mvnw -pl spring-struts1-apps/demo package
 java -jar spring-struts1-apps/demo/target/demo.war  # http://localhost:8080/subscribe.do
 ```
 
-Матрица совместимости версий — в [README](../README.md#совместимость).
+The version compatibility matrix is in the
+[README](https://github.com/ys-kalyakin/spring-struts-brigde#compatibility).
