@@ -12,9 +12,6 @@ import java.util.regex.Pattern;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
-
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
@@ -32,6 +29,7 @@ import org.apache.struts.upload.SpringMultipartRequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 /**
@@ -39,10 +37,10 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
  *
  * <p>Ported from weblegacy/struts1 1.5.x (org.apache.struts.util.RequestUtils).</p>
  *
- * <p><strong>ConvertUtils isolation:</strong> this class is the single access
- * point of the engine for commons-beanutils population and the static
- * <code>ConvertUtils</code> registry. No other engine class is allowed to
- * touch beanutils converters directly.</p>
+ * <p><strong>Population:</strong> form population is performed by
+ * {@link FormPopulator} on top of the engine's own
+ * {@link StrutsConversionService}; the populate path does not depend on
+ * the static commons-beanutils <code>ConvertUtils</code> registry.</p>
  */
 public class RequestUtils {
 
@@ -86,8 +84,9 @@ public class RequestUtils {
 
     /**
      * <p>Populate the properties of the specified JavaBean from the specified
-     * request. Conversion is performed by commons-beanutils with its default
-     * converter registry (compatible semantics with Struts 1).</p>
+     * request. Conversion is performed by the engine's own conversion service
+     * ({@link StrutsConversionService}) with the semantics of the
+     * commons-beanutils default registry (compatible with Struts 1).</p>
      */
     public static void populate(Object bean, HttpServletRequest request)
         throws ServletException {
@@ -232,9 +231,10 @@ public class RequestUtils {
 
         // Set the corresponding properties of our bean
         try {
-            BeanUtils.populate(bean, properties);
+            FormPopulator.populate(bean, properties);
         } catch (Exception e) {
-            throw new ServletException("BeanUtils.populate", e);
+            throw new ServletException(
+                FormPopulator.POPULATE_ERROR_MESSAGE, e);
         } finally {
             if (multipartHandler != null) {
                 // Set the multipart request handler for our ActionForm.
@@ -258,40 +258,35 @@ public class RequestUtils {
         }
 
         final FormFile[] formFileValue = (FormFile[]) parameterValue;
-        try {
-            final Class<?> propertyType =
-                    PropertyUtils.getPropertyType(bean, name);
+        final Class<?> propertyType =
+            new BeanWrapperImpl(bean).getPropertyType(name);
 
-            if (propertyType == null) {
-                return parameterValue;
+        if (propertyType == null) {
+            return parameterValue;
+        }
+
+        if (List.class.isAssignableFrom(propertyType)) {
+            return Arrays.asList(formFileValue);
+        }
+
+        if (FormFile.class.isAssignableFrom(propertyType)) {
+            switch (formFileValue.length) {
+                case 0:
+                    LOG.error("FormFile-parameter \"{}\" for FormBean "
+                            + "\"{}\" has unexpected length of null!",
+                            name, bean.getClass().getName());
+                    return null;
+
+                case 1:
+                    return formFileValue[0];
+
+                default:
+                    LOG.error("FormFile-parameter \"{}\" for FormBean "
+                            + "\"{}\" should have an Array or a List as "
+                            + "method parameter!", name,
+                            bean.getClass().getName());
+                    return formFileValue[0];
             }
-
-            if (List.class.isAssignableFrom(propertyType)) {
-                return Arrays.asList(formFileValue);
-            }
-
-            if (FormFile.class.isAssignableFrom(propertyType)) {
-                switch (formFileValue.length) {
-                    case 0:
-                        LOG.error("FormFile-parameter \"{}\" for FormBean "
-                                + "\"{}\" has unexpected length of null!",
-                                name, bean.getClass().getName());
-                        return null;
-
-                    case 1:
-                        return formFileValue[0];
-
-                    default:
-                        LOG.error("FormFile-parameter \"{}\" for FormBean "
-                                + "\"{}\" should have an Array or a List as "
-                                + "method parameter!", name,
-                                bean.getClass().getName());
-                        return formFileValue[0];
-                }
-            }
-        } catch (IllegalAccessException | InvocationTargetException
-                | NoSuchMethodException e) {
-            throw new ServletException(e);
         }
 
         // no changes

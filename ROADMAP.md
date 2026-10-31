@@ -34,7 +34,7 @@
 
 - **Точка входа**: Spring MVC `DispatcherServlet`; движок — `StrutsHandlerMapping` + `StrutsHandlerAdapter`. `ActionServlet` сохраняется как фасад совместимости (init-param `config`, рабочая ссылка `action.getServlet()`).
 - **Парсинг конфига**: commons-digester с правилами, портированными из weblegacy `core` (`org.apache.struts.config`).
-- **Populate форм**: commons-beanutils (совместимая семантика конвертации); переход на Spring `ConversionService` — кандидат рефакторинга после фазы 1.
+- **Populate форм**: commons-beanutils (совместимая семантика конвертации); переход на Spring `ConversionService` — кандидат рефакторинга после фазы 1. *Реализовано*: изменение `populate-conversion-service` — populate выполняется собственным сервисом конвертации движка на Spring `ConversionService` с семантикой дефолтного реестра beanutils; статический реестр в populate не участвует.
 - **MessageResources**: поверх Spring `MessageSource`; локаль — Struts-семантика (сессия, инициализация из запроса).
 - **Бины**: `@StrutsAction` — singleton; `@StrutsForm` — prototype (экземпляр на запрос, состояние не разделяется); классы без регистрации в Spring создаются напрямую (классический режим).
 
