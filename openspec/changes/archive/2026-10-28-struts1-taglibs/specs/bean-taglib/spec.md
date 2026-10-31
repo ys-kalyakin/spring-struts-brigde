@@ -2,57 +2,57 @@
 
 ## Purpose
 
-Тэг-библиотека `struts-bean` (URI `http://struts.apache.org/tags-bean`): вывод значений бинов и сообщений, определение переменных и доступ к данным запроса и окружения — с TLD, именами и поведением эталона weblegacy.
+The `struts-bean` tag library (URI `http://struts.apache.org/tags-bean`): outputting bean values and messages, defining variables, and access to request and environment data — with the TLD, names, and behavior of the weblegacy reference.
 
 ## ADDED Requirements
 
-### Requirement: Идентичность TLD, URI и имён тегов
-TLD библиотеки SHALL быть идентична эталонной weblegacy (`struts-bean.tld`, 11 тегов): тот же URI `http://struts.apache.org/tags-bean`, те же имена тегов и атрибуты. JSP SHALL подключать библиотеку декларацией `<%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>` без правок web.xml.
+### Requirement: TLD, URI, and tag name identity
+The library TLD SHALL be identical to the weblegacy reference (`struts-bean.tld`, 11 tags): the same URI `http://struts.apache.org/tags-bean`, the same tag and attribute names. JSPs SHALL connect the library with the declaration `<%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>` without web.xml edits.
 
-#### Scenario: Подключение и компиляция JSP
-- **WHEN** JSP декларирует библиотеку по URI `http://struts.apache.org/tags-bean` и использует `bean:write`
-- **THEN** JSP компилируется и тег обрабатывается без дополнительных объявлений
+#### Scenario: Connecting and compiling a JSP
+- **WHEN** a JSP declares the library by the URI `http://struts.apache.org/tags-bean` and uses `bean:write`
+- **THEN** the JSP compiles and the tag is processed without additional declarations
 
-### Requirement: Вывод значений тегом bean:write
-`bean:write` SHALL выводить значение бина из области по `name`/`property` (с учётом `scope`); HTML-разметка в значении SHALL экранироваться по умолчанию и выводиться как есть при `filter="false"`; `format`/`formatKey` применяют форматирование.
+### Requirement: Outputting values with bean:write
+`bean:write` SHALL output the value of a bean from a scope by `name`/`property` (honoring `scope`); HTML markup in the value SHALL be escaped by default and output as is with `filter="false"`; `format`/`formatKey` apply formatting.
 
-#### Scenario: Значение свойства бина
-- **WHEN** в запросе лежит бин со свойством `name = "Ivan"`, и JSP содержит `<bean:write name="bean" property="name"/>`
-- **THEN** на страницу выведено `Ivan`
+#### Scenario: Bean property value
+- **WHEN** the request contains a bean with the property `name = "Ivan"`, and the JSP contains `<bean:write name="bean" property="name"/>`
+- **THEN** `Ivan` is output to the page
 
-#### Scenario: Экранирование по умолчанию
-- **WHEN** значение свойства содержит `<b>`, и JSP содержит `<bean:write name="bean" property="html"/>`
-- **THEN** на странице выведен экранированный текст `&lt;b&gt;`, а при `filter="false"` — исходная разметка
+#### Scenario: Escaping by default
+- **WHEN** the property value contains `<b>`, and the JSP contains `<bean:write name="bean" property="html"/>`
+- **THEN** the page shows the escaped text `&lt;b&gt;`, while with `filter="false"` — the original markup
 
-### Requirement: Сообщения тегом bean:message
-`bean:message` SHALL выводить сообщение по `key` (или по свойству, заданному `name`/`property`) из бандла — по умолчанию или указанного атрибутом `bundle`, с подстановкой `arg0..arg3` и локалью по семантике движка.
+### Requirement: Messages with bean:message
+`bean:message` SHALL output a message by `key` (or by the property given by `name`/`property`) from the bundle — the default one or the one specified by the `bundle` attribute, with `arg0..arg3` substitution and the locale per engine semantics.
 
-#### Scenario: Сообщение по ключу
-- **WHEN** бандл содержит `welcome.heading=Welcome!`, и JSP содержит `<bean:message key="welcome.heading"/>`
-- **THEN** на странице выведено `Welcome!`
+#### Scenario: Message by key
+- **WHEN** the bundle contains `welcome.heading=Welcome!`, and the JSP contains `<bean:message key="welcome.heading"/>`
+- **THEN** `Welcome!` is output to the page
 
-#### Scenario: Сообщение с аргументами
-- **WHEN** JSP содержит `<bean:message key="greeting" arg0="Ivan"/>` и шаблон `greeting=Hello, {0}!`
-- **THEN** на странице выведено `Hello, Ivan!`
+#### Scenario: Message with arguments
+- **WHEN** the JSP contains `<bean:message key="greeting" arg0="Ivan"/>` and the template `greeting=Hello, {0}!`
+- **THEN** `Hello, Ivan!` is output to the page
 
-### Requirement: Определение переменных тегом bean:define
-`bean:define` SHALL копировать значение (по `name`/`property`/`value`) в переменную JSP и атрибут области: под указанным `id`, в области `toScope`, с типом значения исходного свойства.
+### Requirement: Defining variables with bean:define
+`bean:define` SHALL copy a value (by `name`/`property`/`value`) into a JSP variable and a scope attribute: under the given `id`, in the `toScope` scope, with the type of the source property value.
 
-#### Scenario: Определение и вывод переменной
-- **WHEN** JSP содержит `<bean:define id="theName" name="bean" property="name"/>` и затем `<bean:write name="theName"/>`
-- **THEN** переменная определена и на странице выведено её значение
+#### Scenario: Defining and outputting a variable
+- **WHEN** the JSP contains `<bean:define id="theName" name="bean" property="name"/>` and then `<bean:write name="theName"/>`
+- **THEN** the variable is defined and its value is output to the page
 
-### Requirement: Доступ к данным запроса и окружения
-Теги `bean:header`, `bean:cookie`, `bean:parameter` SHALL определять переменную из заголовка запроса, cookie или параметра запроса (с `value` по умолчанию и поддержкой `multiple`); `bean:size` SHALL выводить размер коллекции/массива/карты; `bean:include` SHALL включать содержимое ресурса в переменную; `bean:resource` SHALL загружать содержимое ресурса веб-приложения; `bean:struts` SHALL предоставлять доступ к элементам конфигурации (form-bean, forward, mapping).
+### Requirement: Access to request and environment data
+The tags `bean:header`, `bean:cookie`, `bean:parameter` SHALL define a variable from a request header, cookie, or request parameter (with a default `value` and `multiple` support); `bean:size` SHALL output the size of a collection/array/map; `bean:include` SHALL include the content of a resource into a variable; `bean:resource` SHALL load the content of a web application resource; `bean:struts` SHALL provide access to configuration elements (form-bean, forward, mapping).
 
-#### Scenario: Параметр запроса и его размер
-- **WHEN** запрос содержит параметр `color=blue`, и JSP содержит `<bean:parameter id="color" name="color"/>` и `<bean:write name="color"/>`
-- **THEN** на странице выведено `blue`
+#### Scenario: Request parameter and its size
+- **WHEN** the request contains the parameter `color=blue`, and the JSP contains `<bean:parameter id="color" name="color"/>` and `<bean:write name="color"/>`
+- **THEN** `blue` is output to the page
 
-#### Scenario: Заголовок запроса
-- **WHEN** JSP содержит `<bean:header id="lang" name="Accept-Language"/>` и `<bean:write name="lang"/>`
-- **THEN** на странице выведено значение заголовка запроса
+#### Scenario: Request header
+- **WHEN** the JSP contains `<bean:header id="lang" name="Accept-Language"/>` and `<bean:write name="lang"/>`
+- **THEN** the value of the request header is output to the page
 
-#### Scenario: Включение ресурса
-- **WHEN** JSP содержит `<bean:include id="page" href="/some/page.jsp"/>` и `<bean:write name="page" filter="false"/>`
-- **THEN** переменная содержит отрендеренное содержимое включённой страницы
+#### Scenario: Including a resource
+- **WHEN** the JSP contains `<bean:include id="page" href="/some/page.jsp"/>` and `<bean:write name="page" filter="false"/>`
+- **THEN** the variable contains the rendered content of the included page

@@ -2,50 +2,50 @@
 
 ## Purpose
 
-Читает и объединяет конфигурацию из `struts-config.xml` — главного источника конфигурации движка: маппинги, формы, форварды, исключения, message-resources и плагины регистрируются при старте приложения.
+Reads and merges the configuration from `struts-config.xml` — the engine's primary configuration source: action mappings, forms, forwards, exceptions, message-resources, and plugins are registered at application startup.
 
 ## Requirements
 
-### Requirement: Регистрация элементов конфигурации
-При старте приложение с валидным `struts-config.xml` SHALL зарегистрировать все объявленные элементы: маппинги экшенов (с их локальными форвардами и исключениями), формы, глобальные форварды, глобальные исключения, message-resources и плагины.
+### Requirement: Registration of configuration elements
+At startup, an application with a valid `struts-config.xml` SHALL register all declared elements: action mappings (with their local forwards and exceptions), forms, global forwards, global exceptions, message-resources, and plugins.
 
-#### Scenario: Старт с конфигурацией приложения blank
-- **WHEN** приложение стартует с `struts-config.xml`, содержащим action `path="/Welcome"` с атрибутом `forward="/pages/Welcome.jsp"`, глобальный форвард `name="welcome"` с `path="/Welcome.do"` и `<message-resources parameter="MessageResources"/>`
-- **THEN** маппинг `/Welcome`, глобальный форвард `welcome` и message-resources с параметром `MessageResources` зарегистрированы и доступны обработке запросов
+#### Scenario: Startup with the blank application configuration
+- **WHEN** the application starts with a `struts-config.xml` containing the action `path="/Welcome"` with the attribute `forward="/pages/Welcome.jsp"`, the global forward `name="welcome"` with `path="/Welcome.do"`, and `<message-resources parameter="MessageResources"/>`
+- **THEN** the `/Welcome` mapping, the `welcome` global forward, and the message-resources with parameter `MessageResources` are registered and available to request processing
 
-#### Scenario: Форма и плагин из конфигурации
-- **WHEN** `struts-config.xml` объявляет `<form-bean>` и `<plug-in className="...">`
-- **THEN** форма зарегистрирована по имени, а плагин включён в список плагинов конфигурации
+#### Scenario: Form and plugin from the configuration
+- **WHEN** `struts-config.xml` declares a `<form-bean>` and a `<plug-in className="...">`
+- **THEN** the form is registered by name, and the plugin is included in the configuration's plugin list
 
-### Requirement: Объединение списка файлов конфигурации
-Значение init-param `config` SHALL интерпретироваться как список путей к конфигурационным файлам (разделитель — запятая) модуля по умолчанию; все файлы списка SHALL быть прочитаны и объединены в конфигурацию модуля по умолчанию. Каждый init-param вида `config/<prefix>` (например `config/exercise`) SHALL задавать список файлов отдельного модуля с префиксом `/<prefix>` (например `/exercise`).
+### Requirement: Merging the list of configuration files
+The value of the `config` init-param SHALL be interpreted as a list of configuration file paths (comma-separated) for the default module; all files in the list SHALL be read and merged into the default module's configuration. Each init-param of the form `config/<prefix>` (for example `config/exercise`) SHALL specify the list of files for a separate module with the prefix `/<prefix>` (for example `/exercise`).
 
-#### Scenario: Несколько файлов в config
-- **WHEN** init-param `config` равен `/WEB-INF/struts-config.xml,/WEB-INF/struts-config-extra.xml` и оба файла существуют
-- **THEN** элементы обоих файлов зарегистрированы в конфигурации модуля по умолчанию
+#### Scenario: Multiple files in config
+- **WHEN** the init-param `config` equals `/WEB-INF/struts-config.xml,/WEB-INF/struts-config-extra.xml` and both files exist
+- **THEN** elements of both files are registered in the default module's configuration
 
-#### Scenario: Модуль по init-param config/exercise
-- **WHEN** web.xml объявляет init-param `config/exercise` со значением `/WEB-INF/exercise/struts-config.xml`
-- **THEN** файл разобран в конфигурацию модуля с префиксом `/exercise`, элементы зарегистрированы в ней независимо от модуля по умолчанию
+#### Scenario: Module via the config/exercise init-param
+- **WHEN** web.xml declares the init-param `config/exercise` with the value `/WEB-INF/exercise/struts-config.xml`
+- **THEN** the file is parsed into the configuration of the module with prefix `/exercise`, and its elements are registered there independently of the default module
 
-### Requirement: Ошибка старта при некорректной конфигурации
-Если файл из init-param `config` отсутствует или не может быть разобран, старт приложения SHALL завершиться ошибкой, содержащей имя этого файла.
+### Requirement: Startup error on invalid configuration
+If a file from the `config` init-param is missing or cannot be parsed, application startup SHALL fail with an error containing that file's name.
 
-#### Scenario: Отсутствующий файл
-- **WHEN** init-param `config` указывает на файл, которого нет в приложении
-- **THEN** старт завершается ошибкой, и в сообщении ошибки назван путь отсутствующего файла
+#### Scenario: Missing file
+- **WHEN** the init-param `config` points to a file that does not exist in the application
+- **THEN** startup fails, and the error message names the path of the missing file
 
-#### Scenario: Некорректный XML
-- **WHEN** конфигурационный файл содержит синтаксически некорректный XML или не соответствует DTD
-- **THEN** старт завершается ошибкой с именем файла в сообщении
+#### Scenario: Invalid XML
+- **WHEN** a configuration file contains syntactically invalid XML or does not conform to the DTD
+- **THEN** startup fails with the file name in the error message
 
-### Requirement: Регистрация модулей конфигурации
-Все объявленные модули SHALL быть разобраны при старте и зарегистрированы по своим префиксам; незарегистрированный префикс в запросе даёт модуль по умолчанию. Ошибка разбора файла модуля SHALL вести к ошибке старта с именем файла.
+### Requirement: Registration of configuration modules
+All declared modules SHALL be parsed at startup and registered under their prefixes; an unregistered prefix in a request falls back to the default module. A module file parsing error SHALL lead to a startup error naming the file.
 
-#### Scenario: Несколько модулей
-- **WHEN** web.xml объявляет `config/exercise` и `config/dispatch` с существующими файлами
-- **THEN** зарегистрированы модули `/exercise` и `/dispatch` наряду с модулем по умолчанию
+#### Scenario: Multiple modules
+- **WHEN** web.xml declares `config/exercise` and `config/dispatch` with existing files
+- **THEN** the modules `/exercise` and `/dispatch` are registered alongside the default module
 
-#### Scenario: Битый файл модуля
-- **WHEN** init-param `config/dispatch` указывает на отсутствующий файл
-- **THEN** старт завершается ошибкой с именем этого файла
+#### Scenario: Broken module file
+- **WHEN** the init-param `config/dispatch` points to a missing file
+- **THEN** startup fails with an error naming that file

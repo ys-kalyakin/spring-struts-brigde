@@ -2,39 +2,39 @@
 
 ## Why
 
-Фаза 1 (`struts1-engine-core`) дала работающий движок и запустила портированный `apps/blank`, но его JSP пришлось переписать без тэг-библиотек — миграция реальных приложений без них невозможна: тэг-библиотеки Struts — второй столп совместимости наряду с конфигурацией (см. proposal.md фазы 1 и принципы совместимости роадмапа). Фаза 2 реализует тэг-библиотеки `struts-bean`, `struts-html`, `struts-logic`, `struts-nested` с теми же URI, TLD и поведением, что у weblegacy, и прогоняет целевое приложение `apps/examples` (сценарии exercise-taglib и dispatch).
+Phase 1 (`struts1-engine-core`) delivered a working engine and ran the ported `apps/blank`, but its JSPs had to be rewritten without tag libraries — migrating real applications without them is impossible: the Struts tag libraries are the second pillar of compatibility alongside configuration (see phase 1 proposal.md and the roadmap compatibility principles). Phase 2 implements the `struts-bean`, `struts-html`, `struts-logic`, and `struts-nested` tag libraries with the same URIs, TLDs, and behavior as weblegacy, and runs the target application `apps/examples` (the exercise-taglib and dispatch scenarios).
 
 ## What Changes
 
-- Создаётся модуль `spring-struts1-taglib`: 98 тегов четырёх библиотек, портированных из weblegacy `taglib` с сохранением пакетов `org.apache.struts.taglib.*`; TLD копируются без изменений (те же `<uri>`, имена и атрибуты тегов) — JSP подключают библиотеки теми же `taglib`-декларациями.
-- В `spring-struts1-core` портируются утилиты, на которых стоят теги: `TagUtils`, `ResponseUtils`, `ModuleUtils` (классические API).
-- Движок получает поддержку нескольких модулей конфигурации: init-params `config/<prefix>` (например `config/exercise`), выбор модуля по пути запроса (модуль по умолчанию — как раньше), модуль-относительные форварды. Phase-1 спеки `struts-config-parsing` и `request-processing` модифицируются.
-- Маршрутизация дополняется path-mapped экшенами (`/action/*` наряду с `*.do`) — отложенное из фазы 1 решение.
-- Портируется минимальный `DynaActionForm` (создание из `<form-property>`, initial-значения, populate, динамический доступ DynaBean): нужен dispatch-сценариям целевого приложения; DynaValidatorForm остаётся в фазе 3.
-- Портируются dispatch-экшены из weblegacy `extras` (`org.apache.struts.extras.actions`): `DispatchAction`, `LookupDispatchAction`, `MappingDispatchAction`, `EventDispatchAction`, `ActionDispatcher`, `EventActionDispatcher`, `ForwardAction`, `IncludeAction`.
-- Портируется `apps/examples` с модулями exercise и dispatch (JSP и исходники приложения — без изменений); секции upload и validator исключаются до фазы 3.
-- Портированный `blank` переключается на оригинальные JSP из эталона (с тэг-библиотеками) вместо адаптации фазы 1 — регрессионная проверка базовых тегов.
+- A new module `spring-struts1-taglib` is created: 98 tags of the four libraries, ported from weblegacy `taglib` while preserving the `org.apache.struts.taglib.*` packages; the TLDs are copied unchanged (the same `<uri>`, tag names, and attributes) — JSPs connect the libraries with the same `taglib` declarations.
+- `spring-struts1-core` receives the utilities the tags depend on: `TagUtils`, `ResponseUtils`, `ModuleUtils` (classic APIs).
+- The engine gains support for multiple configuration modules: init-params `config/<prefix>` (e.g. `config/exercise`), module selection by request path (default module — as before), module-relative forwards. The phase-1 specs `struts-config-parsing` and `request-processing` are modified.
+- Routing is extended with path-mapped actions (`/action/*` alongside `*.do`) — a decision deferred from phase 1.
+- A minimal `DynaActionForm` is ported (creation from `<form-property>`, initial values, populate, dynamic DynaBean access): needed by the target application's dispatch scenarios; DynaValidatorForm remains in phase 3.
+- Dispatch actions are ported from weblegacy `extras` (`org.apache.struts.extras.actions`): `DispatchAction`, `LookupDispatchAction`, `MappingDispatchAction`, `EventDispatchAction`, `ActionDispatcher`, `EventActionDispatcher`, `ForwardAction`, `IncludeAction`.
+- `apps/examples` is ported with the exercise and dispatch modules (JSPs and application sources — unchanged); the upload and validator sections are excluded until phase 3.
+- The ported `blank` switches to the original reference JSPs (with tag libraries) instead of the phase 1 adaptation — a regression check of the basic tags.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `bean-taglib`: библиотека `struts-bean` (URI `http://struts.apache.org/tags-bean`): write, message, define, size, header, cookie, parameter, include, resource, struts — вывод значений, сообщения, определение переменных, доступ к данным запроса.
-- `html-taglib`: библиотека `struts-html`: form и виджеты, errors/messages, img/link/rewrite, base/html, xhtml-режим; тег `javascript` откладывается до фазы валидации (зависит от commons-validator).
-- `logic-taglib`: библиотека `struts-logic`: iterate, сравнения, match, present/empty, messagesPresent, redirect/forward.
-- `nested-taglib`: библиотека `struts-nested` — вложенные обёртки над bean/html/logic с относительными путями свойств.
-- `dynamic-form-beans`: `DynaActionForm` — динамические формы из `<form-property>` (сейчас без валидаторных вариантов).
-- `dispatch-actions`: семейство dispatch-экшенов (DispatchAction, LookupDispatchAction, MappingDispatchAction, EventDispatchAction, ActionDispatcher) — выбор метода обработки по запросу.
+- `bean-taglib`: the `struts-bean` library (URI `http://struts.apache.org/tags-bean`): write, message, define, size, header, cookie, parameter, include, resource, struts — outputting values, messages, defining variables, access to request data.
+- `html-taglib`: the `struts-html` library: form and widgets, errors/messages, img/link/rewrite, base/html, xhtml mode; the `javascript` tag is deferred until the validation phase (depends on commons-validator).
+- `logic-taglib`: the `struts-logic` library: iterate, comparisons, match, present/empty, messagesPresent, redirect/forward.
+- `nested-taglib`: the `struts-nested` library — nested wrappers over bean/html/logic with relative property paths.
+- `dynamic-form-beans`: `DynaActionForm` — dynamic forms from `<form-property>` (validator variants not yet included).
+- `dispatch-actions`: the dispatch action family (DispatchAction, LookupDispatchAction, MappingDispatchAction, EventDispatchAction, ActionDispatcher) — selecting the processing method from the request.
 
 ### Modified Capabilities
 
-- `struts-config-parsing`: init-params `config/<prefix>` задают модули конфигурации; `config` остаётся модулем по умолчанию (объединение списка файлов — как было).
-- `request-processing`: маршрутизация выбирает модуль по префиксу пути запроса; добавляется path-mapped маппинг экшенов (`/action/*`).
+- `struts-config-parsing`: init-params `config/<prefix>` define configuration modules; `config` remains the default module (list of files merged — as before).
+- `request-processing`: routing selects the module by request path prefix; path-mapped action mapping (`/action/*`) is added.
 
 ## Impact
 
-- **Структура:** новый Maven-модуль `spring-struts1-taglib` (зависимость от core); `spring-struts1-apps/examples` — новое тестовое приложение (war).
-- **Зависимости:** jakarta.servlet.jsp-api (provided) для компиляции тегов; commons-validator не подключается (фаза 3).
-- **Эталон:** `/home/helloween/projects/struts1-reference` — taglib-модуль (v1.5.0-rc2), TLD в `META-INF/tld`, `apps/examples`; HTML-вывод тегов сверяется с weblegacy.
-- **Не входит в объём:** struts-el (EL-варианты тегов — отдельное решение после фазы), commons-validator/`ValidatorPlugIn`/`DynaValidatorForm`, multipart upload (html:file рендерится, но обработка загрузки — фаза 3), Tiles, полный xhtml-покрытие за пределами классического режима, остальные утилиты extras (DownloadAction и пр.).
-- **Совместимость:** имена тегов, TLD, URI и структура сгенерированного HTML — по эталону weblegacy; критерии приёмки фазы 2 из ROADMAP.md.
+- **Structure:** a new Maven module `spring-struts1-taglib` (depends on core); `spring-struts1-apps/examples` — a new test application (war).
+- **Dependencies:** jakarta.servlet.jsp-api (provided) for compiling the tags; commons-validator is not included (phase 3).
+- **Reference:** `/home/helloween/projects/struts1-reference` — the taglib module (v1.5.0-rc2), TLDs in `META-INF/tld`, `apps/examples`; tag HTML output is verified against weblegacy.
+- **Out of scope:** struts-el (EL variants of the tags — a separate decision after this phase), commons-validator/`ValidatorPlugIn`/`DynaValidatorForm`, multipart upload (html:file is rendered, but upload handling is phase 3), Tiles, full xhtml coverage beyond the classic mode, the remaining extras utilities (DownloadAction etc.).
+- **Compatibility:** tag names, TLDs, URIs, and the structure of the generated HTML — per the weblegacy reference; phase 2 acceptance criteria from ROADMAP.md.

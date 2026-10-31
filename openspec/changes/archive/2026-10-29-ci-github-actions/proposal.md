@@ -2,32 +2,32 @@
 
 ## Why
 
-Сейчас качество сборки подтверждается только локальным `./mvnw verify`: в репозитории нет ни одной проверки GitHub Actions, поэтому регрессии в PR и в `main` обнаруживаются вручную, а собранные WAR/JAR нигде не сохраняются. Проект уже прошёл фазы 1–3 и содержит 205 тестов, включая интеграционные прогоны на embedded Tomcat, — им нужен воспроизводимый gate на каждый PR и на каждое изменение основной ветки.
+Currently build quality is confirmed only by a local `./mvnw verify`: the repository has no GitHub Actions checks at all, so regressions in PRs and in `main` are discovered manually, and the built WAR/JAR files are not stored anywhere. The project has already completed phases 1–3 and contains 205 tests, including integration runs on embedded Tomcat — they need a reproducible gate for every PR and every change to the main branch.
 
 ## What Changes
 
-- **Новый workflow `.github/workflows/ci.yml`** для GitHub Actions:
-  - триггеры: `pull_request` в `main`, `push` в `main`, ручной `workflow_dispatch`;
-  - job `build` на `ubuntu-latest`: checkout, Temurin JDK 17 (минимум проекта, `maven.compiler.release=17`), кэш Maven-репозитория и wrapper, `./mvnw -B -ntp verify` (компиляция, unit- и интеграционные тесты, упаковка WAR/JAR);
-  - `concurrency` с отменой устаревших прогонов для PR, `permissions: contents: read`, `timeout-minutes`, отключение интерактивного вывода Maven.
-- **Публикация результатов**: отчёты surefire (`**/target/surefire-reports/**`) загружаются артефактом всегда, даже при падении тестов; собранные WAR/JAR — артефактом успешной сборки. Это делает падение диагностируемым без повторного локального прогона.
-- **Кэширование** зависимостей Maven и дистрибутива Maven wrapper с ключом по `pom.xml`/`maven-wrapper.properties`, чтобы холодная сборка не скачивала зависимости заново.
-- **Бейдж статуса CI** в `README.md` со ссылкой на workflow.
-- Ветка `main` используется как основная (она же default branch в `origin`); отдельного workflow для релизов, публикации в Maven Central и деплоя нет — это вне объёма изменения.
+- **A new workflow `.github/workflows/ci.yml`** for GitHub Actions:
+  - triggers: `pull_request` to `main`, `push` to `main`, and manual `workflow_dispatch`;
+  - job `build` on `ubuntu-latest`: checkout, Temurin JDK 17 (the project minimum, `maven.compiler.release=17`), Maven repository and wrapper caching, `./mvnw -B -ntp verify` (compilation, unit and integration tests, WAR/JAR packaging);
+  - `concurrency` with cancellation of outdated runs for PRs, `permissions: contents: read`, `timeout-minutes`, and non-interactive Maven output.
+- **Publishing results**: surefire reports (`**/target/surefire-reports/**`) are always uploaded as an artifact, even when tests fail; the built WAR/JAR files are uploaded as an artifact of a successful build. This makes failures diagnosable without re-running locally.
+- **Caching** of Maven dependencies and the Maven wrapper distribution keyed on `pom.xml`/`maven-wrapper.properties`, so a cold build does not re-download dependencies.
+- **A CI status badge** in `README.md` linking to the workflow.
+- The `main` branch is used as the primary one (it is also the default branch in `origin`); there is no separate workflow for releases, publishing to Maven Central, or deployment — this is out of scope for the change.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `ci-pipeline`: поведение GitHub Actions CI — обязательная проверка PR и `main`, состав сборки, кэширование, конкурентность, сохранение отчётов и артефактов, ручной запуск.
+- `ci-pipeline`: GitHub Actions CI behavior — mandatory checks for PRs and `main`, build composition, caching, concurrency, retention of reports and artifacts, manual triggering.
 
 ### Modified Capabilities
 
-Нет: изменение не меняет поведение фреймворка, его API или тестовых приложений.
+None: the change does not alter the behavior of the framework, its API, or the test applications.
 
 ## Impact
 
-- **Файлы:** новый `.github/workflows/ci.yml`; правка `README.md` (бейдж); больше ничего в коде и сборке не меняется.
-- **Инфраструктура:** GitHub-hosted runner `ubuntu-latest`, официальные actions `actions/checkout`, `actions/setup-java`, `actions/cache`, `actions/upload-artifact`; секреты не требуются, fork-PR работают.
-- **Сборка:** остаётся `./mvnw verify` без изменения pom; CI использует те же команды, что и локальная проверка.
-- **Не входит в объём:** релизы и публикация артефактов по тегам, деплой, CodeQL/SAST, dependency review, матрица JDK/OS, self-hosted runners, Docker-образы.
+- **Files:** new `.github/workflows/ci.yml`; an edit to `README.md` (badge); nothing else in the code or the build changes.
+- **Infrastructure:** a GitHub-hosted `ubuntu-latest` runner, the official actions `actions/checkout`, `actions/setup-java`, `actions/cache`, `actions/upload-artifact`; no secrets required, fork PRs work.
+- **Build:** remains `./mvnw verify` with no pom changes; CI uses the same commands as the local check.
+- **Out of scope:** releases and publishing artifacts on tags, deployment, CodeQL/SAST, dependency review, a JDK/OS matrix, self-hosted runners, Docker images.

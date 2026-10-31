@@ -2,35 +2,35 @@
 
 ## Purpose
 
-Даёт приложению доступ к сообщениям по ключу с семантикой Struts 1: ресурсы из `<message-resources>`, локаль из сессии и фирменный формат отсутствующих ключей.
+Gives the application key-based access to messages with Struts 1 semantics: resources from `<message-resources>`, the locale from the session, and the signature missing-key format.
 
 ## ADDED Requirements
 
-### Requirement: Загрузка message-resources
-Элементы `<message-resources>` из конфигурации SHALL быть загружены при старте; ресурсы, объявленные без ключа `key`, SHALL быть доступны как ресурсы по умолчанию, объявленные с `key` — по этому ключу.
+### Requirement: Loading message-resources
+`<message-resources>` elements from the configuration SHALL be loaded at startup; resources declared without a `key` attribute SHALL be available as the default resources, those declared with a `key` — under that key.
 
-#### Scenario: Ресурсы по умолчанию
-- **WHEN** конфигурация объявляет `<message-resources parameter="MessageResources"/>`
-- **THEN** бандл `MessageResources` загружен и доступен приложению как ресурсы по умолчанию
+#### Scenario: Default resources
+- **WHEN** the configuration declares `<message-resources parameter="MessageResources"/>`
+- **THEN** the `MessageResources` bundle is loaded and available to the application as the default resources
 
-#### Scenario: Именованный бандл
-- **WHEN** конфигурация объявляет `<message-resources key="alternate" parameter="AlternateResources"/>`
-- **THEN** бандл `AlternateResources` доступен по ключу `alternate`
+#### Scenario: Named bundle
+- **WHEN** the configuration declares `<message-resources key="alternate" parameter="AlternateResources"/>`
+- **THEN** the `AlternateResources` bundle is available under the key `alternate`
 
-### Requirement: Сообщение по ключу с локалью из сессии
-Получение сообщения SHALL учитывать локаль, сохранённую в сессии (ключ сессии `org.apache.struts.action.LOCALE`); если в сессии локали нет, SHALL использоваться локаль запроса.
+### Requirement: Message by key with the locale from the session
+Message retrieval SHALL respect the locale stored in the session (session key `org.apache.struts.action.LOCALE`); if the session has no locale, the request locale SHALL be used.
 
-#### Scenario: Локаль из сессии
-- **WHEN** в сессии сохранена локаль `ru_RU`, и у бандла есть запись для этой локали
-- **THEN** сообщение по ключу возвращается в редакции локали `ru_RU`
+#### Scenario: Locale from the session
+- **WHEN** the locale `ru_RU` is stored in the session, and the bundle has an entry for that locale
+- **THEN** the message for the key is returned in the `ru_RU` wording
 
-#### Scenario: Локаль не установлена
-- **WHEN** локаль в сессии не установлена
-- **THEN** сообщение возвращается по локали запроса
+#### Scenario: Locale not set
+- **WHEN** no locale is set in the session
+- **THEN** the message is returned by the request locale
 
-### Requirement: Формат отсутствующих ключей
-Сообщение по отсутствующему в бандле ключу SHALL возвращаться в формате `???<locale>.<key>???` (например, `???ru_RU.welcome.missing???`).
+### Requirement: Missing-key format
+A message for a key missing from the bundle SHALL be returned in the format `???<locale>.<key>???` (for example, `???ru_RU.welcome.missing???`).
 
-#### Scenario: Отсутствующий ключ
-- **WHEN** запрашивается ключ, которого нет в бандле, при локали `ru_RU`
-- **THEN** возвращается строка `???ru_RU.<key>???` вместо исключения
+#### Scenario: Missing key
+- **WHEN** a key that is not in the bundle is requested, with the locale `ru_RU`
+- **THEN** the string `???ru_RU.<key>???` is returned instead of an exception

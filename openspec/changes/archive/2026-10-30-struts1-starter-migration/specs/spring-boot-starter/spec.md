@@ -2,65 +2,65 @@
 
 ## Purpose
 
-Автоматическая конфигурация движка Struts 1 на Spring Boot: подключение зависимости стартера заменяет ручную настройку (web.xml с DispatcherServlet, init-params и импорт конфигураций движка), классический контракт init-params переносится в свойства.
+Automatic configuration of the Struts 1 engine on Spring Boot: adding the starter dependency replaces manual setup (web.xml with DispatcherServlet, init-params, and importing engine configurations), and the classic init-params contract moves into properties.
 
 ## ADDED Requirements
 
-### Requirement: Автоматическая конфигурация движка
-Подключение зависимости `spring-struts1-starter` к приложению Spring Boot SHALL автоматически регистрировать все бины движка Struts 1 — фасад `ActionServlet`, обработку запроса (handler mapping и handler adapter), резолвер экземпляров и регистратор типов из struts-config — без ручного импорта конфигураций движка приложением. Поведение SHALL быть эквивалентно ручному импорту `StrutsEngineConfiguration`.
+### Requirement: Automatic engine configuration
+Adding the `spring-struts1-starter` dependency to a Spring Boot application SHALL automatically register all Struts 1 engine beans — the `ActionServlet` facade, request handling (handler mapping and handler adapter), the instance resolver, and the struts-config types registrar — without manual import of engine configurations by the application. Behavior SHALL be equivalent to manually importing `StrutsEngineConfiguration`.
 
-#### Scenario: Boot-приложение без ручной конфигурации
-- **WHEN** Spring Boot приложение подключает `spring-struts1-starter` и задаёт расположение struts-config через свойства стартера
-- **THEN** бины движка зарегистрированы, запрос к экшену обрабатывается по полному жизненному циклу (populate → валидация → execute → форвард), как при ручной конфигурации
+#### Scenario: Boot application without manual configuration
+- **WHEN** a Spring Boot application adds `spring-struts1-starter` and sets the struts-config location via starter properties
+- **THEN** the engine beans are registered and a request to an action is processed by the full lifecycle (populate → validation → execute → forward), as with manual configuration
 
-#### Scenario: Классический режим продолжает работать
-- **WHEN** WAR-приложение конфигурирует движок через web.xml и ручной импорт конфигураций без стартера
-- **THEN** движок работает как прежде; стартер не является обязательным для движка
+#### Scenario: Classic mode keeps working
+- **WHEN** a WAR application configures the engine via web.xml and manual import of configurations without the starter
+- **THEN** the engine works as before; the starter is not required by the engine
 
-### Requirement: Регистрация и маппинг фронт-сервлета
-Стартер SHALL зарегистрировать `DispatcherServlet` приложения Spring Boot с шаблоном маппинга из свойства `spring.struts1.mapping.url-pattern` (по умолчанию `*.do`; поддерживается список шаблонов). Маппинг обработки запросов движком SHALL следовать тому же свойству: суффиксное (`*.do`) и path-mapped (`/action/*`) маппирование согласованы между сервлетом и движком.
+### Requirement: Front servlet registration and mapping
+The starter SHALL register the `DispatcherServlet` of the Spring Boot application with a mapping pattern from the `spring.struts1.mapping.url-pattern` property (default `*.do`; a list of patterns is supported). The engine's request-handling mapping SHALL follow the same property: suffix (`*.do`) and path-mapped (`/action/*`) mappings are consistent between the servlet and the engine.
 
-#### Scenario: Маппинг по умолчанию
-- **WHEN** приложение не настраивает шаблон маппинга
-- **THEN** запросы `/x.do` обрабатываются экшеном с `path="/x"`, а запросы к путям вне маппинга не попадают в движок
+#### Scenario: Default mapping
+- **WHEN** the application does not configure a mapping pattern
+- **THEN** requests to `/x.do` are handled by the action with `path="/x"`, and requests to paths outside the mapping do not reach the engine
 
-#### Scenario: Path-mapped маппирование через свойство
-- **WHEN** `spring.struts1.mapping.url-pattern=/action/*` и поступает запрос `/action/x`
-- **THEN** запрос обрабатывается экшеном с `path="/x"`
+#### Scenario: Path-mapped mapping via property
+- **WHEN** `spring.struts1.mapping.url-pattern=/action/*` and a request arrives at `/action/x`
+- **THEN** the request is handled by the action with `path="/x"`
 
-### Requirement: Классический init-param контракт через свойства
-Стартер SHALL передавать фасаду `ActionServlet` параметры классического контракта (`config`, `config/<префикс>`, `validating`) из свойств `spring.struts1.*` вместо init-params web.xml. Семантика параметров SHALL совпадать с init-params web.xml.
+### Requirement: Classic init-param contract via properties
+The starter SHALL pass the classic contract parameters (`config`, `config/<prefix>`, `validating`) to the `ActionServlet` facade from the `spring.struts1.*` properties instead of web.xml init-params. Parameter semantics SHALL match the web.xml init-params.
 
-#### Scenario: Конфигурация из свойств
-- **WHEN** приложение задаёт `spring.struts1.config=classpath:struts-config.xml`
-- **THEN** конфигурация загружается из указанного ресурса и `getServlet().getInitParameter("config")` возвращает то же значение
+#### Scenario: Configuration from properties
+- **WHEN** the application sets `spring.struts1.config=classpath:struts-config.xml`
+- **THEN** configuration is loaded from the specified resource and `getServlet().getInitParameter("config")` returns the same value
 
-#### Scenario: Конфигурация модуля
-- **WHEN** приложение задаёт `spring.struts1.config.admin=/WEB-INF/struts-admin.xml`
-- **THEN** модуль с префиксом `/admin` парсится из указанного файла наравне с модулем по умолчанию
+#### Scenario: Module configuration
+- **WHEN** the application sets `spring.struts1.config.admin=/WEB-INF/struts-admin.xml`
+- **THEN** the module with the `/admin` prefix is parsed from the specified file on par with the default module
 
-#### Scenario: Значения по умолчанию
-- **WHEN** приложение не задаёт свойства конфигурации
-- **THEN** `config` по умолчанию `/WEB-INF/struts-config.xml`, валидация XML при парсинге включена
+#### Scenario: Default values
+- **WHEN** the application does not set the configuration properties
+- **THEN** `config` defaults to `/WEB-INF/struts-config.xml` and XML validation during parsing is enabled
 
-#### Scenario: Отсутствующий файл конфигурации
-- **WHEN** `spring.struts1.config` указывает на несуществующий ресурс
-- **THEN** старт приложения завершается ошибкой с именем файла
+#### Scenario: Missing configuration file
+- **WHEN** `spring.struts1.config` points to a non-existent resource
+- **THEN** application startup fails with an error naming the file
 
-### Requirement: Условная интеграция тэг-сервисов
-Стартер SHALL автоматически подключать сервисы тэг-библиотек, если модуль `spring-struts1-taglib` присутствует в classpath, и SHALL не требовать от приложения иных действий для их работы. При отсутствии модуля в classpath стартер SHALL работать без них.
+### Requirement: Conditional tag-services integration
+The starter SHALL automatically wire in the tag library services when the `spring-struts1-taglib` module is on the classpath, and SHALL not require any further action from the application for them to work. When the module is absent from the classpath, the starter SHALL work without them.
 
-#### Scenario: Тэг-библиотека в classpath
-- **WHEN** приложение подключает `spring-struts1-starter` и `spring-struts1-taglib`
-- **THEN** сервисы тэг-библиотек зарегистрированы и JSP-тэги Struts работают без ручного импорта их конфигурации
+#### Scenario: Tag library on the classpath
+- **WHEN** the application adds `spring-struts1-starter` and `spring-struts1-taglib`
+- **THEN** the tag library services are registered and Struts JSP tags work without manual import of their configuration
 
-#### Scenario: Тэг-библиотека отсутствует
-- **WHEN** в classpath есть стартер, но нет `spring-struts1-taglib`
-- **THEN** приложение стартует без сервисов тэг-библиотек и ошибок старта
+#### Scenario: Tag library absent
+- **WHEN** the classpath contains the starter but not `spring-struts1-taglib`
+- **THEN** the application starts without the tag library services and without startup errors
 
-### Requirement: Отключение стартера
-Стартер SHALL поддерживать полное отключение свойством `spring.struts1.enabled=false`: бины движка и фронт-сервлет не регистрируются, приложение Spring Boot работает без вмешательства стартера.
+### Requirement: Disabling the starter
+The starter SHALL support being fully disabled with the `spring.struts1.enabled=false` property: engine beans and the front servlet are not registered, and the Spring Boot application runs without starter interference.
 
-#### Scenario: Отключение свойством
-- **WHEN** приложение задаёт `spring.struts1.enabled=false`
-- **THEN** бины движка и `DispatcherServlet` от стартера не зарегистрированы, и MVC-приложение работает со своими контроллерами
+#### Scenario: Disabling via property
+- **WHEN** the application sets `spring.struts1.enabled=false`
+- **THEN** the engine beans and the starter's `DispatcherServlet` are not registered, and the MVC application works with its own controllers

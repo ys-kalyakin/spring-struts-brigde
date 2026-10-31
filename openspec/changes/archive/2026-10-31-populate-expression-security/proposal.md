@@ -2,30 +2,30 @@
 
 ## Why
 
-Аудит безопасности пути populate (ручное обозрение + глубокий статический скан Mimosa + эмпирический пробник на Spring 7.0.10) показал: составить выражение имени параметра, которое выполняет произвольный код, **нельзя** — синтаксис имён структурный (без вызовов методов и вычисления выражений), векторы обхода загрузчика классов (`class.classLoader.*`, `class.module.classLoader.*` — CVE-2014-0114 / Spring4Shell-стиль) блокируются двумя слоями, а инстанцирование классов по имени идёт только из конфигурации. Однако аудит выявил нарушения собственной спеки `form-populate` и бреши в эшелонировании защиты, которые нужно устранить: часть «безопасных» выражений роняет populate с ошибкой сервлета (HTTP 500) вместо молчаливого пропуска, CVE-фильтр не покрыт тестами и может незаметно регрессировать, а multipart-путь читает свойства до применения фильтра.
+A security audit of the populate path (manual review + deep Mimosa static scan + an empirical probe against Spring 7.0.10) established that it is **not possible** to craft a parameter-name expression that executes arbitrary code: the name syntax is structural (no method calls or expression evaluation), class-loader traversal vectors (`class.classLoader.*`, `class.module.classLoader.*` — CVE-2014-0114 / Spring4Shell-style) are blocked by two layers, and class instantiation by name happens only from configuration. However, the audit found violations of the `form-populate` spec itself and gaps in the defense-in-depth that must be fixed: some "safe" expressions crash populate with a servlet error (HTTP 500) instead of being silently skipped, the CVE filter is not covered by tests and could silently regress, and the multipart path reads properties before the filter is applied.
 
 ## What Changes
 
-- **Fail-silent навигация**: неизвестное или нечитаемое промежуточное свойство при навигации по вложенному пути (`a.b.c`) SHALL пропускаться без ошибки; сейчас `NotReadablePropertyException` не перехватывается и весь populate завершается ошибкой сервлета — прямое нарушение требования спеки «имя, не соответствующее ни одному свойству, SHALL пропускаться без ошибки».
-- **Второй слой защиты от class-доступа в populate**: сегменты с именем `class` (любой регистр) — голые, индексированные (`class[0]`) и отображаемые (`class(key)`) — SHALL пропускаться на уровне `FormPopulator`, не полагаясь только на regex-фильтр `RequestUtils` (CVE-2014-0114). Сейчас голое `class=x` доходит до конвертации `String`→`Class` и падает ошибкой populate.
-- **Порядок проверок в multipart-пути**: CVE-фильтр имён SHALL применяться до вызова `rationalizeMultipleFileProperty` (сейчас она читает типы свойств через `BeanWrapper` по сырому имени до фильтра — параметр `class.x` в multipart даёт необработанное исключение до блока try populate).
-- **Регрессионные тесты class-фильтра**: матрица выражений (из проверочного пробника) для regex-слоя и для populate-слоя, включая `class`, `class.classLoader`, `class.module.classLoader.DefaultAssertionStatus`, `x.class.y`, `foo[class]`, `foo('class')`, `map(class)`, lazy-формы и DynaBean.
-- **Уточнение спеки `form-populate`**: точные семантики игнорирования class-доступа и молчаливого пропуска неизвестных/нечитаемых промежуточных свойств, включая multipart-путь.
-- Вне scope (зафиксировано осознанно): клиентский `eval` в портированных JS commons-validator (клиентская легаси-валидация, серверного эффекта нет); рефлексивная загрузка классов из конфигурации (`applicationInstance`/фабрики — по дизайну, из HTTP-ввода не достижимо); конвертация `String`→`Class` для `Class`-типизированных свойств форм (закреплена спекой как совместимость с beanutils; для форм с такими свойствами — документированный риск, редкий случай).
+- **Fail-silent navigation**: an unknown or unreadable intermediate property during nested-path navigation (`a.b.c`) SHALL be skipped without error; currently `NotReadablePropertyException` is not caught and the entire populate fails with a servlet error — a direct violation of the spec requirement that "a name that does not correspond to any property SHALL be skipped without error".
+- **Second layer of defense against class access in populate**: segments named `class` (any case) — bare, indexed (`class[0]`), and mapped (`class(key)`) — SHALL be skipped at the `FormPopulator` level rather than relying solely on the `RequestUtils` regex filter (CVE-2014-0114). Currently a bare `class=x` reaches the `String`→`Class` conversion and fails with a populate error.
+- **Order of checks in the multipart path**: the CVE name filter SHALL be applied before calling `rationalizeMultipleFileProperty` (currently it reads property types through `BeanWrapper` using the raw name before the filter — a `class.x` parameter in a multipart request produces an unhandled exception before the populate try block).
+- **Regression tests for the class filter**: an expression matrix (from the verification probe) for the regex layer and for the populate layer, including `class`, `class.classLoader`, `class.module.classLoader.DefaultAssertionStatus`, `x.class.y`, `foo[class]`, `foo('class')`, `map(class)`, lazy forms, and DynaBean.
+- **Spec refinement for `form-populate`**: exact semantics for ignoring class access and for silently skipping unknown/unreadable intermediate properties, including the multipart path.
+- Out of scope (deliberately fixed): client-side `eval` in the ported JS commons-validator (client-side legacy validation, no server-side effect); reflective class loading from configuration (`applicationInstance`/factories — by design, not reachable from HTTP input); `String`→`Class` conversion for `Class`-typed form properties (locked in by the spec as beanutils compatibility; for forms with such properties — a documented risk, a rare case).
 
 ## Capabilities
 
 ### New Capabilities
 
-(нет)
+(none)
 
 ### Modified Capabilities
 
-- `form-populate`: уточняются требования «Источники значений populate» (полное игнорирование class-доступа, порядок фильтра и multipart-обработки) и «Синтаксис имён свойств» (молчаливый пропуск неизвестных/нечитаемых промежуточных свойств, включая вложенные пути).
+- `form-populate`: the requirements "Populate Value Sources" (complete ignoring of class access, ordering of the filter and multipart processing) and "Property Name Syntax" (silent skipping of unknown/unreadable intermediate properties, including nested paths) are refined.
 
 ## Impact
 
-- **Код**: `spring-struts1-core` — `FormPopulator` (перехват `InvalidPropertyException` в навигации/дескрипторах, пропуск сегментов `class`), `RequestUtils` (порядок CVE-фильтра перед `rationalize`, fail-silent в `rationalize`). Публичный API и семантика populate-конвертаций не меняются; меняется только поведение на «мусорных»/опасных именах (ошибка → молчаливый пропуск), что устраняет расхождение со спекой.
-- **Тесты**: новые регрессионные тесты в `spring-struts1-core/src/test/java/org/apache/struts/util/`; существующие fixture-тесты populate не закрепляют текущее падающее поведение (проверено) и не должны измениться.
-- **Зависимости**: без изменений (Spring 7.0.10, commons-beanutils 1.11.0 — актуальные, оба содержат исправления CVE-2010-1622 / CVE-2022-22965 / CVE-2014-0114).
-- **Совместимость**: для корректных форм поведение не меняется; для аномальных имен — с 500 на молчаливый пропуск (это и требует спека и совместимость с эталоном beanutils, где неизвестные имена пропускались).
+- **Code**: `spring-struts1-core` — `FormPopulator` (catching `InvalidPropertyException` in navigation/descriptors, skipping `class` segments), `RequestUtils` (ordering the CVE filter before `rationalize`, fail-silent in `rationalize`). The public API and populate conversion semantics do not change; only behavior on "garbage"/dangerous names changes (error → silent skip), which removes the divergence from the spec.
+- **Tests**: new regression tests in `spring-struts1-core/src/test/java/org/apache/struts/util/`; existing populate fixture tests do not lock in the currently failing behavior (verified) and must not change.
+- **Dependencies**: unchanged (Spring 7.0.10, commons-beanutils 1.11.0 — current, both contain fixes for CVE-2010-1622 / CVE-2022-22965 / CVE-2014-0114).
+- **Compatibility**: for well-behaved forms behavior does not change; for anomalous names it changes from 500 to silent skip (which is exactly what the spec requires and what is compatible with the beanutils reference, where unknown names were skipped).

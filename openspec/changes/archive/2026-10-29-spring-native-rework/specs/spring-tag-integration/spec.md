@@ -2,49 +2,49 @@
 
 ## Purpose
 
-Делает тэг-библиотеки частью Spring-JSP-стека: обработчики тегов получают доступ к Spring-контексту и его бинам, общая логика тегов выполняется Spring-компонентами, а Struts-теги работают на одной странице с тегами Spring.
+Makes the tag libraries part of the Spring JSP stack: tag handlers get access to the Spring context and its beans, shared tag logic runs in Spring components, and Struts tags work on the same page as Spring tags.
 
 ## ADDED Requirements
 
-### Requirement: Доступ тегов к Spring-контексту
-Пользовательский тег, построенный на базе инфраструктуры тегов движка, SHALL иметь доступ к контексту приложения Spring и его бинам во время обработки страницы.
+### Requirement: Tag access to the Spring context
+A custom tag built on the engine's tag infrastructure SHALL have access to the Spring application context and its beans while processing a page.
 
-#### Scenario: Пользовательский тег использует Spring-бин
-- **WHEN** пользовательский тег на базе движка получает из контекста бин сервиса и выводит его результат в тело тега
-- **THEN** страница рендерит данные, полученные из Spring-бина
+#### Scenario: A custom tag uses a Spring bean
+- **WHEN** a custom tag built on the engine base obtains a service bean from the context and writes its result into the tag body
+- **THEN** the page renders data obtained from the Spring bean
 
-### Requirement: Логика тегов выполняется Spring-компонентами
-Общая логика тэг-библиотек — резолв сообщений, построение URL, поиск формы в области, рендер ошибок и сообщений — SHALL выполняться Spring-компонентами, а обработчики тегов делегируют им; переопределение такого компонента пользователем меняет поведение соответствующих тегов.
+### Requirement: Tag logic runs in Spring components
+The shared tag-library logic — message resolution, URL building, form lookup in scope, error and message rendering — SHALL run in Spring components, and tag handlers delegate to them; overriding such a component by the user changes the behavior of the corresponding tags.
 
-#### Scenario: Переопределение компонента меняет вывод тегов
-- **WHEN** приложение переопределяет Spring-компонент резолва сообщений тегов собственной реализацией
-- **THEN** вывод тегов сообщений и ошибок строится по пользовательской реализации
+#### Scenario: Overriding a component changes tag output
+- **WHEN** the application overrides the tag message-resolution Spring component with its own implementation
+- **THEN** the output of message and error tags follows the user's implementation
 
-#### Scenario: Инъекция зависимости в тег
-- **WHEN** пользовательский тег на базе движка объявляет зависимость от бина контекста
-- **THEN** зависимость получена к моменту обработки тела тега без ручного поиска по строковым ключам
+#### Scenario: Dependency injection into a tag
+- **WHEN** a custom tag built on the engine base declares a dependency on a context bean
+- **THEN** the dependency is available by the time the tag body is processed, without manual lookup by string keys
 
-### Requirement: Бандлы message-resources как MessageSource
-Бандлы, объявленные в `<message-resources>`, SHALL быть доступны через Spring `MessageSource`: бандл по умолчанию — как основной `MessageSource` контекста, именованные — по своим ключам; теги Spring (например `spring:message`) рендерят из них сообщения.
+### Requirement: message-resources bundles as MessageSource
+Bundles declared in `<message-resources>` SHALL be available through the Spring `MessageSource`: the default bundle as the context's primary `MessageSource`, named ones under their own keys; Spring tags (for example `spring:message`) render messages from them.
 
-#### Scenario: spring:message читает бандл Struts
-- **WHEN** конфигурация объявляет `<message-resources parameter="MessageResources"/>`, и JSP использует `spring:message` с кодом ключа из этого бандла
-- **THEN** на странице выведено то же сообщение, что возвращает классический тег `bean:message`
+#### Scenario: spring:message reads a Struts bundle
+- **WHEN** the configuration declares `<message-resources parameter="MessageResources"/>`, and a JSP uses `spring:message` with a key code from that bundle
+- **THEN** the page shows the same message that the classic `bean:message` tag returns
 
-#### Scenario: Именованный бандл доступен по ключу
-- **WHEN** конфигурация объявляет бандл с ключом `alternate`, и страница обращается к нему через `MessageSource` по этому ключу
-- **THEN** сообщение получено из бандла `alternate`
+#### Scenario: A named bundle is available by key
+- **WHEN** the configuration declares a bundle with key `alternate`, and a page accesses it through the `MessageSource` by that key
+- **THEN** the message is obtained from the `alternate` bundle
 
-### Requirement: Сосуществование Struts- и Spring-тегов в JSP
-На одной JSP-странице SHALL корректно работать сочетание Struts-тегов, тегов Spring и EL-доступа к бинам контекста: каждая конструкция рендерит ожидаемый результат без дополнительной настройки.
+### Requirement: Coexistence of Struts and Spring tags in JSP
+A combination of Struts tags, Spring tags, and EL access to context beans SHALL work correctly on a single JSP page: each construct renders its expected result with no extra configuration.
 
-#### Scenario: Смешанная страница
-- **WHEN** JSP содержит `html:form` с `html:text`, `spring:message` и EL-выражение, ссылающееся на Spring-бин
-- **THEN** все три конструкции отрендерены: форма со значением свойства, сообщение из бандла и данные бина
+#### Scenario: A mixed page
+- **WHEN** a JSP contains `html:form` with `html:text`, `spring:message`, and an EL expression referencing a Spring bean
+- **THEN** all three constructs are rendered: the form with the property value, the message from the bundle, and the bean's data
 
-### Requirement: Сохранение классического контракта тегов
-Перевод тэг-библиотек на Spring-реализацию SHALL сохранять внешний контракт существующих спецификаций `bean-taglib`, `html-taglib`, `logic-taglib`, `nested-taglib`: те же TLD, URI, имена и атрибуты тегов и тот же HTML-вывод; существующие JSP не требуют изменений.
+### Requirement: The classic tag contract is preserved
+Moving the tag libraries to the Spring implementation SHALL preserve the external contract of the existing `bean-taglib`, `html-taglib`, `logic-taglib`, `nested-taglib` specs: the same TLDs, URIs, tag names and attributes, and the same HTML output; existing JSPs require no changes.
 
-#### Scenario: Приёмочные сценарии тэг-библиотек проходят
-- **WHEN** прогоняются приёмочные сценарии спецификаций `bean-taglib`, `html-taglib`, `logic-taglib` и `nested-taglib` (включая IT приложений `blank` и `examples`)
-- **THEN** все сценарии проходят без изменений ожиданий
+#### Scenario: Tag-library acceptance scenarios pass
+- **WHEN** the acceptance scenarios of the `bean-taglib`, `html-taglib`, `logic-taglib`, and `nested-taglib` specs are run (including the ITs of the `blank` and `examples` apps)
+- **THEN** all scenarios pass with unchanged expectations

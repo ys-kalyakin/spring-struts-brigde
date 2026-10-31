@@ -2,60 +2,60 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Источники значений populate
-Значения для заполнения формы SHALL браться из параметров запроса (все значения имени — как массив строк); для multipart-запроса — из разобранных элементов multipart (текстовые — как параметры, файловые — в свойства типов `FormFile`); разбор multipart SHALL соответствовать спеке `multipart-upload`. Параметры, чьи имена начинаются с `org.apache.struts.`, SHALL пропускаться. Имена с доступом к `class` SHALL игнорироваться (CVE-2014-0114): параметр, в пути свойств которого `class` (в любом регистре) фигурирует как имя свойства — сам по себе, в начале пути, вложенно, с индексом (`class[0]`) или с ключом (`class(key)`) — SHALL пропускаться без ошибки и без изменения формы до любой иной обработки имени, включая разрешение типов файловых полей multipart. Ключ отображаемого свойства (например, `map(class)` или `foo('class')`) именем свойства не является и доступом к `class` не считается.
+### Requirement: Populate Value Sources
+Values for filling the form SHALL be taken from the request parameters (each name value — as a string array); for a multipart request — from the parsed multipart items (text items as parameters, file items into properties of type `FormFile`); multipart parsing SHALL conform to the `multipart-upload` spec. Parameters whose names begin with `org.apache.struts.` SHALL be skipped. Names with `class` access SHALL be ignored (CVE-2014-0114): a parameter in whose property path `class` (in any case) appears as a property name — on its own, at the start of the path, nested, with an index (`class[0]`), or with a key (`class(key)`) — SHALL be skipped without error and without modifying the form, before any other processing of the name, including resolution of multipart file-field types. The key of a mapped property (for example, `map(class)` or `foo('class')`) is not a property name and does not count as `class` access.
 
-#### Scenario: Параметры запроса как источники значений
-- **WHEN** POST-запрос содержит параметры `name=Alice` и `age=30`, и форма имеет свойства `name` и `age`
-- **THEN** оба свойства заполнены соответствующими значениями к моменту вызова экшена
+#### Scenario: Request parameters as value sources
+- **WHEN** a POST request contains the parameters `name=Alice` and `age=30`, and the form has the properties `name` and `age`
+- **THEN** both properties are populated with the corresponding values by the time the action is invoked
 
-#### Scenario: Служебные параметры пропускаются
-- **WHEN** запрос содержит параметр `org.apache.struts.action.CANCEL`
-- **THEN** попытка заполнить свойство с таким именем не выполняется и форма не изменяется
+#### Scenario: Service parameters are skipped
+- **WHEN** the request contains the parameter `org.apache.struts.action.CANCEL`
+- **THEN** no attempt is made to populate a property with that name and the form is not modified
 
-#### Scenario: Файловое поле multipart заполняет FormFile-свойство
-- **WHEN** POST `multipart/form-data` содержит файловое поле `theFile` и форма имеет свойство `FormFile`
-- **THEN** свойство содержит разобранный файл, а текстовые поля формы заполнены из multipart-элементов
+#### Scenario: Multipart file field populates a FormFile property
+- **WHEN** a POST `multipart/form-data` contains a file field `theFile` and the form has a `FormFile` property
+- **THEN** the property contains the parsed file, and the form's text fields are populated from the multipart items
 
-#### Scenario: Голое имя class игнорируется
-- **WHEN** запрос содержит параметр `class=value` (или `CLASS=value`)
-- **THEN** populate завершается без ошибки, форма не изменяется, остальные параметры заполнены
+#### Scenario: Bare class name is ignored
+- **WHEN** the request contains the parameter `class=value` (or `CLASS=value`)
+- **THEN** populate completes without error, the form is not modified, and the remaining parameters are populated
 
-#### Scenario: Вложенный доступ через class игнорируется
-- **WHEN** запрос содержит параметры `class.module.classLoader.DefaultAssertionStatus=1`, `a.class.b=1`, `class[0]=1`, `class(key)=1`
-- **THEN** каждый такой параметр пропущен без ошибки и без изменения формы; остальные параметры заполнены
+#### Scenario: Nested access through class is ignored
+- **WHEN** the request contains the parameters `class.module.classLoader.DefaultAssertionStatus=1`, `a.class.b=1`, `class[0]=1`, `class(key)=1`
+- **THEN** each such parameter is skipped without error and without modifying the form; the remaining parameters are populated
 
-#### Scenario: Файловое поле multipart с class-именем игнорируется
-- **WHEN** multipart-запрос содержит поле `class.x` и текстовое поле `name=Alice`, форма имеет свойство `name`
-- **THEN** populate завершается без ошибки, свойство `name` заполнено, поле `class.x` проигнорировано до попытки разрешения типа свойства
+#### Scenario: Multipart file field with a class name is ignored
+- **WHEN** a multipart request contains a field `class.x` and a text field `name=Alice`, and the form has a `name` property
+- **THEN** populate completes without error, the `name` property is populated, and the `class.x` field is ignored before the property type resolution is attempted
 
-### Requirement: Синтаксис имён свойств
-Имена параметров SHALL обрабатываться в beanutils-синтаксисе: простое имя задаёт свойство, `prop[i]` — индексированное свойство (массив или список), `prop(key)` — отображаемое свойство (`Map`), `a.b` — вложенное свойство, а также их комбинации. Имя, не соответствующее ни одному свойству формы, SHALL пропускаться без ошибки; недоступное вложенное свойство SHALL пропускаться без ошибки — как при промежуточном значении `null`, так и при неизвестном или нечитаемом промежуточном свойстве на любом шаге вложенного пути; populate при этом SHALL продолжать обработку остальных параметров. Отображаемое свойство SHALL получать исходное значение параметра (массив строк) без конвертации.
+### Requirement: Property Name Syntax
+Parameter names SHALL be processed in beanutils syntax: a simple name designates a property, `prop[i]` — an indexed property (array or list), `prop(key)` — a mapped property (`Map`), `a.b` — a nested property, as well as their combinations. A name that does not correspond to any property of the form SHALL be skipped without error; an inaccessible nested property SHALL be skipped without error — both when the intermediate value is `null` and when an intermediate property is unknown or unreadable at any step of the nested path; populate SHALL continue processing the remaining parameters. A mapped property SHALL receive the raw parameter value (string array) without conversion.
 
-#### Scenario: Индексированный параметр
-- **WHEN** запрос содержит параметр `intIndexed[0]=5` и форма имеет массив `int[]` `intIndexed`
-- **THEN** первый элемент массива равен 5, остальные элементы не изменены
+#### Scenario: Indexed parameter
+- **WHEN** the request contains the parameter `intIndexed[0]=5` and the form has an `int[]` array `intIndexed`
+- **THEN** the first element of the array equals 5 and the remaining elements are unchanged
 
-#### Scenario: Отображаемый параметр
-- **WHEN** запрос содержит параметр `value(color)=red` и форма имеет свойство-`Map` `value`
-- **THEN** по ключу `color` в Map лежит исходное значение параметра — массив строк
+#### Scenario: Mapped parameter
+- **WHEN** the request contains the parameter `value(color)=red` and the form has a `Map` property `value`
+- **THEN** under the key `color` the Map holds the raw parameter value — a string array
 
-#### Scenario: Вложенный параметр
-- **WHEN** запрос содержит параметр `nested.intProperty=7` и форма имеет вложенный бин `nested` со свойством `intProperty`
-- **THEN** свойство `intProperty` вложенного бина равно 7
+#### Scenario: Nested parameter
+- **WHEN** the request contains the parameter `nested.intProperty=7` and the form has a nested bean `nested` with the property `intProperty`
+- **THEN** the `intProperty` property of the nested bean equals 7
 
-#### Scenario: Неизвестное имя параметра
-- **WHEN** запрос содержит параметр, не соответствующий ни одному свойству формы
-- **THEN** populate завершается без ошибки, форма не изменяется по этому параметру
+#### Scenario: Unknown parameter name
+- **WHEN** the request contains a parameter that does not correspond to any property of the form
+- **THEN** populate completes without error and the form is not modified by that parameter
 
-#### Scenario: Комбинация индексированного и отображаемого
-- **WHEN** запрос содержит параметр `nested.maps[0](color)=red`, элемент `maps[0]` существует и является `Map`
-- **THEN** по ключу `color` этой Map лежит первый элемент параметра как строка
+#### Scenario: Combination of indexed and mapped
+- **WHEN** the request contains the parameter `nested.maps[0](color)=red`, the element `maps[0]` exists and is a `Map`
+- **THEN** under the key `color` that Map holds the first element of the parameter as a string
 
-#### Scenario: Неизвестное промежуточное свойство вложенного пути
-- **WHEN** запрос содержит параметры `nonExistent.deep.path=1` и `name=Alice`, форма имеет свойство `name`
-- **THEN** populate завершается без ошибки, свойство `name` заполнено, параметр `nonExistent.deep.path` пропущен
+#### Scenario: Unknown intermediate property of a nested path
+- **WHEN** the request contains the parameters `nonExistent.deep.path=1` and `name=Alice`, and the form has a `name` property
+- **THEN** populate completes without error, the `name` property is populated, and the `nonExistent.deep.path` parameter is skipped
 
-#### Scenario: Нечитаемое промежуточное свойство вложенного пути
-- **WHEN** запрос содержит параметр `nested.missing.child=1`, форма имеет вложенный бин `nested`, у которого нет свойства `missing`
-- **THEN** populate завершается без ошибки, параметр пропущен
+#### Scenario: Unreadable intermediate property of a nested path
+- **WHEN** the request contains the parameter `nested.missing.child=1` and the form has a nested bean `nested` that has no `missing` property
+- **THEN** populate completes without error and the parameter is skipped

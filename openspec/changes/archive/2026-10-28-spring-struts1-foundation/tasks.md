@@ -1,21 +1,21 @@
 # Tasks
 
-## 1. Документ ROADMAP.md
+## 1. ROADMAP.md Document
 
-- [x] 1.1 Создать `ROADMAP.md` в корне: разделы «Видение», «Принципы совместимости» (пакеты `org.apache.struts.*`, `struts-config.xml`, тэг-библиотеки, jakarta-стек), «Целевой стек» (Spring Boot 4.x / Framework 7, Java 17+, Tomcat 11 — с пометкой о проверке при старте фазы 1); проверить, что файл существует и разделы присутствуют
-- [x] 1.2 Описать фазы 1–4, каждая с: объёмом работ, целевым приложением weblegacy, критериями приёмки (включая поведенческие сценарии ядра: парсинг конфига, маршрутизация `*.do`, жизненный цикл populate → validate → execute → forward, форварды, message-resources, исключения, экшены/формы как Spring-бины, фолбэк-совместимость, PlugIn), рекомендуемым именем будущего change и открытыми вопросами; проверить, что каждая фаза содержит все элементы
-- [x] 1.3 Включить в роадмап соответствие «фаза → change» (`struts1-engine-core`, `struts1-taglibs`, `struts1-tiles-validation`, `struts1-starter-migration`) и правило о том, что фаза может быть разбита на несколько изменений; проверить, что имена не пересекаются с существующими (`openspec list`)
+- [x] 1.1 Create `ROADMAP.md` at the root: sections "Vision", "Compatibility Principles" (the `org.apache.struts.*` packages, `struts-config.xml`, tag libraries, the jakarta stack), "Target Stack" (Spring Boot 4.x / Framework 7, Java 17+, Tomcat 11 — with a note to verify at the start of phase 1); verify that the file exists and the sections are present
+- [x] 1.2 Describe phases 1–4, each with: scope of work, target weblegacy application, acceptance criteria (including core behavioral scenarios: config parsing, `*.do` routing, the populate → validate → execute → forward lifecycle, forwards, message-resources, exceptions, actions/forms as Spring beans, fallback compatibility, PlugIn), a recommended name for the future change, and open questions; verify that each phase contains all elements
+- [x] 1.3 Include in the roadmap the "phase → change" mapping (`struts1-engine-core`, `struts1-taglibs`, `struts1-tiles-validation`, `struts1-starter-migration`) and the rule that a phase may be split into several changes; verify that the names do not clash with existing ones (`openspec list`)
 
 ## 2. README
 
-- [x] 2.1 Дополнить `README.md`: цель проекта (Struts 1 на движке Spring, drop-in замена), ссылка на `ROADMAP.md`, ссылка на эталон weblegacy/struts1; проверить, что ссылки валидны и текст читается
+- [x] 2.1 Supplement `README.md`: the project goal (Struts 1 on a Spring engine, a drop-in replacement), a link to `ROADMAP.md`, a link to the weblegacy/struts1 reference; verify that the links are valid and the text reads well
 
-## 3. Согласование
+## 3. Consistency
 
-- [x] 3.1 Сквозная проверка согласованности: объёмы фаз в `ROADMAP.md` совпадают с proposal.md, критерии приёмки покрывают все сценарии бывших спек-дельт; проверить чтением обоих документов
-- [x] 3.2 Прогнать `openspec validate spring-struts1-foundation`; проверить, что валидация проходит
+- [x] 3.1 End-to-end consistency check: the phase scopes in `ROADMAP.md` match proposal.md, and the acceptance criteria cover all scenarios of the former spec deltas; verify by reading both documents
+- [x] 3.2 Run `openspec validate spring-struts1-foundation`; verify that validation passes
 
 ## Workflow follow-up
 
-- После завершения задач синхронизировать и заархивировать change (`/opsx:sync`, `/opsx:archive`).
-- Запуск реализации фазы 1 — новым change (`openspec new change "struts1-engine-core"` или `/opsx:propose`).
+- After the tasks are complete, sync and archive the change (`/opsx:sync`, `/opsx:archive`).
+- Kick off phase 1 implementation as a new change (`openspec new change "struts1-engine-core"` or `/opsx:propose`).

@@ -2,33 +2,33 @@
 
 ## Why
 
-Фазы 1–3 собрали движок, тэг-библиотеки и tiles/валидацию, но каждое приложение по-прежнему подключает их вручную: web.xml с `DispatcherServlet` и классическими init-params, `AnnotationConfigWebApplicationContext` и явный `@Import(StrutsEngineConfiguration, ...)`. Видение проекта — drop-in замена: миграция существующего Struts 1 приложения должна сводиться к замене зависимости, подключению стартера и аннотациям над формами/экшенами. Фаза 4 закрывает этот путь: Spring Boot стартер с авто-конфигурацией, руководство по миграции, матрица совместимости и инфраструктура публикации.
+Phases 1–3 delivered the engine, tag libraries, and tiles/validation, but every application still wires them up manually: a web.xml with the `DispatcherServlet` and classic init-params, an `AnnotationConfigWebApplicationContext`, and an explicit `@Import(StrutsEngineConfiguration, ...)`. The project vision is a drop-in replacement: migrating an existing Struts 1 application should come down to swapping the dependency, adding the starter, and annotating forms/actions. Phase 4 closes that path: a Spring Boot starter with auto-configuration, a migration guide, a compatibility matrix, and publishing infrastructure.
 
 ## What Changes
 
-- Новый модуль `spring-struts1-starter`: авто-конфигурация Spring Boot 4.0.x — регистрирует все бины движка (фасад `ActionServlet`, инициализатор, resolver, `StrutsHandlerMapping`/`StrutsHandlerAdapter`, регистратор типов из struts-config) без ручного `@Import`; регистрирует `DispatcherServlet` с настраиваемым маппингом (по умолчанию `*.do`).
-- Классический контракт init-params (`config`, `config/<prefix>`, `validating`) переносится в свойства `spring.struts1.*` — семантика парсинга конфига не меняется.
-- Условная интеграция: тэг-сервисы подключаются автоматически, если `spring-struts1-taglib` в classpath.
-- Приложения `apps/*` переводятся на бутстрап через стартер (класс приложения `SpringBootServletInitializer`, web.xml сокращается до минимума); интеграционные тесты остаются на embedded Tomcat 11 (реальный контейнер, не mock).
-- Новое демо-приложение (модуль в `spring-struts1-apps`): исполняемый Spring Boot jar без web.xml, экшен и форма с аннотациями `@StrutsAction`/`@StrutsForm` — эталон миграции из руководства.
-- Руководство по миграции (`docs/MIGRATION.md`) с типовыми правками (jasper для JSP, свойства, статические ресурсы) и матрица совместимости (README).
-- Инфраструктура публикации Maven-артефактов: профиль `publication` с `distributionManagement` через свойства и документация по запуску deploy. Внешний канал (Maven Central) в этом изменении не активируется: требуются учётные данные, недоступные в репозитории (открытый вопрос роадмапа решается вне кода).
+- New module `spring-struts1-starter`: Spring Boot 4.0.x auto-configuration — registers all engine beans (the `ActionServlet` facade, the initializer, the resolver, `StrutsHandlerMapping`/`StrutsHandlerAdapter`, the struts-config types registrar) without manual `@Import`; registers the `DispatcherServlet` with a configurable mapping (default `*.do`).
+- The classic init-params contract (`config`, `config/<prefix>`, `validating`) moves into `spring.struts1.*` properties — config parsing semantics are unchanged.
+- Conditional integration: tag services are wired in automatically when `spring-struts1-taglib` is on the classpath.
+- The `apps/*` applications switch to bootstrap via the starter (application class `SpringBootServletInitializer`, web.xml reduced to the minimum); integration tests remain on embedded Tomcat 11 (a real container, not a mock).
+- A new demo application (module in `spring-struts1-apps`): an executable Spring Boot jar without web.xml, with an action and form annotated `@StrutsAction`/`@StrutsForm` — the migration reference from the guide.
+- A migration guide (`docs/MIGRATION.md`) with typical adjustments (jasper for JSP, properties, static resources) and a compatibility matrix (README).
+- Maven artifact publishing infrastructure: a `publication` profile with `distributionManagement` configured via properties, plus documentation on running deploy. The external channel (Maven Central) is not activated in this change: it requires credentials not available in the repository (the open roadmap question is resolved outside the code).
 
 ## Capabilities
 
 ### New Capabilities
 
-- `spring-boot-starter`: автоматическая конфигурация движка Struts 1 стартером — регистрация бинов движка, регистрация и маппинг фронт-сервлета, классический init-param контракт через свойства, условная интеграция тэг-сервисов, отключение стартера.
-- `app-migration`: путь миграции приложения на стартер — что достаточно для рабочей миграции (зависимость, класс приложения, свойства), демо-миграция с аннотациями, руководство по миграции, матрица совместимости, инфраструктура публикации.
+- `spring-boot-starter`: automatic configuration of the Struts 1 engine via the starter — engine bean registration, front-servlet registration and mapping, the classic init-param contract through properties, conditional tag-services integration, disabling the starter.
+- `app-migration`: the application migration path to the starter — what suffices for a working migration (dependency, application class, properties), an annotated demo migration, a migration guide, a compatibility matrix, publishing infrastructure.
 
 ### Modified Capabilities
 
-- `action-servlet-facade`: фасад `ActionServlet` теперь конфигурируется двумя равнозначными способами — init-params web.xml (классический WAR-режим) и свойствами стартера `spring.struts1.*` (Boot-режим); семантика параметров и доступ через `action.getServlet()` не меняются.
+- `action-servlet-facade`: the `ActionServlet` facade is now configured in two equivalent ways — web.xml init-params (classic WAR mode) and the starter properties `spring.struts1.*` (Boot mode); parameter semantics and access via `action.getServlet()` are unchanged.
 
 ## Impact
 
-- Новый модуль `spring-struts1-starter` с зависимостью на Spring Boot 4.0.x autoconfigure; родительский pom получает версию Boot и профиль публикации.
-- Приложения `apps/*` (blank, examples, cookbook, mailreader): добавляется зависимость стартера и класс приложения, правки web.xml; интеграционные тесты (`TomcatTestServer`) сохраняются как есть.
-- Новый модуль демо-приложения в `spring-struts1-apps` (packaging jar, boot-maven-plugin).
-- Движок (`spring-struts1-core`) остаётся без изменений по поведению; ручной режим `@Import` сохраняется для классического WAR-бутстрапа.
-- Документация: новый `docs/MIGRATION.md`, обновление README (матрица совместимости, публикация).
+- New module `spring-struts1-starter` depending on Spring Boot 4.0.x autoconfigure; the parent pom gains the Boot version and the publication profile.
+- The `apps/*` applications (blank, examples, cookbook, mailreader): the starter dependency and application class are added, web.xml is adjusted; integration tests (`TomcatTestServer`) remain as is.
+- A new demo application module in `spring-struts1-apps` (packaging jar, boot-maven-plugin).
+- The engine (`spring-struts1-core`) remains unchanged behaviorally; the manual `@Import` mode is preserved for classic WAR bootstrap.
+- Documentation: new `docs/MIGRATION.md`, README update (compatibility matrix, publishing).

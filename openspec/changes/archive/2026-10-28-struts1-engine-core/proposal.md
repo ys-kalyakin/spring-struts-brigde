@@ -2,38 +2,38 @@
 
 ## Why
 
-Роадмап (фаза 1) и заархивированный change `spring-struts1-foundation` назначили этот change точкой старта реализации: проект до сих пор содержит только документацию, кода нет. Цель фазы 1 — минимальный движок Struts 1 на Spring MVC, способный запустить портированное `apps/blank` из эталона weblegacy/struts1: это первый проверяемый шаг к drop-in замене артефакта Struts 1 на `spring-struts1`.
+The roadmap (phase 1) and the archived change `spring-struts1-foundation` designated this change as the starting point of implementation: the project so far contains only documentation, no code. The goal of phase 1 is a minimal Struts 1 engine on Spring MVC capable of running the ported `apps/blank` from the weblegacy/struts1 reference: this is the first verifiable step toward a drop-in replacement of the Struts 1 artifact with `spring-struts1`.
 
 ## What Changes
 
-- Создаётся мультимодульный Maven-проект: `spring-struts1-core` (движок и конфигурационная модель), `spring-struts1-apps` (портированные тестовые приложения); в этой фазе — только `blank`.
-- Портируется конфигурационная модель и Digester-правила из weblegacy `core` (`org.apache.struts.config`): парсинг `struts-config.xml` — маппинги, формы, форварды, исключения, message-resources, плагины.
-- Строится движок жизненного цикла запроса на Spring MVC (`StrutsHandlerMapping` + `StrutsHandlerAdapter` внутри `DispatcherServlet`): маршрутизация по суффиксу (`*.do`), populate формы по семантике commons-beanutils → валидация (`validate=true/false`) → `execute` → форвард; локальные форварды приоритетнее глобальных; `redirect=true` — HTTP-редирект, иначе dispatch.
-- `MessageResources` реализуется поверх Spring `MessageSource` со Struts-семантикой локали (сессия, инициализация из запроса) и форматом отсутствующих ключей `???<locale>.<key>???`.
-- Добавляется декларативная обработка исключений: `global-exceptions` и `exception` в маппинге — форвард + `ActionMessage`; неописанные — проброс в контейнер.
-- Добавляются аннотации `@StrutsAction` (singleton) / `@StrutsForm` (prototype) и резолвинг бинов из Spring-контекста; классы без регистрации в Spring создаются напрямую (фолбэк классического режима).
-- `ActionServlet` сохраняется как фасад совместимости (init-param `config`, рабочая ссылка `action.getServlet()`); жизненный цикл `PlugIn` (init при старте, destroy при остановке; из Spring-контекста, если бин, иначе прямое создание).
-- Портируется `apps/blank` с минимальной документированной адаптацией: JSP переписываются без Struts-тэг-библиотек (фаза 2), вместо `ValidatorPlugIn` подключается простой тестовый плагин (валидатор — фаза 3); прогон — интеграционный тест на embedded Tomcat 11.
+- A multi-module Maven project is created: `spring-struts1-core` (engine and configuration model), `spring-struts1-apps` (ported test applications); in this phase — only `blank`.
+- The configuration model and Digester rules from weblegacy `core` (`org.apache.struts.config`) are ported: parsing of `struts-config.xml` — action mappings, forms, forwards, exceptions, message-resources, plugins.
+- A request lifecycle engine is built on Spring MVC (`StrutsHandlerMapping` + `StrutsHandlerAdapter` inside `DispatcherServlet`): suffix routing (`*.do`), form populate with commons-beanutils semantics → validation (`validate=true/false`) → `execute` → forward; local forwards take priority over global ones; `redirect=true` — HTTP redirect, otherwise dispatch.
+- `MessageResources` is implemented on top of Spring `MessageSource` with Struts locale semantics (session, initialized from the request) and the missing-key format `???<locale>.<key>???`.
+- Declarative exception handling is added: `global-exceptions` and `exception` in a mapping — forward + `ActionMessage`; undeclared exceptions are propagated to the container.
+- The `@StrutsAction` (singleton) / `@StrutsForm` (prototype) annotations and bean resolution from the Spring context are added; classes not registered in Spring are created directly (classic-mode fallback).
+- `ActionServlet` is preserved as a compatibility facade (init-param `config`, working `action.getServlet()` reference); the `PlugIn` lifecycle (init at startup, destroy at shutdown; created from the Spring context if a bean, otherwise direct creation).
+- `apps/blank` is ported with minimal documented adaptation: JSPs are rewritten without Struts tag libraries (phase 2), instead of `ValidatorPlugIn` a simple test plugin is wired in (validator — phase 3); the run is an integration test on embedded Tomcat 11.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `struts-config-parsing`: чтение и объединение конфигурации из `struts-config.xml` — маппинги, формы, глобальные/локальные форварды, исключения, message-resources, плагины; контракт init-param `config` (список файлов) и ошибки старта при отсутствующем/некорректном файле.
-- `request-processing`: маршрутизация запросов на экшены (суффиксное маппирование) и полный жизненный цикл запроса — populate → validate → execute → forward — с семантикой форвардов и 404 для незарегистрированных путей.
-- `message-resources`: доступ к сообщениям приложения по ключу поверх Spring `MessageSource`, Struts-семантика локали и формат отсутствующих ключей.
-- `exception-handling`: декларативная обработка исключений через `global-exceptions` и `exception` в маппинге.
-- `spring-bean-integration`: аннотации `@StrutsAction`/`@StrutsForm`, семантика singleton/prototype, внедрение зависимостей, фолбэк прямого создания классов, не зарегистрированных в Spring.
-- `action-servlet-facade`: фасад `ActionServlet` (совместимость с legacy-кодом, init-params) и жизненный цикл `PlugIn`.
+- `struts-config-parsing`: reading and merging configuration from `struts-config.xml` — action mappings, forms, global/local forwards, exceptions, message-resources, plugins; the init-param `config` contract (list of files) and startup errors on a missing/invalid file.
+- `request-processing`: routing requests to actions (suffix mapping) and the full request lifecycle — populate → validate → execute → forward — with forward semantics and 404 for unregistered paths.
+- `message-resources`: key-based access to application messages on top of Spring `MessageSource`, Struts locale semantics and the missing-key format.
+- `exception-handling`: declarative exception handling via `global-exceptions` and `exception` in a mapping.
+- `spring-bean-integration`: the `@StrutsAction`/`@StrutsForm` annotations, singleton/prototype semantics, dependency injection, fallback of direct creation for classes not registered in Spring.
+- `action-servlet-facade`: the `ActionServlet` facade (compatibility with legacy code, init-params) and the `PlugIn` lifecycle.
 
 ### Modified Capabilities
 
-(нет — спецификаций в проекте ещё нет, `openspec list --specs` пуст)
+(none — the project has no specs yet, `openspec list --specs` is empty)
 
 ## Impact
 
-- **Структура:** новые Maven-модули `spring-struts1-core` и `spring-struts1-apps` (родительский POM в корне); код движка сохраняет пакеты `org.apache.struts.*`.
-- **Зависимости:** Spring Framework 7 / Spring Boot 4.0.x (при блокере JSP на Tomcat 11 — документированный откат на Boot 3.5.x без изменения кода движка), commons-digester, commons-beanutils; Java 17+; embedded Tomcat 11 для интеграционных тестов.
-- **Тестовые приложения:** портированный `apps/blank` из `/home/helloween/projects/struts1-reference` (v1.5.0-rc2) — целевое приложение фазы; эталон совместимости для конфигураций и сценариев.
-- **Не входит в объём:** тэг-библиотеки, Tiles, multipart upload, commons-validator/`DynaActionForm` (фазы 2–3), Spring Boot стартер (фаза 4), поддержка нескольких модулей (`config/<prefix>`) и path-mapped экшенов (`/action/*`) — решение о path-mapped зафиксировано в design.md.
-- **Рефакторинг-кандидат после фазы 1:** переход populate с commons-beanutils на Spring `ConversionService`.
+- **Structure:** new Maven modules `spring-struts1-core` and `spring-struts1-apps` (parent POM at the root); engine code keeps the `org.apache.struts.*` packages.
+- **Dependencies:** Spring Framework 7 / Spring Boot 4.0.x (in case of a JSP blocker on Tomcat 11 — a documented rollback to Boot 3.5.x without changing engine code), commons-digester, commons-beanutils; Java 17+; embedded Tomcat 11 for integration tests.
+- **Test applications:** the ported `apps/blank` from `/home/helloween/projects/struts1-reference` (v1.5.0-rc2) — the target application of the phase; the compatibility reference for configurations and scenarios.
+- **Out of scope:** tag libraries, Tiles, multipart upload, commons-validator/`DynaActionForm` (phases 2–3), a Spring Boot starter (phase 4), support for multiple modules (`config/<prefix>`) and path-mapped actions (`/action/*`) — the path-mapped decision is recorded in design.md.
+- **Refactoring candidate after phase 1:** switching populate from commons-beanutils to Spring `ConversionService`.

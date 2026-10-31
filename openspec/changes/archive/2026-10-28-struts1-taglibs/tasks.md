@@ -1,56 +1,56 @@
 # Tasks
 
-## 1. Модуль taglib и утилиты ядра
+## 1. Taglib module and core utilities
 
-- [x] 1.1 Создать модуль `spring-struts1-taglib` (зависимость: core, jakarta.servlet.jsp-api provided, beanutils) с TLD, скопированными байт-в-байт из эталона (`META-INF/tld/struts-{bean,html,logic,nested}.tld`); проверить, что `./mvnw -q -pl spring-struts1-taglib -am validate` проходит
-- [x] 1.2 Портировать в core `org.apache.struts.util.ResponseUtils` (filter/render/write) и `ModuleUtils` (карта модулей, selectModule по пути запроса) из эталона; проверить юнит-тестом filter (экранирование) и выбора модуля по пути
-- [x] 1.3 Портировать `org.apache.struts.taglib.TagUtils` из эталона с адаптацией к нашему ядру (MessageResources/ModuleConfig из запроса); проверить юнит-тестом построения URL с контекстом и фильтрации значений
+- [x] 1.1 Create the `spring-struts1-taglib` module (dependencies: core, jakarta.servlet.jsp-api provided, beanutils) with TLDs copied byte-for-byte from the reference (`META-INF/tld/struts-{bean,html,logic,nested}.tld`); verify that `./mvnw -q -pl spring-struts1-taglib -am validate` passes
+- [x] 1.2 Port into core `org.apache.struts.util.ResponseUtils` (filter/render/write) and `ModuleUtils` (module map, selectModule by request path) from the reference; verify with a unit test of filter (escaping) and module selection by path
+- [x] 1.3 Port `org.apache.struts.taglib.TagUtils` from the reference with adaptation to our core (MessageResources/ModuleConfig from the request); verify with a unit test of URL building with context and value filtering
 
-## 2. Библиотека struts-bean
+## 2. struts-bean library
 
-- [x] 2.1 Портировать 11 тегов `org.apache.struts.taglib.bean` (write, message, define, size, header, cookie, parameter, include, resource, struts, page?) файл-в-файл из эталона; проверить компиляцию модуля
-- [x] 2.2 Написать IT на embedded Tomcat 11 (собственная test-страница в тестовом webapp): bean:write значения и filter=true/false, bean:message по ключу и с arg0..arg3 и bundle, bean:define + bean:write переменной, bean:parameter/header/cookie, bean:size, bean:include; проверить, что тесты зелёные и соответствуют сценариям спеки `bean-taglib`
+- [x] 2.1 Port the 11 tags of `org.apache.struts.taglib.bean` (write, message, define, size, header, cookie, parameter, include, resource, struts, page?) file-by-file from the reference; verify the module compiles
+- [x] 2.2 Write ITs on embedded Tomcat 11 (a dedicated test page in the test webapp): bean:write values and filter=true/false, bean:message by key and with arg0..arg3 and bundle, bean:define + bean:write of the variable, bean:parameter/header/cookie, bean:size, bean:include; verify the tests are green and match the scenarios of the `bean-taglib` spec
 
-## 3. Библиотека struts-html
+## 3. struts-html library
 
-- [x] 3.1 Портировать 29 тегов `org.apache.struts.taglib.html` (form, text, password, hidden, textarea, checkbox, multibox, radio, select, option, options, optionsCollection, submit, reset, button, cancel, image, file, errors, messages, img, link, rewrite, base, html, xhtml, javascript-заглушка отсутствует — тег не портируется); проверить компиляцию модуля
-- [x] 3.2 Написать IT: html:form с action и без (как exercise html-form), виджеты text/select/checkbox/multibox с значениями из формы, html:errors (header/prefix/suffix по умолчанию и фильтр по property), html:messages, html:link по forward и с paramId/paramName, html:rewrite, html:img, html:base; проверить соответствие сценариям спеки `html-taglib`
-- [x] 3.3 Реализовать xhtml-режим (флаг, самозакрывающиеся элементы, `checked="checked"`/`selected="selected"`) и IT: вывод с включённым и выключенным режимом; проверить сценарий спеки `html-taglib` (xhtml)
-- [x] 3.4 Зафиксировать IT: JSP с `html:javascript` даёт ошибку обработки (тег отложен до фазы 3); проверить сценарий спеки
+- [x] 3.1 Port the 29 tags of `org.apache.struts.taglib.html` (form, text, password, hidden, textarea, checkbox, multibox, radio, select, option, options, optionsCollection, submit, reset, button, cancel, image, file, errors, messages, img, link, rewrite, base, html, xhtml; no javascript stub — the tag is not ported); verify the module compiles
+- [x] 3.2 Write ITs: html:form with action and without (as the html-form exercise), widgets text/select/checkbox/multibox with values from the form, html:errors (header/prefix/suffix defaults and filtering by property), html:messages, html:link by forward and with paramId/paramName, html:rewrite, html:img, html:base; verify they match the scenarios of the `html-taglib` spec
+- [x] 3.3 Implement the xhtml mode (flag, self-closing elements, `checked="checked"`/`selected="selected"`) and IT: output with the mode enabled and disabled; verify the `html-taglib` spec scenario (xhtml)
+- [x] 3.4 Pin with an IT: a JSP with `html:javascript` produces a processing error (the tag is deferred to phase 3); verify the spec scenario
 
-## 4. Библиотека struts-logic
+## 4. struts-logic library
 
-- [x] 4.1 Портировать 17 тегов `org.apache.struts.taglib.logic` (iterate, equal/notEqual, greaterEqual/lessEqual/greaterThan/lessThan, match/notMatch, present/notPresent, empty/notEmpty, messagesPresent/messagesNotPresent, redirect, forward); проверить компиляцию модуля
-- [x] 4.2 Написать IT: iterate (коллекция, indexId, offset/length), сравнения по параметру и свойству, match с location, present/notPresent (в т.ч. атрибут приложения — как в Welcome.jsp эталона), empty, messagesPresent, redirect по forward (302) и forward; проверить соответствие сценариям спеки `logic-taglib`
+- [x] 4.1 Port the 17 tags of `org.apache.struts.taglib.logic` (iterate, equal/notEqual, greaterEqual/lessEqual/greaterThan/lessThan, match/notMatch, present/notPresent, empty/notEmpty, messagesPresent/messagesNotPresent, redirect, forward); verify the module compiles
+- [x] 4.2 Write ITs: iterate (collection, indexId, offset/length), comparisons by parameter and property, match with location, present/notPresent (including an application attribute — as in the reference Welcome.jsp), empty, messagesPresent, redirect by forward (302) and forward; verify they match the scenarios of the `logic-taglib` spec
 
-## 5. Библиотека struts-nested
+## 5. struts-nested library
 
-- [x] 5.1 Портировать 40 тегов `org.apache.struts.taglib.nested` (включая NestedPropertyHelper/NestedReferenceHelper) файл-в-файл; проверить компиляцию модуля
-- [x] 5.2 Написать IT на собственных страницах: nested:form + nested:text с полным путём свойства, nested:iterate + nested:write по элементам списка, nested:root/nested:reference, эквивалентность вывода базовым тегам; проверить соответствие сценариям спеки `nested-taglib`
+- [x] 5.1 Port the 40 tags of `org.apache.struts.taglib.nested` (including NestedPropertyHelper/NestedReferenceHelper) file-by-file; verify the module compiles
+- [x] 5.2 Write ITs on dedicated pages: nested:form + nested:text with a full property path, nested:iterate + nested:write over list elements, nested:root/nested:reference, output equivalence to the base tags; verify they match the scenarios of the `nested-taglib` spec
 
-## 6. Мульти-модульность и path-mapped
+## 6. Multi-modularity and path-mapped
 
-- [x] 6.1 Расширить `ActionServlet.initModuleConfig`: разбор init-params `config/<prefix>` в карту модулей (ошибка старта с именем файла при битом/отсутствующем файле модуля); проверить юнит-тестами (модуль по `config/exercise`, ошибка с именем файла)
-- [x] 6.2 Внедрить выбор модуля в `StrutsHandlerMapping` (по префиксу пути запроса, иначе модуль по умолчанию) и передавать модуль в конвейер/адаптер (атрибут запроса); проверить IT: запрос `/exercise/…` обслуживается маппингами модуля `/exercise`, запрос без префикса — модулем по умолчанию
-- [x] 6.3 Добавить в `StrutsHandlerMapping` режим `servletMapping` (`*.do` / `/action/*`): path-mapped маршрутизация с отбрасыванием префикса; проверить IT: запрос `/action/Welcome` обслуживается маппингом `/Welcome`
+- [x] 6.1 Extend `ActionServlet.initModuleConfig`: parsing `config/<prefix>` init-params into a module map (startup error with the file name on a broken/missing module file); verify with unit tests (module by `config/exercise`, error with the file name)
+- [x] 6.2 Introduce module selection in `StrutsHandlerMapping` (by request path prefix, otherwise the default module) and pass the module into the pipeline/adapter (request attribute); verify with an IT: a request to `/exercise/…` is served by the mappings of the `/exercise` module, a request without a prefix — by the default module
+- [x] 6.3 Add the `servletMapping` mode to `StrutsHandlerMapping` (`*.do` / `/action/*`): path-mapped routing with prefix stripping; verify with an IT: a request to `/action/Welcome` is served by the `/Welcome` mapping
 
-## 7. DynaActionForm и dispatch-экшены
+## 7. DynaActionForm and dispatch actions
 
-- [x] 7.1 Портировать минимальный `DynaActionForm` (DynaBean поверх HashMap, свойство из `<form-property>`, initial-значения) и ветку создания в `FormBeanConfig.createActionForm`; проверить юнит-тестами: свойства по конфигурации, initial, свежий экземпляр на запрос
-- [x] 7.2 Проверить IT: populate динамической формы параметрами запроса и валидация по флагу маппинга на динамической форме; проверить сценарии спеки `dynamic-form-beans`
-- [x] 7.3 Портировать subset extras в core (`org.apache.struts.extras.actions`: DispatchAction, LookupDispatchAction, MappingDispatchAction, EventDispatchAction, ActionDispatcher, EventActionDispatcher, ForwardAction, IncludeAction); проверить юнит/IT: dispatch по параметру, LookupDispatch по кнопке из бандла, MappingDispatch по parameter маппинга, EventDispatch по событию, ActionDispatcher без наследования, unspecified при отсутствии параметра; проверить сценарии спеки `dispatch-actions`
+- [x] 7.1 Port a minimal `DynaActionForm` (DynaBean over a HashMap, properties from `<form-property>`, initial values) and the creation branch in `FormBeanConfig.createActionForm`; verify with unit tests: properties per configuration, initial values, a fresh instance per request
+- [x] 7.2 Verify with an IT: populate of the dynamic form from request parameters and validation by the mapping flag on a dynamic form; verify the scenarios of the `dynamic-form-beans` spec
+- [x] 7.3 Port the extras subset into core (`org.apache.struts.extras.actions`: DispatchAction, LookupDispatchAction, MappingDispatchAction, EventDispatchAction, ActionDispatcher, EventActionDispatcher, ForwardAction, IncludeAction); verify with unit tests/ITs: dispatch by parameter, LookupDispatch by button from the bundle, MappingDispatch by the mapping's parameter, EventDispatch by event, ActionDispatcher without inheritance, unspecified when the parameter is absent; verify the scenarios of the `dispatch-actions` spec
 
-## 8. Портирование apps/examples и blank
+## 8. Porting apps/examples and blank
 
-- [x] 8.1 Создать модуль `spring-struts1-apps/examples` (war): web.xml с модулями config, config/exercise, config/dispatch (без upload/validator), struts-config-файлы и исходники приложения из эталона без правок, JSP exercise/dispatch — из эталона; проверить, что war собирается `./mvnw -pl spring-struts1-apps/examples -am package`
-- [x] 8.2 Переключить `blank` на оригинальные JSP из эталона (html:html/bean:message/logic:notPresent) вместо адаптации фазы 1; проверить, что IT blank зелёные на оригинальных страницах
-- [x] 8.3 Написать IT прогона examples на embedded Tomcat 11: все exercise-страницы bean-*/html-*/logic-* отвечают 200 с ключевыми маркерами структуры HTML (атрибуты, вложенность), сценарии dispatch (actionDispatcher, eventAction, lookup, mapping) выполняются POST-запросами с выбором метода; проверить, что тесты зелёные. Примечание: html-link.jsp и bean-include.jsp ссылаются на исключённые в 8.1 модули /upload и /validator, поэтому в IT исключены с комментарием (поведение их тегов покрыто IT модуля taglib)
+- [x] 8.1 Create the `spring-struts1-apps/examples` module (war): web.xml with the config, config/exercise, config/dispatch modules (without upload/validator), struts-config files and application sources from the reference without edits, exercise/dispatch JSPs — from the reference; verify the war builds with `./mvnw -pl spring-struts1-apps/examples -am package`
+- [x] 8.2 Switch `blank` to the original reference JSPs (html:html/bean:message/logic:notPresent) instead of the phase 1 adaptation; verify the blank ITs are green on the original pages
+- [x] 8.3 Write ITs for the examples run on embedded Tomcat 11: all exercise pages bean-*/html-*/logic-* respond 200 with key HTML structure markers (attributes, nesting), dispatch scenarios (actionDispatcher, eventAction, lookup, mapping) are executed with POST requests selecting the method; verify the tests are green. Note: html-link.jsp and bean-include.jsp reference the /upload and /validator modules excluded in 8.1, so they are excluded from the ITs with a comment (the behavior of their tags is covered by the taglib module ITs)
 
-## 9. Сквозная проверка фазы 2
+## 9. End-to-end phase 2 verification
 
-- [x] 9.1 Полный `./mvnw verify` зелёный; пройтись по критериям приёмки фазы 2 в ROADMAP.md (TLD/URI идентичны, examples рендерится и проходит exercise-taglib и dispatch, структура HTML совместима) и убедиться, что каждый покрыт тестом; проверить итоговый отчёт прогона
+- [x] 9.1 Full `./mvnw verify` green; go through the phase 2 acceptance criteria in ROADMAP.md (TLD/URIs identical, examples renders and passes exercise-taglib and dispatch, HTML structure compatible) and make sure each is covered by a test; verify the final run report
 
 ## Workflow follow-up
 
-- Синхронизировать спеки и заархивировать change (`/opsx:sync`, `/opsx:archive`) после ревью.
-- Проверить заархивированный результат (`openspec list`).
+- Sync the specs and archive the change (`/opsx:sync`, `/opsx:archive`) after review.
+- Check the archived result (`openspec list`).

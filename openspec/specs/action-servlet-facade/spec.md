@@ -2,32 +2,32 @@
 
 ## Purpose
 
-Сохраняет совместимость с legacy-кодом Struts 1: работающий фасад `ActionServlet` с init-params и жизненный цикл `PlugIn` (init при старте, destroy при остановке).
+Preserves compatibility with legacy Struts 1 code: a working `ActionServlet` facade with init-params and the `PlugIn` lifecycle (init at startup, destroy at shutdown).
 
 ## Requirements
 
-### Requirement: Фасад ActionServlet
-`ActionServlet` SHALL работать как фасад совместимости: конфигурация задаётся init-param `config` из web.xml (классический WAR-режим) либо свойствами стартера `spring.struts1.*` (Boot-режим), а экшены через `action.getServlet()` получают работающий servlet, через который доступны конфигурация модуля и init-params. В Boot-режиме init-params фасада SHALL соответствовать свойствам стартера с той же семантикой.
+### Requirement: ActionServlet facade
+`ActionServlet` SHALL operate as a compatibility facade: configuration is provided either by the `config` init-param from web.xml (classic WAR mode) or by the starter properties `spring.struts1.*` (Boot mode), and actions receive a working servlet through `action.getServlet()`, through which the module configuration and init-params are accessible. In Boot mode, the facade init-params SHALL match the starter properties with the same semantics.
 
-#### Scenario: Init-param config из web.xml
-- **WHEN** web.xml объявляет init-param `config` со значением `/WEB-INF/struts-config.xml`
-- **THEN** конфигурация загружается из этого файла и `getServlet().getInitParameter("config")` возвращает то же значение
+#### Scenario: Init-param config from web.xml
+- **WHEN** web.xml declares init-param `config` with value `/WEB-INF/struts-config.xml`
+- **THEN** configuration is loaded from that file and `getServlet().getInitParameter("config")` returns the same value
 
-#### Scenario: Свойства стартера в Boot-режиме
-- **WHEN** Boot-приложение задаёт `spring.struts1.config=/WEB-INF/struts-config.xml`
-- **THEN** конфигурация загружается из этого ресурса и `getServlet().getInitParameter("config")` возвращает то же значение
+#### Scenario: Starter properties in Boot mode
+- **WHEN** a Boot application sets `spring.struts1.config=/WEB-INF/struts-config.xml`
+- **THEN** configuration is loaded from that resource and `getServlet().getInitParameter("config")` returns the same value
 
-#### Scenario: Ссылка на servlet в экшене
-- **WHEN** execute экшена вызывает `action.getServlet()`
-- **THEN** возвращается работающий ActionServlet текущего приложения
+#### Scenario: Servlet reference in an action
+- **WHEN** an action's execute calls `action.getServlet()`
+- **THEN** the working ActionServlet of the current application is returned
 
-### Requirement: Жизненный цикл PlugIn
-Плагины из конфигурации SHALL инициализироваться при старте приложения (в порядке объявления) и останавливаться при его остановке; плагин, зарегистрированный как Spring-бин, SHALL создаваться из контекста, остальные — прямым созданием.
+### Requirement: PlugIn lifecycle
+Plugins from the configuration SHALL be initialized at application startup (in declaration order) and stopped at shutdown; a plugin registered as a Spring bean SHALL be created from the context, the rest — by direct instantiation.
 
-#### Scenario: Init и destroy плагина
-- **WHEN** приложение с объявленным плагином стартует и затем останавливается
-- **THEN** init плагина вызван при старте и destroy — при остановке
+#### Scenario: Plugin init and destroy
+- **WHEN** an application with a declared plugin starts and then stops
+- **THEN** the plugin's init is called at startup and its destroy at shutdown
 
-#### Scenario: Плагин как Spring-бин
-- **WHEN** класс плагина зарегистрирован в Spring как бин
-- **THEN** плагин создаётся из контекста и его зависимости внедрены
+#### Scenario: Plugin as a Spring bean
+- **WHEN** the plugin class is registered in Spring as a bean
+- **THEN** the plugin is created from the context and its dependencies are injected

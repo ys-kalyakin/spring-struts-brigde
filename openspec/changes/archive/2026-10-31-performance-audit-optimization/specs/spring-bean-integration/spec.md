@@ -2,17 +2,17 @@
 
 ## ADDED Requirements
 
-### Requirement: Кэширование резолвинга бинов
-Поиск определения экшена и формы по типу SHALL не повторяться по всем определениям бинов контекста на каждый запрос: результат соответствия «тип → имя бина» SHALL кэшироваться. Семантика жизненного цикла SHALL сохраняться: singleton-экземпляр экшена переиспользуется между запросами, для формы создаётся новый экземпляр на каждый запрос; приоритет пользовательской регистрации бина SHALL сохраняться.
+### Requirement: Caching of bean resolution
+The lookup of an action and form definition by type SHALL NOT scan all bean definitions of the context on every request: the type-to-bean-name match result SHALL be cached. Lifecycle semantics SHALL be preserved: the singleton action instance is reused across requests, while a new form instance is created per request; the priority of a user bean registration SHALL be preserved.
 
-#### Scenario: Повторный запрос обслуживается одним экземпляром экшена
-- **WHEN** два запроса обрабатываются экшеном, тип которого резолвится из контекста
-- **THEN** поиск имени бина по типу выполняется из кэша, и оба запроса обслуживает один и тот же singleton-экземпляр
+#### Scenario: Repeated request served by a single action instance
+- **WHEN** two requests are processed by an action whose type is resolved from the context
+- **THEN** the bean-name lookup by type is served from the cache, and the same singleton instance serves both requests
 
-#### Scenario: Кэш не переиспользует экземпляры форм
-- **WHEN** два запроса используют форму в области request
-- **THEN** каждый запрос получает собственный экземпляр формы, кэшируется только соответствие типа имени бина
+#### Scenario: Cache does not reuse form instances
+- **WHEN** two requests use a request-scoped form
+- **THEN** each request gets its own form instance; only the type-to-bean-name mapping is cached
 
-#### Scenario: Пользовательская регистрация приоритетна при кэшировании
-- **WHEN** класс экшена или формы явно зарегистрирован пользователем как бин
-- **THEN** кэшированный резолвинг использует пользовательское определение бина и его область
+#### Scenario: User registration takes priority when caching
+- **WHEN** an action or form class is explicitly registered by the user as a bean
+- **THEN** the cached resolution uses the user's bean definition and its scope

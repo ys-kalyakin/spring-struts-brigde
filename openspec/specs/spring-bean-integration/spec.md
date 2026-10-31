@@ -2,73 +2,73 @@
 
 ## Purpose
 
-Связывает экшены и формы Struts со Spring: аннотированные классы становятся Spring-бинами с внедрением зависимостей, а классы без регистрации в Spring продолжают работать через прямое создание.
+Links Struts actions and forms with Spring: annotated classes become Spring beans with dependency injection, while classes not registered in Spring keep working through direct instantiation.
 
 ## Requirements
 
-### Requirement: Экшены как singleton-бины
-Экшен SHALL быть Spring-бином в одном экземпляре: тип, объявленный в конфигурации, автоматически регистрируется в контексте как singleton, если пользователь не зарегистрировал этот класс явно. Один и тот же экземпляр переиспользуется между запросами, а зависимости внедряются независимо от наличия аннотаций.
+### Requirement: Actions as singleton beans
+An action SHALL be a Spring bean in a single instance: the type declared in the configuration is automatically registered in the context as a singleton unless the user has registered that class explicitly. The same instance is reused across requests, and dependencies are injected regardless of the presence of annotations.
 
-#### Scenario: Переиспользование экземпляра экшена
-- **WHEN** два запроса обрабатываются одним экшеном
-- **THEN** оба запроса обслуживаются одним и тем же экземпляром
+#### Scenario: Reuse of an action instance
+- **WHEN** two requests are handled by the same action
+- **THEN** both requests are served by the same instance
 
-#### Scenario: Внедрение зависимостей в экшен
-- **WHEN** экшен объявляет зависимость Spring-бина
-- **THEN** зависимость внедрена и доступна в методе execute
+#### Scenario: Dependency injection into an action
+- **WHEN** an action declares a dependency on a Spring bean
+- **THEN** the dependency is injected and available in the execute method
 
-#### Scenario: Экшен без аннотаций становится Spring-бином
-- **WHEN** маппинг объявляет класс экшена без аннотаций и без регистрации пользователем
-- **THEN** класс автоматически зарегистрирован в контексте как singleton, экземпляр создан Spring и зависимости внедрены
+#### Scenario: Action without annotations becomes a Spring bean
+- **WHEN** a mapping declares an action class without annotations and without user registration
+- **THEN** the class is automatically registered in the context as a singleton, the instance is created by Spring, and dependencies are injected
 
-### Requirement: Формы как prototype-бины
-Форма SHALL быть Spring-бином, создающим новый экземпляр на каждый запрос: тип, объявленный в конфигурации, автоматически регистрируется в контексте как prototype, если пользователь не зарегистрировал этот класс явно. Состояние формы не разделяется между запросами, зависимости внедряются в созданный экземпляр независимо от наличия аннотаций.
+### Requirement: Forms as prototype beans
+A form SHALL be a Spring bean that creates a new instance for every request: the type declared in the configuration is automatically registered in the context as a prototype unless the user has registered that class explicitly. Form state is not shared between requests, and dependencies are injected into the created instance regardless of the presence of annotations.
 
-#### Scenario: Новый экземпляр на каждый запрос
-- **WHEN** два запроса используют одну форму
-- **THEN** каждый запрос получает собственный экземпляр формы, и состояние первого запроса не видно второму
+#### Scenario: New instance per request
+- **WHEN** two requests use the same form
+- **THEN** each request gets its own form instance, and the first request's state is not visible to the second
 
-#### Scenario: Внедрение зависимостей в форму
-- **WHEN** форма объявляет зависимость Spring-бина
-- **THEN** зависимость внедрена в созданный для запроса экземпляр
+#### Scenario: Dependency injection into a form
+- **WHEN** a form declares a dependency on a Spring bean
+- **THEN** the dependency is injected into the instance created for the request
 
-#### Scenario: Форма без аннотаций становится Spring-бином
-- **WHEN** маппинг объявляет форму, класс которой не помечен аннотациями и не зарегистрирован пользователем
-- **THEN** класс автоматически зарегистрирован в контексте как prototype, экземпляр создан Spring, зависимости внедрены и populate выполняется как раньше
+#### Scenario: Form without annotations becomes a Spring bean
+- **WHEN** a mapping declares a form whose class is not annotated and not registered by the user
+- **THEN** the class is automatically registered in the context as a prototype, the instance is created by Spring, dependencies are injected, and populate proceeds as before
 
-### Requirement: Приоритет явной регистрации
-Если класс формы или экшена явно зарегистрирован пользователем в Spring (компонент-скан, Java- или XML-конфигурация), движок SHALL использовать пользовательское определение бина как есть: авто-регистрация не заменяет его, область и имя пользовательского бина соблюдаются.
+### Requirement: Priority of explicit registration
+If a form or action class is explicitly registered by the user in Spring (component scan, Java or XML configuration), the engine SHALL use the user's bean definition as is: auto-registration does not replace it, and the scope and name of the user's bean are respected.
 
-#### Scenario: Пользовательский бин экшена приоритетен
-- **WHEN** класс экшена зарегистрирован пользователем как бин, и тот же класс объявлен в struts-config
-- **THEN** запросы обслуживает пользовательский бин, а не автоматически зарегистрированная копия
+#### Scenario: User's action bean takes priority
+- **WHEN** an action class is registered by the user as a bean, and the same class is declared in struts-config
+- **THEN** requests are served by the user's bean, not by an automatically registered copy
 
-#### Scenario: Пользовательская область формы соблюдается
-- **WHEN** пользователь зарегистрировал форму с областью session, и маппинг объявляет scope session
-- **THEN** в сессии используется один экземпляр пользовательского бина
+#### Scenario: User's form scope is respected
+- **WHEN** the user has registered a form with session scope, and the mapping declares session scope
+- **THEN** a single instance of the user's bean is used in the session
 
-### Requirement: Жизненный цикл Spring-бина
-Экземпляры форм и экшенов SHALL проходить полный жизненный цикл Spring-бина: колбэки `@PostConstruct` вызываются до первого использования экземпляра, `BeanPostProcessor` применяются, колбэки `@PreDestroy` вызываются при завершении контекста для singleton-экземпляров.
+### Requirement: Spring bean lifecycle
+Form and action instances SHALL go through the full Spring bean lifecycle: `@PostConstruct` callbacks are invoked before the first use of the instance, `BeanPostProcessor`s are applied, and `@PreDestroy` callbacks are invoked at context shutdown for singleton instances.
 
-#### Scenario: PostConstruct до первого execute
-- **WHEN** экшен объявляет колбэк `@PostConstruct`
-- **THEN** колбэк вызван до первого выполнения метода execute и один раз за жизнь бина
+#### Scenario: PostConstruct before the first execute
+- **WHEN** an action declares a `@PostConstruct` callback
+- **THEN** the callback is invoked before the first execution of the execute method and once per bean lifetime
 
-#### Scenario: PreDestroy при завершении контекста
-- **WHEN** контекст приложения закрывается
-- **THEN** для singleton-экземпляров экшенов вызван колбэк `@PreDestroy`
+#### Scenario: PreDestroy at context shutdown
+- **WHEN** the application context is closed
+- **THEN** the `@PreDestroy` callback is invoked for singleton action instances
 
-### Requirement: Кэширование резолвинга бинов
-Поиск определения экшена и формы по типу SHALL не повторяться по всем определениям бинов контекста на каждый запрос: результат соответствия «тип → имя бина» SHALL кэшироваться. Семантика жизненного цикла SHALL сохраняться: singleton-экземпляр экшена переиспользуется между запросами, для формы создаётся новый экземпляр на каждый запрос; приоритет пользовательской регистрации бина SHALL сохраняться.
+### Requirement: Caching of bean resolution
+Looking up the definition of an action and form by type SHALL not scan all context bean definitions on every request: the type → bean name match result SHALL be cached. Lifecycle semantics SHALL be preserved: a singleton action instance is reused across requests, a new form instance is created for every request; the priority of user bean registration SHALL be preserved.
 
-#### Scenario: Повторный запрос обслуживается одним экземпляром экшена
-- **WHEN** два запроса обрабатываются экшеном, тип которого резолвится из контекста
-- **THEN** поиск имени бина по типу выполняется из кэша, и оба запроса обслуживает один и тот же singleton-экземпляр
+#### Scenario: Repeated request served by one action instance
+- **WHEN** two requests are handled by an action whose type is resolved from the context
+- **THEN** the bean name lookup by type is served from the cache, and both requests are served by the same singleton instance
 
-#### Scenario: Кэш не переиспользует экземпляры форм
-- **WHEN** два запроса используют форму в области request
-- **THEN** каждый запрос получает собственный экземпляр формы, кэшируется только соответствие типа имени бина
+#### Scenario: Cache does not reuse form instances
+- **WHEN** two requests use a form in request scope
+- **THEN** each request gets its own form instance; only the type-to-bean-name match is cached
 
-#### Scenario: Пользовательская регистрация приоритетна при кэшировании
-- **WHEN** класс экшена или формы явно зарегистрирован пользователем как бин
-- **THEN** кэшированный резолвинг использует пользовательское определение бина и его область
+#### Scenario: User registration takes priority with caching
+- **WHEN** an action or form class is explicitly registered by the user as a bean
+- **THEN** the cached resolution uses the user's bean definition and its scope

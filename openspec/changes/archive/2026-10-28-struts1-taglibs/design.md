@@ -2,42 +2,42 @@
 
 ## Context
 
-Фаза 1 дала движок (`DispatcherServlet` + `StrutsHandlerMapping`/`StrutsHandlerAdapter`, фасад `ActionServlet`, `MessageResources` поверх `MessageSource`, парсинг конфигов) и портированный `blank` с JSP без тэг-библиотек. Эталон фазы: weblegacy-модуль `taglib` — 4 библиотеки (bean 11, html 30, logic 17, nested 40 тегов) + `TagUtils`, TLD в `META-INF/tld`. Целевое приложение `apps/examples` использует **мульти-модульную конфигурацию** (`config/exercise`, `config/dispatch`; upload/validator — фаза 3), `DynaActionForm` в dispatch-конфиге и dispatch-экшены из модуля `extras` (`org.apache.struts.extras.actions`). См. proposal.md — Why.
+Phase 1 delivered the engine (`DispatcherServlet` + `StrutsHandlerMapping`/`StrutsHandlerAdapter`, the `ActionServlet` facade, `MessageResources` on top of `MessageSource`, config parsing) and a ported `blank` with JSPs without tag libraries. The phase reference: the weblegacy `taglib` module — 4 libraries (bean 11, html 30, logic 17, nested 40 tags) + `TagUtils`, TLDs in `META-INF/tld`. The target application `apps/examples` uses **multi-module configuration** (`config/exercise`, `config/dispatch`; upload/validator — phase 3), `DynaActionForm` in the dispatch config, and dispatch actions from the `extras` module (`org.apache.struts.extras.actions`). See proposal.md — Why.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Модуль `spring-struts1-taglib` с 98 тегами, TLD «как есть» из эталона, теми же URI.
-- Портированные утилиты `TagUtils` (в taglib-модуле, как в эталоне) и `ResponseUtils`/`ModuleUtils` (в core).
-- Мульти-модульная конфигурация и выбор модуля по запросу; path-mapped экшены.
-- Минимальный `DynaActionForm`; семейство dispatch-экшенов (subset extras).
-- Прогон `apps/examples` (exercise + dispatch) и `blank` на оригинальных JSP — на embedded Tomcat 11.
+- A `spring-struts1-taglib` module with 98 tags, TLDs "as is" from the reference, same URIs.
+- Ported utilities `TagUtils` (in the taglib module, as in the reference) and `ResponseUtils`/`ModuleUtils` (in core).
+- Multi-module configuration and module selection by request; path-mapped actions.
+- A minimal `DynaActionForm`; the dispatch action family (extras subset).
+- A run of `apps/examples` (exercise + dispatch) and `blank` on the original JSPs — on embedded Tomcat 11.
 
 **Non-Goals:**
-- struts-el, commons-validator/`ValidatorPlugIn`/`DynaValidatorForm`/`html:javascript` (фаза 3), multipart-обработка (рендер `html:file` — да, приём загрузки — нет), Tiles, `DownloadAction` и прочий непортящийся extras, отдельный артефакт extras.
+- struts-el, commons-validator/`ValidatorPlugIn`/`DynaValidatorForm`/`html:javascript` (phase 3), multipart handling (rendering `html:file` — yes, accepting uploads — no), Tiles, `DownloadAction` and the rest of the non-ported extras, a separate extras artifact.
 
 ## Decisions
 
-1. **Портирование тегов — файл-в-файл из эталона** с сохранением пакетов `org.apache.struts.taglib.{bean,html,logic,nested}` и `TagUtils`; адаптация минимальная (jakarta уже в эталоне). TLD копируются байт-в-байт — контейнер находит их по `<uri>` внутри jar, декларации JSP работают без правок. Альтернатива — переизобрести теги поверх Spring — отклонена: теряется совместимость вывода и атрибутов.
-2. **Общий источник правды для URL и сообщений — `TagUtils`.** Она разрешает модуль по запросу (атрибут `Globals.MODULE_KEY`, который адаптер уже выставляет), строит URL с контекстом и рендерит сообщения. `ModuleUtils` (`selectModule`/`getModuleConfig`) портируется в core; выбор модуля делается в `StrutsHandlerMapping` до диспетчеризации.
-3. **Мульти-модульность.** `ActionServlet.initModuleConfig` разбирает все init-params с префиксом `config/` (суффикс после `config/` — префикс модуля со слэшем) в карту префиксов. В `StrutsHandlerMapping` добавляется выбор модуля по пути запроса (префикс после контекста; иначе модуль по умолчанию), выбранный `ModuleConfig` кладётся в атрибут запроса; адаптер и `TagUtils` читают модуль из запроса. Модуль-относительные форварды работают в пределах модуля; кросс-модульные — через атрибут `module` форварда (префикс подставляется к пути).
-4. **Path-mapped экшены.** Свойство маппинга `servletMapping` принимает классический формат (`*.do` или `/action/*`): суффиксное — как сейчас, префиксное — отбрасывает префикс (опциональный суффикс тоже срезается). Значение по умолчанию — `*.do`.
-5. **`DynaActionForm` — минимальный порт** (`org.apache.struts.action.DynaActionForm` поверх `DynaBean` commons-beanutils, которая уже есть): создание из `<form-property>` с `initial`-значениями, populate через существующий `RequestUtils.populate`, динамический доступ по имени/индексу. `FormBeanConfig.createActionForm` получает ветку для динамических форм. Валидаторные варианты (`DynaValidatorForm`) — фаза 3.
-6. **Dispatch-экшены — subset extras в core.** Классы портируются с сохранением пакета `org.apache.struts.extras.actions`: `DispatchAction`, `LookupDispatchAction`, `MappingDispatchAction`, `EventDispatchAction`, `ActionDispatcher`, `EventActionDispatcher`, `ForwardAction`, `IncludeAction`. Положить в core (а не отдельный артефакт) — временно: при миграции по фазе 4 артефакты всё равно собирает стартер; при необходимости выделится отдельный модуль.
-7. **`html:javascript` не портируется в этой фазе** (зависит от commons-validator): TLD остаётся без изменений, реализация тега появится вместе с валидатором в фазе 3 — JSP с этим тегом даст ошибку обработки. Остальные 29 тегов html — в объёме.
-8. **Портирование examples — только работающие секции.** Модули `config` (корень), `config/exercise`, `config/dispatch`; секции upload/validator из web.xml и webapp исключаются до фазы 3. Исходники приложения (`org.apache.struts.webapp.examples.*`, `...dispatch.*`, `...validator.LocaleAction`) и JSP — из эталона без правок; `CustomFormBean`/`CustomActionMapping` уже поддержаны (`set-property` через `BaseConfig`).
-9. **blank — на оригинальных JSP.** JSP из эталона (с `html:html`, `bean:message`, `logic:notPresent`) копируются как есть, замещая адаптацию фазы 1: базовая регрессия тегов bean/html/logic на реальном приложении.
-10. **Тестовая стратегия.** IT на embedded Tomcat 11: каждая exercise-страница → 200 + ключевые маркеры структуры HTML (атрибуты, вложенность — по критерию совместимости вывода); интерактивные сценарии dispatch (методы по кнопкам/событиям) прогоняются POST-запросами; `blank` на оригинальных JSP; собственные страницы для nested и xhtml (examples их не exercise-ирует). Модульные тесты — для `TagUtils` (filter, URL), выбора модуля, path-mapped, `DynaActionForm` (initial/populate) и dispatch-экшенов.
+1. **Tag porting — file-by-file from the reference**, preserving the `org.apache.struts.taglib.{bean,html,logic,nested}` packages and `TagUtils`; adaptation is minimal (jakarta is already in the reference). TLDs are copied byte-for-byte — the container finds them by `<uri>` inside the jar, JSP declarations work without edits. The alternative — reinventing the tags on top of Spring — is rejected: output and attribute compatibility would be lost.
+2. **A single source of truth for URLs and messages — `TagUtils`.** It resolves the module from the request (the `Globals.MODULE_KEY` attribute that the adapter already sets), builds URLs with the context, and renders messages. `ModuleUtils` (`selectModule`/`getModuleConfig`) is ported into core; module selection happens in `StrutsHandlerMapping` before dispatching.
+3. **Multi-modularity.** `ActionServlet.initModuleConfig` parses all init-params with the `config/` prefix (the suffix after `config/` is the module prefix starting with a slash) into a map of prefixes. `StrutsHandlerMapping` gains module selection by request path (the prefix after the context; otherwise the default module), and the selected `ModuleConfig` is placed into a request attribute; the adapter and `TagUtils` read the module from the request. Module-relative forwards work within a module; cross-module ones go through the forward's `module` attribute (the prefix is prepended to the path).
+4. **Path-mapped actions.** The mapping property `servletMapping` accepts the classic formats (`*.do` or `/action/*`): suffix-based — as now; prefix-based — strips the prefix (an optional suffix is trimmed as well). The default value is `*.do`.
+5. **`DynaActionForm` — a minimal port** (`org.apache.struts.action.DynaActionForm` on top of the commons-beanutils `DynaBean`, which is already available): creation from `<form-property>` with `initial` values, populate via the existing `RequestUtils.populate`, dynamic access by name/index. `FormBeanConfig.createActionForm` gains a branch for dynamic forms. Validator variants (`DynaValidatorForm`) — phase 3.
+6. **Dispatch actions — an extras subset in core.** The classes are ported preserving the `org.apache.struts.extras.actions` package: `DispatchAction`, `LookupDispatchAction`, `MappingDispatchAction`, `EventDispatchAction`, `ActionDispatcher`, `EventActionDispatcher`, `ForwardAction`, `IncludeAction`. Putting them in core (rather than a separate artifact) is temporary: with the phase 4 migration the starter assembles the artifacts anyway; a separate module can be extracted if needed.
+7. **`html:javascript` is not ported in this phase** (it depends on commons-validator): the TLD stays unchanged, the tag implementation will arrive with the validator in phase 3 — a JSP using this tag will produce a processing error. The other 29 html tags are in scope.
+8. **Porting examples — only the working sections.** Modules `config` (root), `config/exercise`, `config/dispatch`; the upload/validator sections are excluded from web.xml and the webapp until phase 3. The application sources (`org.apache.struts.webapp.examples.*`, `...dispatch.*`, `...validator.LocaleAction`) and JSPs come from the reference without edits; `CustomFormBean`/`CustomActionMapping` are already supported (`set-property` via `BaseConfig`).
+9. **blank — on the original JSPs.** The JSPs from the reference (with `html:html`, `bean:message`, `logic:notPresent`) are copied as is, replacing the phase 1 adaptation: a basic regression of the bean/html/logic tags on a real application.
+10. **Test strategy.** ITs on embedded Tomcat 11: each exercise page → 200 + key HTML structure markers (attributes, nesting — per the output compatibility criterion); the interactive dispatch scenarios (methods via buttons/events) are exercised with POST requests; `blank` on the original JSPs; dedicated pages for nested and xhtml (examples does not exercise them). Unit tests — for `TagUtils` (filter, URLs), module selection, path-mapped, `DynaActionForm` (initial/populate), and the dispatch actions.
 
 ## Risks / Trade-offs
 
-- [Расхождение HTML-вывода с weblegacy] → теги портируются файл-в-файл, вывод фиксируется тестами по атрибутам/вложенности; эталонные exercise-страницы — fixture-тесты.
-- [JSP 4.0 (Tomcat 11) против JSP 3.1 эталона] → API `jakarta.servlet.jsp.tagext` стабилен между 3.x и 4.0; риск закрывается IT-прогоном всех страниц на Tomcat 11.
-- [Nested-теги зависят от стека `BodyTagSupport`] → портируется `NestedPropertyHelper`/`NestedReferenceHelper` как в эталоне; тесты на вложенность изолированы в собственных страницах.
-- [Мульти-модульное состояние в сессии (формы разных модулей)] → фаза 1 хранит формы по имени form-bean; семантика эталона (общее пространство имён сессии) сохраняется как есть, расхождения фиксируются в tasks.
-- [`TagUtils` тянет смежные мелочи core (ModuleUtils, ResponseUtils)] → портируются одной группой до тегов, чтобы теги компилировались без правок.
-- [TLD объявляет тег без реализации (`html:javascript`)] → контейнер парсит TLD без инстанцирования классов; падает только JSP с этим тегом — поведение зафиксировано спекой.
+- [HTML output divergence from weblegacy] → tags are ported file-by-file, output is pinned by tests on attributes/nesting; the reference exercise pages serve as fixture tests.
+- [JSP 4.0 (Tomcat 11) vs the reference's JSP 3.1] → the `jakarta.servlet.jsp.tagext` API is stable between 3.x and 4.0; the risk is closed by an IT run of all pages on Tomcat 11.
+- [Nested tags depend on the `BodyTagSupport` stack] → `NestedPropertyHelper`/`NestedReferenceHelper` are ported as in the reference; nesting tests are isolated in dedicated pages.
+- [Multi-module state in the session (forms of different modules)] → phase 1 stores forms by form-bean name; the reference semantics (a shared session namespace) are preserved as is, divergences are recorded in tasks.
+- [`TagUtils` pulls in adjacent core bits (ModuleUtils, ResponseUtils)] → they are ported as one group before the tags so that the tags compile without edits.
+- [A TLD declares a tag without an implementation (`html:javascript`)] → the container parses the TLD without instantiating classes; only a JSP using that tag fails — the behavior is pinned by the spec.
 
 ## Open Questions
 
-- Точка подключения struts-el (отдельный change после фазы 2 или внутри фазы 3) — не влияет на объём и спеки этой фазы.
+- The integration point for struts-el (a separate change after phase 2 or within phase 3) — does not affect the scope and specs of this phase.

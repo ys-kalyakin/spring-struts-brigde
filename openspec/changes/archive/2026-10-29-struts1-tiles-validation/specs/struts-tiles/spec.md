@@ -2,88 +2,88 @@
 
 ## Purpose
 
-Tiles 1.x-совместимая система шаблонов: определения тайлов в tiles-defs.xml, подключение плагином через struts-config.xml, контроллеры тайлов, переходы по форвардам на definitions и тэг-библиотека `struts-tiles` — с URI, TLD и поведением эталона weblegacy.
+A Tiles 1.x-compatible templating system: tile definitions in tiles-defs.xml, wiring via a plugin through struts-config.xml, tile controllers, forwards to definitions, and the `struts-tiles` tag library — with the URI, TLD, and behavior of the weblegacy reference.
 
 ## ADDED Requirements
 
-### Requirement: Подключение Tiles плагином
-`TilesPlugin` SHALL подключаться декларативно элементом `<plug-in>` struts-config.xml с init-параметрами `definitions-config` (список файлов определений через запятую), `definitions-parser-validate`, `definitions-factory-class`, `moduleAware`. Фабрика определений SHALL инициализироваться при старте и размещаться в контексте под классическим атрибутом; повторная инициализация для модуля SHALL быть ошибкой старта; `destroy` плагина SHALL освобождать фабрику.
+### Requirement: Wiring Tiles as a plugin
+`TilesPlugin` SHALL be wired declaratively by a `<plug-in>` element of struts-config.xml with the init-parameters `definitions-config` (a comma-separated list of definition files), `definitions-parser-validate`, `definitions-factory-class`, `moduleAware`. The definitions factory SHALL be initialized at startup and placed in the context under the classic attribute; re-initialization for a module SHALL be a startup error; the plugin's `destroy` SHALL release the factory.
 
-#### Scenario: Декларативное подключение
-- **WHEN** struts-config.xml объявляет `TilesPlugin` с `definitions-config=/WEB-INF/tiles-defs.xml`
-- **THEN** фабрика определений инициализирована при старте, definitions доступны тегам и форвардам без дополнительного кода
+#### Scenario: Declarative wiring
+- **WHEN** struts-config.xml declares `TilesPlugin` with `definitions-config=/WEB-INF/tiles-defs.xml`
+- **THEN** the definitions factory is initialized at startup, and the definitions are available to tags and forwards without additional code
 
-#### Scenario: Module-aware фабрики
-- **WHEN** плагин объявлен с `moduleAware=true` в двух модулях с разными tiles-defs
-- **THEN** каждый модуль использует свою фабрику определений, имена definition в модулях не конфликтуют
+#### Scenario: Module-aware factories
+- **WHEN** the plugin is declared with `moduleAware=true` in two modules with different tiles-defs
+- **THEN** each module uses its own definitions factory, and definition names in the modules do not conflict
 
-#### Scenario: Отсутствующий файл определений
-- **WHEN** `definitions-config` указывает на несуществующий файл
-- **THEN** старт приложения завершается ошибкой с именем файла
+#### Scenario: A missing definitions file
+- **WHEN** `definitions-config` points to a non-existent file
+- **THEN** the application startup fails with the file name
 
-### Requirement: Парсинг tiles-defs.xml
-Файлы определений SHALL разбираться по синтаксису эталона: `definition` (name, path, extends, роль) с элементами `put` (имя, значение, тип, direct) и `putList`/`add`, наследование definition через `extends` с переопределением атрибутов, DTD 1.1/1.3/1.4 с локальными копиями; фабрика по умолчанию SHALL поддерживать локализованные варианты файлов определений (`*_xx_YY.xml`/`*_xx.xml` выбираются по локали, базовый файл — fallback).
+### Requirement: Parsing tiles-defs.xml
+Definition files SHALL be parsed by the reference syntax: `definition` (name, path, extends, role) with `put` elements (name, value, type, direct) and `putList`/`add`, definition inheritance via `extends` with attribute overriding, DTDs 1.1/1.3/1.4 with local copies; the default factory SHALL support localized variants of definition files (`*_xx_YY.xml`/`*_xx.xml` selected by locale, the base file as fallback).
 
-#### Scenario: Наследование определений
-- **WHEN** tiles-defs.xml объявляет definition `.base` с path и put-атрибутами, и definition `.page` с `extends=".base"`, переопределяющим один атрибут
-- **THEN** рендер `.page` использует path и все атрибуты `.base` с переопределённым значением
+#### Scenario: Definition inheritance
+- **WHEN** tiles-defs.xml declares a definition `.base` with a path and put attributes, and a definition `.page` with `extends=".base"` overriding one attribute
+- **THEN** rendering `.page` uses the path and all attributes of `.base` with the overridden value
 
-#### Scenario: putList и add
-- **WHEN** definition содержит `putList` с элементами `add`
-- **THEN** атрибут доступен как список значений (например, список пунктов меню, рендеримых итерацией)
+#### Scenario: putList and add
+- **WHEN** a definition contains a `putList` with `add` elements
+- **THEN** the attribute is available as a list of values (for example, a list of menu items renderable by iteration)
 
-#### Scenario: Локализованные определения
-- **WHEN** рядом с базовым tiles-defs.xml существует вариант с суффиксом локали, и запрос приходит с этой локалью
-- **THEN** определения разрешаются из локализованного файла, при отсутствии локального варианта — из базового
+#### Scenario: Localized definitions
+- **WHEN** a variant with a locale suffix exists next to the base tiles-defs.xml, and a request arrives with that locale
+- **THEN** the definitions are resolved from the localized file; if there is no localized variant — from the base one
 
-### Requirement: Рендер definition и вложенные тайлы
-Рендер definition SHALL формировать контекст атрибутов тайла (`ComponentContext`) для текущего запроса, перейти на path-шаблон определения и дать шаблону читать атрибуты тегами библиотеки; вложенные тайлы SHALL видеть атрибуты своего контекста, а не родительской страницы.
+### Requirement: Rendering a definition and nested tiles
+Rendering a definition SHALL build the tile attribute context (`ComponentContext`) for the current request, transition to the definition's path template, and let the template read the attributes with the library's tags; nested tiles SHALL see the attributes of their own context, not of the parent page.
 
-#### Scenario: Страница на layout
-- **WHEN** форвард ведёт на definition с layout-шаблоном и атрибутами header/footer/body
-- **THEN** клиент получает страницу, собранную из layout-шаблона: в местах тегов `get` выведены соответствующие атрибуты
+#### Scenario: A page on a layout
+- **WHEN** a forward leads to a definition with a layout template and header/footer/body attributes
+- **THEN** the client receives the page assembled from the layout template: at the `get` tag positions the corresponding attributes are output
 
-#### Scenario: Вставка вложенного тайла
-- **WHEN** body-атрибут сам является definition (или шаблоном с собственными put-атрибутами)
-- **THEN** вложенный тайл отрендерен внутри родительского, его атрибуты не смешиваются с родительскими
+#### Scenario: Inserting a nested tile
+- **WHEN** the body attribute is itself a definition (or a template with its own put attributes)
+- **THEN** the nested tile is rendered inside the parent one, its attributes are not mixed with the parent's
 
-#### Scenario: Атрибут в scope
-- **WHEN** шаблон использует `importAttribute` или `useAttribute` с именем атрибута
-- **THEN** значение доступно последующим тегам страницы (например, `logic:iterate` по списку меню)
+#### Scenario: An attribute in scope
+- **WHEN** the template uses `importAttribute` or `useAttribute` with an attribute name
+- **THEN** the value is available to the page's subsequent tags (for example, `logic:iterate` over the menu list)
 
-#### Scenario: Теги библиотеки работают в связке
-- **WHEN** страница использует пары `definition`+`put` (построение definition в JSP) и `putList`/`add` (наполнение списков)
-- **THEN** построенные definition и списки атрибутов рендерятся тегами `insert`/`get` как и объявленные в tiles-defs
+#### Scenario: The library tags work together
+- **WHEN** a page uses `definition`+`put` pairs (building a definition in the JSP) and `putList`/`add` (filling lists)
+- **THEN** the built definitions and attribute lists are rendered by the `insert`/`get` tags just like those declared in tiles-defs
 
-### Requirement: Контроллеры тайлов
-Definition SHALL поддерживать контроллер: URL-контроллер (включение ресурса перед рендером) и класс-контроллер (реализация классического интерфейса `Controller`, вызываемый с контекстом тайла перед рендером); классический `TilesAction` SHALL работать контроллером definition. Контроллер SHALL выполняться до рендера шаблона и SHALL иметь возможность добавить атрибуты в контекст тайла.
+### Requirement: Tile controllers
+A definition SHALL support a controller: a URL controller (including a resource before rendering) and a class controller (an implementation of the classic `Controller` interface, invoked with the tile context before rendering); the classic `TilesAction` SHALL work as a definition controller. The controller SHALL run before the template render and SHALL be able to add attributes to the tile context.
 
-#### Scenario: Класс-контроллер добавляет атрибут
-- **WHEN** definition объявляет `controllerClass` с реализацией `Controller`, которая кладёт значение в контекст тайла
-- **THEN** шаблонdefinition-а видит добавленное значение среди атрибутов
+#### Scenario: A class controller adds an attribute
+- **WHEN** a definition declares `controllerClass` with a `Controller` implementation that puts a value into the tile context
+- **THEN** the definition's template sees the added value among the attributes
 
-#### Scenario: TilesAction как контроллер
-- **WHEN** definition объявляет контроллером класс, наследующий `TilesAction`
-- **THEN** его execute вызван перед рендером, и после него шаблон рендерится без форварда экшена
+#### Scenario: TilesAction as a controller
+- **WHEN** a definition declares a class extending `TilesAction` as the controller
+- **THEN** its execute is invoked before the render, and after it the template is rendered without an action forward
 
-### Requirement: Форвард на tiles-definition
-Форвард (из экшена, маппинга или global-forward) с путём, совпадающим с именем definition, SHALL рендерить definition вместо поиска JSP: строится контекст атрибутов, вызывается контроллер definition, затем рендерится его path. Путь, не являющийся definition, SHALL обрабатываться как обычный форвард.
+### Requirement: A forward to a tiles-definition
+A forward (from an action, a mapping, or a global-forward) with a path matching a definition name SHALL render the definition instead of looking up a JSP: the attribute context is built, the definition's controller is invoked, then its path is rendered. A path that is not a definition SHALL be processed as a regular forward.
 
-#### Scenario: Экшен возвращает форвард на definition
-- **WHEN** execute экшена возвращает форвард с путём-именем definition, объявленного в tiles-defs
-- **THEN** клиент получает страницу, собранную из этого definition
+#### Scenario: An action returns a forward to a definition
+- **WHEN** the action's execute returns a forward with a path that is a definition name declared in tiles-defs
+- **THEN** the client receives the page assembled from that definition
 
-#### Scenario: Обычный форвард не ломается
-- **WHEN** форвард ведёт на JSP-путь, не совпадающий ни с одним definition
-- **THEN** рендер выполняется как раньше (dispatch на JSP)
+#### Scenario: A regular forward is not broken
+- **WHEN** a forward leads to a JSP path that matches no definition
+- **THEN** the render proceeds as before (a dispatch to the JSP)
 
-### Requirement: Тэг-библиотека struts-tiles
-TLD библиотеки SHALL быть идентична эталонной weblegacy (`struts-tiles.tld`, 11 тегов): тот же URI, те же имена и атрибуты тегов; классический доступ через `TilesUtil` сохраняется, а общая логика (резолв определений, контекст тайла) выполняется Spring-компонентами с возможностью переопределения пользователем.
+### Requirement: The struts-tiles tag library
+The library's TLD SHALL be identical to the weblegacy one (`struts-tiles.tld`, 11 tags): the same URI, the same tag names and attributes; classic access through `TilesUtil` is preserved, and the shared logic (definition resolution, tile context) runs in Spring components overridable by the user.
 
-#### Scenario: Подключение и компиляция JSP
-- **WHEN** JSP декларирует библиотеку по URI `http://struts.apache.org/tags-tiles` и использует `tiles:insert` с вложенными `tiles:put`
-- **THEN** JSP компилируется и тайл рендерится без дополнительных объявлений в web.xml
+#### Scenario: Wiring and JSP compilation
+- **WHEN** a JSP declares the library by the URI `http://struts.apache.org/tags-tiles` and uses `tiles:insert` with nested `tiles:put`
+- **THEN** the JSP compiles and the tile is rendered without additional declarations in web.xml
 
-#### Scenario: Переопределение сервиса резолва определений
-- **WHEN** приложение переопределяет Spring-компонент резолва определений собственной реализацией
-- **THEN** теги и форварды разрешают definitions по пользовательской реализации
+#### Scenario: Overriding the definition-resolution service
+- **WHEN** the application overrides the definition-resolution Spring component with its own implementation
+- **THEN** tags and forwards resolve definitions by the user's implementation

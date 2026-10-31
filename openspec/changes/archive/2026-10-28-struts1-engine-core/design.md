@@ -2,43 +2,43 @@
 
 ## Context
 
-Репозиторий пока не содержит кода — только документацию (см. proposal.md — Why). Зафиксированные роадмапом решения: точка входа — Spring MVC `DispatcherServlet` с `StrutsHandlerMapping` + `StrutsHandlerAdapter`; парсинг конфига — commons-digester с правилами из weblegacy `core`; populate — commons-beanutils; `MessageResources` — поверх Spring `MessageSource`; `@StrutsAction` — singleton, `@StrutsForm` — prototype; стек — Spring Boot 4.0.x / Framework 7, Java 17+, embedded Tomcat 11 (jakarta).
+The repository does not yet contain any code — only documentation (see proposal.md — Why). Decisions fixed by the roadmap: the entry point is the Spring MVC `DispatcherServlet` with `StrutsHandlerMapping` + `StrutsHandlerAdapter`; config parsing — commons-digester with rules from weblegacy `core`; populate — commons-beanutils; `MessageResources` — on top of Spring `MessageSource`; `@StrutsAction` — singleton, `@StrutsForm` — prototype; the stack — Spring Boot 4.0.x / Framework 7, Java 17+, embedded Tomcat 11 (jakarta).
 
-Эталон: `/home/helloween/projects/struts1-reference` (weblegacy 1.5.0-rc2). Его `apps/blank` — war с `web.xml` (servlet `action` → `org.apache.struts.action.ActionServlet`, init-param `config`, mapping `*.do`) и `struts-config.xml` (DTD 1.4): глобальный форвард `welcome` → `/Welcome.do`, экшен `/Welcome` с атрибутом `forward="/pages/Welcome.jsp"` (без типа), `<message-resources parameter="MessageResources"/>` и `ValidatorPlugIn`. JSP blank используют тэг-библиотеки (фаза 2), валидатор — фаза 3.
+The reference: `/home/helloween/projects/struts1-reference` (weblegacy 1.5.0-rc2). Its `apps/blank` is a war with `web.xml` (servlet `action` → `org.apache.struts.action.ActionServlet`, init-param `config`, mapping `*.do`) and `struts-config.xml` (DTD 1.4): global forward `welcome` → `/Welcome.do`, action `/Welcome` with attribute `forward="/pages/Welcome.jsp"` (no type), `<message-resources parameter="MessageResources"/>` and `ValidatorPlugIn`. The blank JSPs use tag libraries (phase 2), the validator — phase 3.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Мультимодульный Maven: `spring-struts1-core` (движок, пакеты `org.apache.struts.*`) + `spring-struts1-apps` (агрегатор портированных приложений, в фазе — `blank`).
-- Портирование конфигурационной модели (`org.apache.struts.config`) и Digester-правил из weblegacy `core`.
-- Движок жизненного цикла запроса на Spring MVC с семантикой classic `RequestProcessor` weblegacy.
-- `./mvnw verify` зелёный: интеграционные тесты запросов всегда на embedded Tomcat 11 (не на mock-стеке).
+- Multi-module Maven: `spring-struts1-core` (engine, `org.apache.struts.*` packages) + `spring-struts1-apps` (aggregator of ported applications, in this phase — `blank`).
+- Porting the configuration model (`org.apache.struts.config`) and Digester rules from weblegacy `core`.
+- A request lifecycle engine on Spring MVC with the semantics of the weblegacy classic `RequestProcessor`.
+- `./mvnw verify` green: integration tests of requests always on embedded Tomcat 11 (not on the mock stack).
 
 **Non-Goals:**
-- Тэг-библиотеки, Tiles, multipart upload, commons-validator/`DynaActionForm` (фазы 2–3), Spring Boot стартер (фаза 4).
-- Несколько модулей конфигурации (`config/<prefix>`) — только модуль по умолчанию.
-- Path-mapped экшены (`/action/*`) — только суффиксные; переносится в фазу 2.
-- Переход populate на Spring `ConversionService` — кандидат рефакторинга после фазы 1.
+- Tag libraries, Tiles, multipart upload, commons-validator/`DynaActionForm` (phases 2–3), a Spring Boot starter (phase 4).
+- Multiple configuration modules (`config/<prefix>`) — only the default module.
+- Path-mapped actions (`/action/*`) — suffix mapping only; moved to phase 2.
+- Switching populate to Spring `ConversionService` — a refactoring candidate after phase 1.
 
 ## Decisions
 
-1. **Входная точка — `DispatcherServlet`, `ActionServlet` — фасад-бин.** Порт `blank` объявляет в web.xml Spring `DispatcherServlet` с маппингом на суффикс `*.do` и init-params движка (`config` и др.). `ActionServlet` создаётся как Spring-бин, инициализируется `ServletContext` и init-params фронтального сервлета, владеет разобранным `ModuleConfig` и доступен экшенам через `action.getServlet()`. Альтернативы: настоящий `ActionServlet` как фронт-контроллер (дублирует MVC, ломает интеграцию со Spring — отклонено); автоконфигурация всей связки стартером (фаза 4; в фазе 1 — явное объявление в web.xml).
-2. **Парсинг — commons-digester с правилами, портированными из `org.apache.struts.config` (ConfigRuleSet).** Портируются `BaseConfig`, `ActionConfig`, `FormBeanConfig`, `ForwardConfig`, `ExceptionConfig`, `MessageResourcesConfig`, `ControllerConfig`, `PlugInConfig`, `ModuleConfig` (+ `impl`), фабрика и `ConfigRuleSet`; для фазы 1 вырезаются зависимости на commons-chain и validator. DTD — 1.4, как в эталоне; валидация XML — init-param `validating` (по умолчанию вкл.). Альтернатива — собственный XML-парсер на Spring — отклонена: правила digester уже кодируют семантики (объединение файлов, set-property, wildcard), риск расхождения с эталоном.
-3. **Конвейер запроса — порт семантики classic `RequestProcessor`, без commons-chain.** weblegacy 1.5 выполняет конвейер через commons-chain; наблюдаемое поведение то же, что у classic `RequestProcessor` (populate → validate → execute → forward, обработка исключений). Фаза 1 реализует конвейер напрямую в `StrutsHandlerAdapter` (HandlerExecutionChain: маппинг → форма → экшен → форвард), commons-chain не подключается. Альтернатива — портировать chain-конфигурацию as-is — отклонена: лишняя зависимость без наблюдаемой выгоды.
-4. **Populate — commons-beanutils** (решение роадмапа). Весь доступ к статическому реестру `ConvertUtils` изолируется в одном утилитарном классе движка (риск из роадмапа); конвертация — дефолтные конвертеры beanutils.
-5. **`MessageResources` — API из weblegacy `util`, backed Spring `MessageSource`.** Публичный API (`MessageResources`, фабрики) портируется; сообщение — из `MessageSource`, локаль — `Globals.LOCALE_KEY` из сессии, иначе локаль запроса; отсутствующий ключ — `???<locale>.<key>???`. При старте в контекст приложения кладётся атрибут `Globals.MESSAGES_KEY` (его проверяет JSP blank).
-6. **Резолвинг бинов.** `@StrutsAction`/`@StrutsForm` — стереотипные аннотации, регистрируемые сканированием Spring; движок резолвит экземпляр по классу из контекста (singleton для экшена, prototype для формы — семантику обеспечивает область бина), при отсутствии бина — прямое создание по имени класса из конфига (фолбэк).
-7. **Портирование blank — минимальная документированная адаптация.** JSP переписаны без тэг-библиотек (scriptlets: проверка `Globals.MESSAGES_KEY`, вывод `bean:message`-эквивалента, редирект из `index.jsp` на `/Welcome.do`); вместо `ValidatorPlugIn` в конфигурации портированного приложения — минимальный тестовый плагин, exercising init/destroy; остальная структура `struts-config.xml` сохраняется как в эталоне.
-8. **Тестовая стратегия.** Модульные тесты конвейера (populate/validate/исключения/сообщения) — на фикстурных конфигурациях и выделенном тестовом приложении в тестах `spring-struts1-core`; все тесты уровня HTTP-запросов — на embedded Tomcat 11 (`tomcat-embed` + JSP), не на mock-стеке. Конфигурации weblegacy подключаются как fixture-тесты парсинга.
+1. **Entry point — `DispatcherServlet`, `ActionServlet` — a facade bean.** The `blank` port declares a Spring `DispatcherServlet` in web.xml with a mapping to the `*.do` suffix and engine init-params (`config` and others). `ActionServlet` is created as a Spring bean, initialized with the `ServletContext` and the front servlet's init-params, owns the parsed `ModuleConfig` and is available to actions via `action.getServlet()`. Alternatives: a real `ActionServlet` as the front controller (duplicates MVC, breaks integration with Spring — rejected); autoconfiguration of the whole bundle by a starter (phase 4; in phase 1 — explicit declaration in web.xml).
+2. **Parsing — commons-digester with rules ported from `org.apache.struts.config` (ConfigRuleSet).** Ported: `BaseConfig`, `ActionConfig`, `FormBeanConfig`, `ForwardConfig`, `ExceptionConfig`, `MessageResourcesConfig`, `ControllerConfig`, `PlugInConfig`, `ModuleConfig` (+ `impl`), the factory and `ConfigRuleSet`; for phase 1 the dependencies on commons-chain and validator are cut out. DTD — 1.4, as in the reference; XML validation — init-param `validating` (on by default). The alternative — a custom XML parser on Spring — is rejected: digester rules already encode the semantics (merging files, set-property, wildcards), a risk of divergence from the reference.
+3. **Request pipeline — a port of the classic `RequestProcessor` semantics, without commons-chain.** weblegacy 1.5 executes the pipeline via commons-chain; the observable behavior is the same as the classic `RequestProcessor` (populate → validate → execute → forward, exception handling). Phase 1 implements the pipeline directly in `StrutsHandlerAdapter` (HandlerExecutionChain: mapping → form → action → forward), commons-chain is not pulled in. The alternative — porting the chain configuration as-is — is rejected: an extra dependency with no observable benefit.
+4. **Populate — commons-beanutils** (roadmap decision). All access to the static `ConvertUtils` registry is isolated in a single engine utility class (a roadmap risk); conversion — default beanutils converters.
+5. **`MessageResources` — the API from weblegacy `util`, backed by a Spring `MessageSource`.** The public API (`MessageResources`, factories) is ported; a message comes from the `MessageSource`, the locale — `Globals.LOCALE_KEY` from the session, otherwise the request locale; a missing key — `???<locale>.<key>???`. At startup the `Globals.MESSAGES_KEY` attribute is placed into the application context (the blank JSP checks it).
+6. **Bean resolution.** `@StrutsAction`/`@StrutsForm` — stereotype annotations registered by Spring scanning; the engine resolves an instance by class from the context (singleton for an action, prototype for a form — the semantics are provided by the bean scope), and if there is no bean — direct creation by the class name from the config (fallback).
+7. **Porting blank — minimal documented adaptation.** JSPs are rewritten without tag libraries (scriptlets: checking `Globals.MESSAGES_KEY`, output of a `bean:message` equivalent, redirect from `index.jsp` to `/Welcome.do`); instead of `ValidatorPlugIn`, the ported application's configuration contains a minimal test plugin, exercising init/destroy; the rest of the `struts-config.xml` structure is preserved as in the reference.
+8. **Test strategy.** Unit tests of the pipeline (populate/validate/exceptions/messages) — on fixture configurations and a dedicated test application in the `spring-struts1-core` tests; all HTTP-request-level tests — on embedded Tomcat 11 (`tomcat-embed` + JSP), not on the mock stack. weblegacy configurations are wired in as fixture tests of parsing.
 
 ## Risks / Trade-offs
 
-- [Статический реестр `ConvertUtils` в beanutils глобален] → изоляция в одном утилитарном классе; при необходимости — сброс/локальная настройка на приложение.
-- [JSP-сборка на Boot 4.0 / Tomcat 11 может не взлететь] → спайк в первой задаче; откат на Boot 3.5.x задокументирован и не меняет код движка (базовый MVC API).
-- [Расхождение портированных digester-правил с weblegacy] → правила портируются файл-в-файл из эталона; конфигурации weblegacy — fixture-тесты.
-- [Неполный контракт `ActionServlet` (init-params)] → реализуется используемый набор (`config`, `validating`); расширяется по мере обнаружения в тестовых приложениях (принцип роадмапа).
-- [Прямая реализация конвейера вместо chain] → поведение фиксируется тестами по критериям приёмки; при расхождении с weblegacy поведение правится по эталону.
+- [The static `ConvertUtils` registry in beanutils is global] → isolation in a single utility class; if needed — reset/per-application local configuration.
+- [JSP compilation on Boot 4.0 / Tomcat 11 may not take off] → a spike in the first task; rollback to Boot 3.5.x is documented and does not change engine code (basic MVC API).
+- [Divergence of ported digester rules from weblegacy] → rules are ported file-by-file from the reference; weblegacy configurations — fixture tests.
+- [Incomplete `ActionServlet` contract (init-params)] → the used set (`config`, `validating`) is implemented; extended as discovered in test applications (roadmap principle).
+- [Direct pipeline implementation instead of chain] → behavior is fixed by tests against the acceptance criteria; on divergence from weblegacy, behavior is corrected per the reference.
 
 ## Open Questions
 
-- Точная минорная версия Boot 4.0.x — определяется спайком первой задачи; откат на 3.5.x не влияет на спецификации и разбивку задач.
+- The exact minor version of Boot 4.0.x — determined by the spike of the first task; rollback to 3.5.x does not affect the specifications and the task breakdown.

@@ -2,31 +2,31 @@
 
 ## Purpose
 
-Динамические формы (`DynaActionForm`): form-bean без собственного Java-класса, свойства которого объявлены элементами `<form-property>` в конфигурации — создание, начальные значения, populate и динамический доступ.
+Dynamic forms (`DynaActionForm`): a form-bean without its own Java class whose properties are declared by `<form-property>` elements in the configuration — creation, initial values, populate and dynamic access.
 
 ## Requirements
 
-### Requirement: Создание DynaActionForm из конфигурации
-form-bean с типом `DynaActionForm` (или наследником) SHALL создавать экземпляр динамической формы с набором свойств из объявленных `<form-property>` (имя, тип, доступность записи); свойства SHALL быть доступны экшену через динамический доступ по имени (`get`/`set` по имени и индексу).
+### Requirement: Creating DynaActionForm from configuration
+A form-bean with type `DynaActionForm` (or a subclass) SHALL create a dynamic form instance with the set of properties from the declared `<form-property>` elements (name, type, writability); the properties SHALL be accessible to the action via dynamic access by name (`get`/`set` by name and index).
 
-#### Scenario: Свойства из form-property
-- **WHEN** конфигурация объявляет form-bean типа `DynaActionForm` с `form-property name="testString" type="java.lang.String"` и маппинг использует эту форму
-- **THEN** к моменту вызова экшена форма содержит свойство `testString`, доступное по имени
+#### Scenario: Properties from form-property
+- **WHEN** the configuration declares a form-bean of type `DynaActionForm` with `form-property name="testString" type="java.lang.String"` and the mapping uses this form
+- **THEN** by the time the action is invoked, the form contains property `testString`, accessible by name
 
-#### Scenario: Форма на каждый запрос
-- **WHEN** два запроса обрабатываются маппингом с динамической формой
-- **THEN** каждый запрос получает собственный экземпляр с исходными (не изменёнными первым запросом) значениями
+#### Scenario: Form per request
+- **WHEN** two requests are processed by a mapping with a dynamic form
+- **THEN** each request receives its own instance with the initial (not modified by the first request) values
 
-### Requirement: Начальные значения form-property
-Свойства динамической формы SHALL получать начальные значения из атрибута `initial` элемента `<form-property>` (для числовых типов — указанное значение, для отсутствующего — нулевое/пустое значение типа); начальные значения применяются при создании каждого экземпляра.
+### Requirement: Initial values of form-property
+Properties of a dynamic form SHALL receive initial values from the `initial` attribute of the `<form-property>` element (for numeric types — the given value, if absent — the zero/empty value of the type); initial values are applied at the creation of each instance.
 
-#### Scenario: Initial строкового свойства
-- **WHEN** `<form-property name="status" type="java.lang.String" initial="new"/>` объявлен в динамической форме
-- **THEN** созданный экземпляр содержит `status = "new"`
+#### Scenario: Initial of a string property
+- **WHEN** `<form-property name="status" type="java.lang.String" initial="new"/>` is declared in a dynamic form
+- **THEN** the created instance contains `status = "new"`
 
-### Requirement: Populate динамической формы
-Параметры запроса SHALL заполнять свойства динамической формы по семантике commons-beanutils, воспроизводимой движком на Spring `ConversionService` (правила конвертации определены в спеке `form-populate`): строки, числа, индексированные (`prop[0]`) и отображаемые (`prop(key)`) свойства; валидация по флагу маппинга SHALL работать с динамической формой так же, как со статической.
+### Requirement: Populate of a dynamic form
+Request parameters SHALL populate the properties of a dynamic form with commons-beanutils semantics, reproduced by the engine on Spring `ConversionService` (conversion rules are defined in the `form-populate` spec): strings, numbers, indexed (`prop[0]`) and mapped (`prop(key)`) properties; validation by the mapping flag SHALL work with a dynamic form the same as with a static one.
 
-#### Scenario: Параметры заполняют динамические свойства
-- **WHEN** запрос содержит параметры `testString=hello` и `language=ru`, и маппинг использует динамическую форму с этими свойствами
-- **THEN** свойства формы содержат значения параметров к моменту вызова экшена
+#### Scenario: Parameters populate dynamic properties
+- **WHEN** the request contains parameters `testString=hello` and `language=ru`, and the mapping uses a dynamic form with these properties
+- **THEN** the form properties contain the parameter values by the time the action is invoked

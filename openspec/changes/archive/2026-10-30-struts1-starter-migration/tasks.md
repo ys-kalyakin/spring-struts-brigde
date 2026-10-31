@@ -1,43 +1,43 @@
 # Tasks: struts1-starter-migration
 
-## 1. Родительский pom: версии Boot и модуль стартера
+## 1. Parent pom: Boot version and starter module
 
-- [x] 1.1 Зафиксировать версию Spring Boot 4.0.x (актуальный патч линии 4.0) в родительском pom, импортировать `spring-boot-dependencies` BOM в `dependencyManagement`, выровнять `spring.version` с версией, управляемой Boot; `./mvnw -pl spring-struts1-core -am verify` зелёный после выравнивания
-- [x] 1.2 Добавить модуль `spring-struts1-starter` в `<modules>` и создать скелет модуля: pom с зависимостями `spring-struts1-core`, optional `spring-struts1-taglib`, `spring-boot-autoconfigure`, provided `jakarta.servlet-api`; `./mvnw -pl spring-struts1-starter -am compile` проходит
+- [x] 1.1 Pin the Spring Boot 4.0.x version (current patch of the 4.0 line) in the parent pom, import the `spring-boot-dependencies` BOM into `dependencyManagement`, align `spring.version` with the Boot-managed version; `./mvnw -pl spring-struts1-core -am verify` green after alignment
+- [x] 1.2 Add the `spring-struts1-starter` module to `<modules>` and create the module skeleton: pom with dependencies on `spring-struts1-core`, optional `spring-struts1-taglib`, `spring-boot-autoconfigure`, provided `jakarta.servlet-api`; `./mvnw -pl spring-struts1-starter -am compile` passes
 
-## 2. Авто-конфигурация стартера
+## 2. Starter auto-configuration
 
-- [x] 2.1 `Struts1Properties` (`spring.struts1.*`): `enabled` (true), `config` (`/WEB-INF/struts-config.xml`), `configModules` (Map → `config/<префикс>`), `validating` (true), `mapping.urlPattern` (`*.do`, список), `servletName` (`action`); unit-тест биндинга свойств (`./mvnw -pl spring-struts1-starter test`)
-- [x] 2.2 Адаптер `EnvironmentServletConfig` в `spring-struts1-core` (implements ServletConfig): ленивое чтение init-params из `Environment` (`config`, `config/<префикс>` из `spring.struts1.config.*`, `validating`, дефолты `/WEB-INF/struts-config.xml` и `true`), резолвинг ресурсов `classpath:` и через `ServletContext`; unit-тест: значения по умолчанию, свойство вместо дефолта, модульный параметр `spring.struts1.config.admin` → `getInitParameter("config/admin")`, перечисление имён параметров
-- [x] 2.3 Fallback регистратора: `StrutsEngineRegistrar` получает `ServletContextAware`/`EnvironmentAware` и при отсутствии `ServletConfig` сам собирает адаптер (если доступен `ServletContext` или задан `spring.struts1.config`), ресурс-резолвинг через адаптер; unit-тест: plain-контекст без ServletConfig с `spring.struts1.config=classpath:fixture` регистрирует типы из struts-config; BPP стартера `StrutsBootConfigurer`: внедряет адаптер остальным `ServletConfigAware`-бинам и синхронизирует маппинг `StrutsHandlerMapping` из свойства
-- [x] 2.4 `Struts1AutoConfiguration`: импорт `StrutsEngineConfiguration`, собственные бины `DispatcherServlet` и `ServletRegistrationBean` из `Struts1Properties` (маппинг согласован с обработчиком запросов движка), условный nested `@Configuration` с `@ConditionalOnClass` для тэг-сервисов; файл `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`; тест с `ApplicationContextRunner`: бины движка зарегистрированы, с taglib в classpath — тэг-сервисы тоже, без taglib — старт без ошибок, `spring.struts1.enabled=false` отключает всё, Boot-овская регистрация `DispatcherServlet` не дублируется
-- [x] 2.5 Интеграционный тест стартера на embedded Tomcat (по образцу `TomcatTestServer`): мини-приложение на Boot со стартером и struts-config в ресурсах — запрос `*.do` проходит жизненный цикл populate → валидация → execute → форвард; path-mapped вариант `/action/*` через `spring.struts1.mapping.url-pattern`
+- [x] 2.1 `Struts1Properties` (`spring.struts1.*`): `enabled` (true), `config` (`/WEB-INF/struts-config.xml`), `configModules` (Map → `config/<prefix>`), `validating` (true), `mapping.urlPattern` (`*.do`, list), `servletName` (`action`); property binding unit test (`./mvnw -pl spring-struts1-starter test`)
+- [x] 2.2 `EnvironmentServletConfig` adapter in `spring-struts1-core` (implements ServletConfig): lazy init-param reads from the `Environment` (`config`, `config/<prefix>` from `spring.struts1.config.*`, `validating`, defaults `/WEB-INF/struts-config.xml` and `true`), resolution of `classpath:` resources and via `ServletContext`; unit test: default values, property overriding a default, module parameter `spring.struts1.config.admin` → `getInitParameter("config/admin")`, enumeration of parameter names
+- [x] 2.3 Registrar fallback: `StrutsEngineRegistrar` implements `ServletContextAware`/`EnvironmentAware` and, when no `ServletConfig` is present, assembles the adapter itself (if a `ServletContext` is available or `spring.struts1.config` is set), resource resolution via the adapter; unit test: plain context without a ServletConfig with `spring.struts1.config=classpath:fixture` registers the types from struts-config; starter BPP `StrutsBootConfigurer`: injects the adapter into the remaining `ServletConfigAware` beans and synchronizes the `StrutsHandlerMapping` mapping from the property
+- [x] 2.4 `Struts1AutoConfiguration`: import of `StrutsEngineConfiguration`, own `DispatcherServlet` and `ServletRegistrationBean` beans from `Struts1Properties` (mapping kept consistent with the engine's request handler), conditional nested `@Configuration` with `@ConditionalOnClass` for tag services; `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` file; test with `ApplicationContextRunner`: engine beans registered, with taglib on the classpath — tag services too, without taglib — startup without errors, `spring.struts1.enabled=false` disables everything, Boot's own `DispatcherServlet` registration is not duplicated
+- [x] 2.5 Starter integration test on embedded Tomcat (modeled on `TomcatTestServer`): mini Boot application with the starter and struts-config in resources — a `*.do` request passes the full lifecycle populate → validation → execute → forward; path-mapped variant `/action/*` via `spring.struts1.mapping.url-pattern`
 
-## 3. Миграция приложений apps/* на стартер
+## 3. Migrating the apps/* applications to the starter
 
-- [x] 3.1 blank: зависимость стартера, класс `BlankApplication extends SpringBootServletInitializer` с `@SpringBootApplication`, web.xml сокращён до display-name и welcome-file-list (сервлет, маппинг и init-params удалены); интеграционный тест `BlankAppTest` проходит без изменений сценариев — `./mvnw -pl spring-struts1-apps/blank verify`
-- [x] 3.2 examples: та же миграция; модульные конфиги `config/<prefix>` из web.xml перенесены в свойства `spring.struts1.config.<префикс>`; `ExamplesTest` проходит — `./mvnw -pl spring-struts1-apps/examples verify`
-- [x] 3.3 cookbook и mailreader: та же миграция; `CookbookAppTest`, `MailreaderAppTest` и тесты mailreader-dao проходят — `./mvnw -pl spring-struts1-apps/cookbook,spring-struts1-apps/mailreader,spring-struts1-apps/mailreader-dao verify`
-- [x] 3.4 Убедиться, что классический режим не сломан: тесты `spring-struts1-core` (ручная конфигурация движка) проходят — `./mvnw -pl spring-struts1-core verify`
+- [x] 3.1 blank: starter dependency, a `BlankApplication extends SpringBootServletInitializer` class with `@SpringBootApplication`, web.xml reduced to display-name and welcome-file-list (servlet, mapping, and init-params removed); the `BlankAppTest` integration test passes with unchanged scenarios — `./mvnw -pl spring-struts1-apps/blank verify`
+- [x] 3.2 examples: the same migration; module configs `config/<prefix>` from web.xml moved to `spring.struts1.config.<prefix>` properties; `ExamplesTest` passes — `./mvnw -pl spring-struts1-apps/examples verify`
+- [x] 3.3 cookbook and mailreader: the same migration; `CookbookAppTest`, `MailreaderAppTest`, and the mailreader-dao tests pass — `./mvnw -pl spring-struts1-apps/cookbook,spring-struts1-apps/mailreader,spring-struts1-apps/mailreader-dao verify`
+- [x] 3.4 Verify classic mode is not broken: `spring-struts1-core` tests (manual engine configuration) pass — `./mvnw -pl spring-struts1-core verify`
 
-## 4. Демо-приложение с аннотациями
+## 4. Annotated demo application
 
-- [x] 4.1 Модуль `spring-struts1-apps/demo` (артефакт `spring-struts1-demo`, packaging war, executable через `spring-boot-maven-plugin`): зависимости стартер, taglib, `spring-boot-starter-webmvc`, `tomcat-embed-jasper`; аннотированные `@StrutsAction` (singleton, зависимость `@Autowired`) и `@StrutsForm` (prototype), struts-config.xml, JSP, message-resources — сборка `./mvnw -pl spring-struts1-apps/demo package` даёт executable WAR
-- [x] 4.2 Интеграционный тест разворачивания WAR на `TomcatTestServer`: страница рендерится, форма заполняется и валидируется (ошибки → input), сообщения по локали, singleton экшена между запросами, отдельная форма на запрос — `./mvnw -pl spring-struts1-apps/demo verify`
-- [x] 4.3 Smoke-тест Boot-запуска: `SpringApplication` на случайном порту с docBase `src/main/webapp` (эквивалент `java -jar`) — страница, форма и сообщение доступны
+- [x] 4.1 Module `spring-struts1-apps/demo` (artifact `spring-struts1-demo`, packaging war, executable via `spring-boot-maven-plugin`): dependencies on the starter, taglib, `spring-boot-starter-webmvc`, `tomcat-embed-jasper`; an annotated `@StrutsAction` (singleton, `@Autowired` dependency) and `@StrutsForm` (prototype), struts-config.xml, JSPs, message-resources — `./mvnw -pl spring-struts1-apps/demo package` produces an executable WAR
+- [x] 4.2 Integration test deploying the WAR to `TomcatTestServer`: page renders, form is filled and validated (errors → input), locale-based messages, singleton action across requests, a fresh form per request — `./mvnw -pl spring-struts1-apps/demo verify`
+- [x] 4.3 Boot-run smoke test: `SpringApplication` on a random port with docBase `src/main/webapp` (equivalent to `java -jar`) — page, form, and message accessible
 
-## 5. Руководство, матрица, публикация
+## 5. Guide, matrix, publishing
 
-- [x] 5.1 `docs/MIGRATION.md`: шаги миграции (замена артефакта, стартер, класс приложения, свойства, аннотации), типовые правки (jasper, static-ресурсы, JSP-ограничение jar/WAR), ссылка на демо; проверка — миграция демо воспроизводима строго по шагам руководства
-- [x] 5.2 Матрица совместимости в README: Boot 4.0.x, Java 17+, Spring Framework (выровненная версия), Tomcat 11 / jakarta servlet 6.1, состав модулей и артефактов; обновить раздел структуры проекта
-- [x] 5.3 Профиль `publication` в родительском pom (`distributionManagement` из свойств `-Dpublication.release.url` и т.п.) и раздел «Публикация» в README; проверка — `./mvnw -Ppublication deploy -Dpublication.release.url=file:target/pubrepo -DskipTests` публикует все модули, и тестовое подключение артефактов резолвится
+- [x] 5.1 `docs/MIGRATION.md`: migration steps (artifact swap, starter, application class, properties, annotations), typical adjustments (jasper, static resources, jar/WAR JSP limitation), link to the demo; verification — the demo migration is reproducible strictly by following the guide's steps
+- [x] 5.2 Compatibility matrix in README: Boot 4.0.x, Java 17+, Spring Framework (aligned version), Tomcat 11 / jakarta servlet 6.1, module and artifact list; update the project structure section
+- [x] 5.3 `publication` profile in the parent pom (`distributionManagement` from properties `-Dpublication.release.url` etc.) and a "Publishing" section in README; verification — `./mvnw -Ppublication deploy -Dpublication.release.url=file:target/pubrepo -DskipTests` publishes all modules, and a test consumption of the artifacts resolves
 
-## 6. Финальная интеграция
+## 6. Final integration
 
-- [x] 6.1 Полный прогон `./mvnw verify` зелёный на всех модулях, включая стартер и демо
-- [x] 6.2 Проверка двойной регистрации сервлета и отключения стартера на реальном приложении: `spring.struts1.enabled=false` на blank Boot-запуске — движок не стартует, приложение не падает; при включённом — единственный `DispatcherServlet`
+- [x] 6.1 Full `./mvnw verify` run green across all modules, including the starter and demo
+- [x] 6.2 Check double servlet registration and starter disabling on a real application: `spring.struts1.enabled=false` on a blank Boot run — the engine does not start, the application does not fail; when enabled — a single `DispatcherServlet`
 
 ## Workflow follow-up
 
-- OpenSpec: обновить статусы задач по ходу реализации (`openspec status --change struts1-starter-migration`), в конце — `openspec archive` и коммит фазы 4.
-- Дописать в README/ROADMAP разрешение открытых вопросов фазы 4: канал публикации (документирован как внешний конфиг), матрица Boot-версий (4.0.x заявлена).
+- OpenSpec: update task statuses during implementation (`openspec status --change struts1-starter-migration`), finish with `openspec archive` and the phase 4 commit.
+- Record in README/ROADMAP the resolution of phase 4 open questions: publishing channel (documented as external configuration), Boot version matrix (4.0.x declared).

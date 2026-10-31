@@ -2,31 +2,31 @@
 
 ## Why
 
-Стратегическая цель проекта — воссоздать Struts 1 поверх актуального Spring как drop-in замену (см. мотивацию ниже), но реализация всего фреймворка — слишком крупная единица работы для одного change. Прежде чем разбивать работу на серию мелких реализационных changes, нужен **единый детальный роадмап** в репозитории: он фиксирует объём фаз, целевые тестовые приложения weblegacy, критерии приёмки и соответствие «фаза → будущее change». Роадмап становится основой, из которой порождаются последующие OpenSpec-изменения.
+The strategic goal of the project is to recreate Struts 1 on top of modern Spring as a drop-in replacement (see the motivation below), but implementing the entire framework is too large a unit of work for a single change. Before splitting the work into a series of small implementation changes, a **single detailed roadmap** is needed in the repository: it fixes the scope of each phase, the target weblegacy test applications, the acceptance criteria, and the "phase → future change" mapping. The roadmap becomes the foundation from which subsequent OpenSpec changes are derived.
 
-## Мотивация проекта (контекст роадмапа)
+## Project Motivation (Roadmap Context)
 
-Struts 1 EOL с 2013, множество legacy-приложений не может уйти на современный стек без переписи веб-слоя. Цель — реализация API Struts 1 на движке Spring так, чтобы приложение мигрировало заменой зависимости и подключением стартера плюс минимальными правками (аннотации над формами/экшенами, чтобы они стали Spring-бинами). Эталон — [weblegacy/struts1](https://github.com/weblegacy/struts1) (линия 1.5.x, уже `jakarta.*`): его API-контракты и тестовые приложения (`apps/blank`, `apps/examples`, `apps/cookbook`, `apps/mailreader`) — критерий совместимости.
+Struts 1 has been EOL since 2013, and many legacy applications cannot move to a modern stack without rewriting the web layer. The goal is to implement the Struts 1 API on a Spring engine so that an application migrates by swapping the dependency and adding the starter, plus minimal edits (annotations on forms/actions to make them Spring beans). The reference is [weblegacy/struts1](https://github.com/weblegacy/struts1) (the 1.5.x line, already on `jakarta.*`): its API contracts and test applications (`apps/blank`, `apps/examples`, `apps/cookbook`, `apps/mailreader`) are the compatibility criterion.
 
 ## What Changes
 
-- Создаётся документ `ROADMAP.md` в корне репозитория (на русском языке — рабочий язык проекта): видение, ключевые принципы совместимости и детальные фазы.
-- Каждая фаза роадмапа содержит: объём работ, целевое тестовое приложение из weblegacy, критерии приёмки (включая поведенческие сценарии ядра: парсинг `struts-config.xml`, маршрутизация `*.do`, жизненный цикл populate → validate → execute → forward, форварды, message-resources, исключения; экшены/формы как Spring-бины), и рекомендуемое имя будущего OpenSpec-изменения.
-- `README.md` дополняется целью проекта и ссылкой на роадмап.
-- Реализация фаз **не входит** в этот change: каждая фаза будет оформлена отдельным мелким OpenSpec-изменением со своими spec-дельтами и задачами.
+- A `ROADMAP.md` document is created at the repository root (in Russian — the project's working language): vision, key compatibility principles, and detailed phases.
+- Each roadmap phase contains: the scope of work, a target weblegacy test application, acceptance criteria (including core behavioral scenarios: parsing `struts-config.xml`, routing `*.do`, the populate → validate → execute → forward lifecycle, forwards, message-resources, exceptions; actions/forms as Spring beans), and a recommended name for the future OpenSpec change.
+- `README.md` is supplemented with the project goal and a link to the roadmap.
+- Implementation of the phases is **out of scope** for this change: each phase will be delivered as a separate small OpenSpec change with its own spec deltas and tasks.
 
 ## Capabilities
 
 ### New Capabilities
-(нет — change изменяет только документацию)
+(none — the change modifies documentation only)
 
 ### Modified Capabilities
-(нет)
+(none)
 
-Этот change — чисто документационный, поведение системы не меняется, поэтому в `.openspec.yaml` установлен `skip_specs: true`.
+This change is purely documentation; system behavior does not change, so `skip_specs: true` is set in `.openspec.yaml`.
 
 ## Impact
 
-- **Файлы:** новый `ROADMAP.md`, обновлённый `README.md`. Код, зависимости и сборка не затрагиваются.
-- **Последующие изменения:** реализационные changes по фазам (ориентировочно: `struts1-engine-core` — фаза 1, `struts1-taglibs` — фаза 2, `struts1-tiles-validation` — фаза 3, `struts1-starter-migration` — фаза 4); имена фиксируются в роадмапе.
-- **Референс:** локальный клон weblegacy/struts1 (`/home/helloween/projects/struts1-reference`, v1.5.0-rc2) — источник контрактов и тестовых приложений.
+- **Files:** new `ROADMAP.md`, updated `README.md`. Code, dependencies, and the build are not affected.
+- **Follow-up changes:** implementation changes per phase (tentatively: `struts1-engine-core` — phase 1, `struts1-taglibs` — phase 2, `struts1-tiles-validation` — phase 3, `struts1-starter-migration` — phase 4); the names are fixed in the roadmap.
+- **Reference:** a local clone of weblegacy/struts1 (`/home/helloween/projects/struts1-reference`, v1.5.0-rc2) — the source of contracts and test applications.

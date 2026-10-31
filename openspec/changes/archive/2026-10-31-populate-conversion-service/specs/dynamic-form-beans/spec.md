@@ -2,9 +2,9 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Populate динамической формы
-Параметры запроса SHALL заполнять свойства динамической формы по семантике commons-beanutils, воспроизводимой движком на Spring `ConversionService` (правила конвертации определены в спеке `form-populate`): строки, числа, индексированные (`prop[0]`) и отображаемые (`prop(key)`) свойства; валидация по флагу маппинга SHALL работать с динамической формой так же, как со статической.
+### Requirement: Dynamic form populate
+Request parameters SHALL fill the properties of a dynamic form with commons-beanutils semantics reproduced by the engine on Spring `ConversionService` (conversion rules are defined in the `form-populate` spec): strings, numbers, indexed (`prop[0]`) and mapped (`prop(key)`) properties; validation driven by the mapping flag SHALL work with a dynamic form the same way as with a static one.
 
-#### Scenario: Параметры заполняют динамические свойства
-- **WHEN** запрос содержит параметры `testString=hello` и `language=ru`, и маппинг использует динамическую форму с этими свойствами
-- **THEN** свойства формы содержат значения параметров к моменту вызова экшена
+#### Scenario: Parameters fill dynamic properties
+- **WHEN** a request contains the parameters `testString=hello` and `language=ru`, and the mapping uses a dynamic form with these properties
+- **THEN** the form properties contain the parameter values by the time the action is invoked

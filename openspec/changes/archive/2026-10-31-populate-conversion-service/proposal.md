@@ -2,31 +2,31 @@
 
 ## Why
 
-Populate форм — единственное место движка, где обработка запроса зависит от статического глобального реестра `ConvertUtils` commons-beanutils: известный риск из роадмапа (пересечение регистраций между приложениями, скрытая изменяемость, невозможность настройки через Spring). Роадмап дважды откладывал переход populate на Spring `ConversionService` (фаза 1, фаза 3); все фазы завершены — наступило окно для рефакторинга без регрессий: поведение уже закреплено интеграционными тестами всех тестовых приложений (`blank`, `examples`, `cookbook`, `mailreader`, `demo`).
+Form populate is the only place in the engine where request processing depends on the static global `ConvertUtils` registry of commons-beanutils: a known risk from the roadmap (registration collisions between applications, hidden mutability, no way to configure via Spring). The roadmap twice postponed moving populate to Spring `ConversionService` (phase 1, phase 3); all phases are now complete — a window has opened for a regression-free refactoring: behavior is already pinned by integration tests of all test applications (`blank`, `examples`, `cookbook`, `mailreader`, `demo`).
 
 ## What Changes
 
-- Новый движковый populate поверх Spring `ConversionService`: собственный `ConversionService` с набором конвертеров, воспроизводящих семантику дефолтного реестра commons-beanutils (примитивы и обёртки, `BigDecimal`/`BigInteger`, литералы Boolean, `String`, массивы, `FormFile`).
-- Поддержка имён параметров в beanutils-синтаксисе: простые, индексированные (`prop[0]`), отображаемые (`prop(key)`), вложенные (`a.b.c`) и их комбинации; неизвестные свойства пропускаются без ошибок (как `BeanUtils.populate`).
-- Два пути присвоения значений: JavaBean-формы — через `BeanWrapper`; `DynaBean`-формы (`DynaActionForm`, `DynaValidatorForm`, `LazyValidatorForm`, `BeanValidatorForm`) — через метаданные `DynaClass` с конвертацией тем же `ConversionService`.
-- `RequestUtils` перестаёт вызывать `BeanUtils.populate`/`PropertyUtils` в populate-пути; публичный API `RequestUtils.populate` сохраняется без изменений.
-- Ошибка конвертации по-прежнему приводит к `ServletException` (сообщение `BeanUtils.populate` сохраняется для совместимости логов/обработчиков).
-- commons-beanutils остаётся зависимостью движка: публичный API (`DynaBean`-иерархия динамических форм, `FieldChecks`, клонирование конфигураций) не затрагивается; изменяется только populate-путь.
+- New engine-level populate on top of Spring `ConversionService`: an own `ConversionService` with a set of converters reproducing the semantics of the default commons-beanutils registry (primitives and wrappers, `BigDecimal`/`BigInteger`, Boolean literals, `String`, arrays, `FormFile`).
+- Support for parameter names in beanutils syntax: simple, indexed (`prop[0]`), mapped (`prop(key)`), nested (`a.b.c`), and their combinations; unknown properties are skipped without errors (like `BeanUtils.populate`).
+- Two value-assignment paths: JavaBean forms — via `BeanWrapper`; `DynaBean` forms (`DynaActionForm`, `DynaValidatorForm`, `LazyValidatorForm`, `BeanValidatorForm`) — via `DynaClass` metadata with conversion by the same `ConversionService`.
+- `RequestUtils` stops calling `BeanUtils.populate`/`PropertyUtils` in the populate path; the public API `RequestUtils.populate` is preserved unchanged.
+- A conversion error still results in a `ServletException` (the `BeanUtils.populate` message is preserved for log/handler compatibility).
+- commons-beanutils remains a dependency of the engine: the public API (the `DynaBean` hierarchy of dynamic forms, `FieldChecks`, configuration cloning) is untouched; only the populate path changes.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `form-populate`: семантика заполнения форм — источники значений (параметры запроса и multipart-элементы), синтаксис имён свойств, правила конвертации значений (набор поддерживаемых типов и литералы, поведение пустой строки, скаляр/массив), обработка DynaBean-форм и ошибок конвертации.
+- `form-populate`: form-filling semantics — value sources (request parameters and multipart elements), property name syntax, value conversion rules (the set of supported types and literals, empty-string behavior, scalar/array), handling of DynaBean forms and conversion errors.
 
 ### Modified Capabilities
 
-- `request-processing`: требование populate — семантика commons-beanutils воспроизводится движком на Spring `ConversionService` (привязка к спеке `form-populate`); наблюдаемое поведение жизненного цикла не меняется.
-- `dynamic-form-beans`: требование populate динамической формы — та же переформулировка; заполнение динамических форм идёт через метаданные `DynaClass` с конвертацией тем же `ConversionService`.
+- `request-processing`: the populate requirement — commons-beanutils semantics are reproduced by the engine on Spring `ConversionService` (tied to the `form-populate` spec); the observable lifecycle behavior does not change.
+- `dynamic-form-beans`: the dynamic-form populate requirement — the same restatement; dynamic forms are filled via `DynaClass` metadata with conversion by the same `ConversionService`.
 
 ## Impact
 
-- **Код**: `spring-struts1-core` — `RequestUtils` (populate-путь), новый класс populate + `ConversionService` (пакет `org.apache.struts.util`), тесты. Не затрагиваются: `StrutsHandlerAdapter` (вызов `RequestUtils.populate` остаётся), тэг-библиотеки, стартер, валидатор.
-- **API**: публичный API не меняется (`RequestUtils.populate` с теми же сигнатурами; `DynaBean`-иерархия остаётся на beanutils).
-- **Зависимости**: `commons-beanutils` остаётся (публичный API); populate-путь движка больше его не использует. `spring-core` (ConversionService) уже транзитивно доступен через `spring-webmvc`.
-- **Совместимость**: наблюдаемое поведение populate должно остаться идентичным — это фиксируют существующие IT всех тестовых приложений без изменений плюс новые fixture-тесты на семантику конвертеров.
+- **Code**: `spring-struts1-core` — `RequestUtils` (populate path), a new populate class + `ConversionService` (package `org.apache.struts.util`), tests. Not affected: `StrutsHandlerAdapter` (the call to `RequestUtils.populate` remains), tag libraries, starter, validator.
+- **API**: the public API does not change (`RequestUtils.populate` with the same signatures; the `DynaBean` hierarchy stays on beanutils).
+- **Dependencies**: `commons-beanutils` remains (public API); the engine's populate path no longer uses it. `spring-core` (ConversionService) is already available transitively via `spring-webmvc`.
+- **Compatibility**: the observable populate behavior must remain identical — the existing ITs of all test applications pin this without changes, plus new fixture tests for converter semantics.

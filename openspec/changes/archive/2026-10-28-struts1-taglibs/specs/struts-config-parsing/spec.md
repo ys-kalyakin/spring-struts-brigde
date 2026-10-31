@@ -2,26 +2,26 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Объединение списка файлов конфигурации
-Значение init-param `config` SHALL интерпретироваться как список путей к конфигурационным файлам (разделитель — запятая) модуля по умолчанию; все файлы списка SHALL быть прочитаны и объединены в конфигурацию модуля по умолчанию. Каждый init-param вида `config/<prefix>` (например `config/exercise`) SHALL задавать список файлов отдельного модуля с префиксом `/<prefix>` (например `/exercise`).
+### Requirement: Merging the configuration file list
+The value of the `config` init-param SHALL be interpreted as a list of paths to configuration files (separator — comma) of the default module; all files of the list SHALL be read and merged into the default module configuration. Each init-param of the form `config/<prefix>` (e.g. `config/exercise`) SHALL define the list of files of a separate module with the prefix `/<prefix>` (e.g. `/exercise`).
 
-#### Scenario: Несколько файлов в config
-- **WHEN** init-param `config` равен `/WEB-INF/struts-config.xml,/WEB-INF/struts-config-extra.xml` и оба файла существуют
-- **THEN** элементы обоих файлов зарегистрированы в конфигурации модуля по умолчанию
+#### Scenario: Multiple files in config
+- **WHEN** the init-param `config` equals `/WEB-INF/struts-config.xml,/WEB-INF/struts-config-extra.xml` and both files exist
+- **THEN** the elements of both files are registered in the default module configuration
 
-#### Scenario: Модуль по init-param config/exercise
-- **WHEN** web.xml объявляет init-param `config/exercise` со значением `/WEB-INF/exercise/struts-config.xml`
-- **THEN** файл разобран в конфигурацию модуля с префиксом `/exercise`, элементы зарегистрированы в ней независимо от модуля по умолчанию
+#### Scenario: Module by the config/exercise init-param
+- **WHEN** web.xml declares the init-param `config/exercise` with the value `/WEB-INF/exercise/struts-config.xml`
+- **THEN** the file is parsed into the configuration of the module with the prefix `/exercise`, and its elements are registered there independently of the default module
 
 ## ADDED Requirements
 
-### Requirement: Регистрация модулей конфигурации
-Все объявленные модули SHALL быть разобраны при старте и зарегистрированы по своим префиксам; незарегистрированный префикс в запросе даёт модуль по умолчанию. Ошибка разбора файла модуля SHALL вести к ошибке старта с именем файла.
+### Requirement: Registration of configuration modules
+All declared modules SHALL be parsed at startup and registered by their prefixes; an unregistered prefix in a request yields the default module. A module file parsing error SHALL lead to a startup error naming the file.
 
-#### Scenario: Несколько модулей
-- **WHEN** web.xml объявляет `config/exercise` и `config/dispatch` с существующими файлами
-- **THEN** зарегистрированы модули `/exercise` и `/dispatch` наряду с модулем по умолчанию
+#### Scenario: Multiple modules
+- **WHEN** web.xml declares `config/exercise` and `config/dispatch` with existing files
+- **THEN** the modules `/exercise` and `/dispatch` are registered alongside the default module
 
-#### Scenario: Битый файл модуля
-- **WHEN** init-param `config/dispatch` указывает на отсутствующий файл
-- **THEN** старт завершается ошибкой с именем этого файла
+#### Scenario: Broken module file
+- **WHEN** the init-param `config/dispatch` points to a missing file
+- **THEN** startup ends with an error naming that file

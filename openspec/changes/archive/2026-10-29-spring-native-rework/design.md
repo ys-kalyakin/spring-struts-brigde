@@ -2,68 +2,68 @@
 
 ## Context
 
-Движок (фазы 1–2) уже стоит на Spring MVC: `StrutsHandlerMapping`/`StrutsHandlerAdapter` ведут конвейер запроса, `StrutsInstanceResolver` берёт аннотированные `@StrutsAction`/`@StrutsForm` классы из контекста, а всё остальное создаёт напрямую (`newInstance`, кэш по классу; для форм — `FormBeanConfig.createActionForm`). Тэг-библиотеки — классические порты: теги наследуют `TagSupport`/`BodyTagSupport`, сообщения берут из статических синглтонов `MessageResources`, общие операции — статические методы `TagUtils`. См. proposal.md (Why) — мотивация не повторяется здесь.
+The engine (phases 1–2) already runs on Spring MVC: `StrutsHandlerMapping`/`StrutsHandlerAdapter` drive the request pipeline, `StrutsInstanceResolver` takes `@StrutsAction`/`@StrutsForm`-annotated classes from the context, and everything else is created directly (`newInstance`, per-class cache; for forms — `FormBeanConfig.createActionForm`). The tag libraries are classic ports: tags extend `TagSupport`/`BodyTagSupport`, messages come from static `MessageResources` singletons, shared operations are static `TagUtils` methods. See proposal.md (Why) — the motivation is not repeated here.
 
-Ограничения, определяющие подход: внешний контракт зафиксирован спеками `*-taglib`, `message-resources`, `request-processing` — их поведение не меняется; JSP-контейнер сам инстанцирует обработчики тегов, поэтому «тег как Spring-бин» может означать только Spring-доступ и делегирование компонентам, а не bean-жизненный цикл тега.
+Constraints that shape the approach: the external contract is fixed by the `*-taglib`, `message-resources`, `request-processing` specs — their behavior does not change; the JSP container instantiates tag handlers itself, so "a tag as a Spring bean" can only mean Spring access and delegation to components, not a bean lifecycle for the tag.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Каждый экземпляр формы и экшена создаётся фабрикой бинов Spring; типы из `struts-config.xml` видны в контексте как bean definitions.
-- Полный бин-жизненный цикл (`@PostConstruct`/`@PreDestroy`, `BeanPostProcessor`) для форм и экшенов.
-- Spring-нативная инфраструктура тегов: доступ к контексту из тега, логика тегов в Spring-компонентах, мост `MessageResources` → `MessageSource`, EL-доступ к бинам, сосуществование с `spring:*`-тегами.
-- Нулевые изменения HTML-вывода и TLD — регресс замыкают существующие IT.
+- Every form and action instance is created by the Spring bean factory; types from `struts-config.xml` are visible in the context as bean definitions.
+- Full bean lifecycle (`@PostConstruct`/`@PreDestroy`, `BeanPostProcessor`) for forms and actions.
+- Spring-native tag infrastructure: context access from tags, tag logic in Spring components, a `MessageResources` → `MessageSource` bridge, EL access to beans, coexistence with `spring:*` tags.
+- Zero changes to HTML output and TLDs — the regression is closed by existing ITs.
 
 **Non-Goals:**
-- Замена JSP другой view-технологией; struts-el; Tiles; commons-validator.
-- Перевод `TagUtils` целиком на сервисы — мигрируются только области, названные в спеке `spring-tag-integration` (сообщения, URL, поиск формы, рендер ошибок/сообщений).
-- Смена конвейера обработки запроса (`request-processing` не затрагивается).
+- Replacing JSP with another view technology; struts-el; Tiles; commons-validator.
+- Moving `TagUtils` entirely to services — only the areas named in the `spring-tag-integration` spec are migrated (messages, URLs, form lookup, error/message rendering).
+- Changing the request-processing pipeline (`request-processing` is untouched).
 
 ## Decisions
 
-### D1. Авто-регистрация типов из конфигурации как bean definitions
-`StrutsEngineRegistrar` (реализован как `BeanDefinitionRegistryPostProcessor` + `ServletConfigAware`) читает классические init-params, разбирает конфигурацию через общий с фасадом парсер (`StrutsConfigParser`, экстрагирован из `ActionServlet`) и регистрирует определения в `BeanDefinitionRegistry`: экшены — singleton с lazy-init, формы — prototype; имена — `strutsAction:<fqcn>` / `strutsForm:<fqcn>`.
-- *Почему именно фаза определения бинов*: контекст движка живёт в `DispatcherServlet`; его `initMessageSource` выполняется раньше создания обычных бинов, поэтому мост `messageSource` (D5) обязан существовать уже на этой фазе — регистрация из инициализатора была бы слишком поздней. Фасад `ActionServlet` сохраняет свой классический init (разбор, message-resources в ServletContext, плагины); парсинг правил у них общий.
-- *Почему не создание на лету через `AutowireCapableBeanFactory.createBean` без регистрации*: бины были бы невидимы в контексте (нельзя переопределить, инспектировать, подписать на события), слабее жизненный цикл. Регистрация даёт «настоящий» статус бина, который и запрошен.
-- *Альтернатива — компонент-скан всех классов из конфигурации*: отклонена, скан работает по пакетам и дублирует определения при каждом неаннотированном классе.
-- `DynaActionForm` не регистрируется: это внутренний динамический класс, создаётся через `FormBeanConfig.createActionForm` (привязка `DynaActionFormClass`, initial-значения) как раньше.
+### D1. Auto-registration of types from the configuration as bean definitions
+`StrutsEngineRegistrar` (implemented as `BeanDefinitionRegistryPostProcessor` + `ServletConfigAware`) reads the classic init-params, parses the configuration with the parser shared with the facade (`StrutsConfigParser`, extracted from `ActionServlet`) and registers definitions in the `BeanDefinitionRegistry`: actions — singleton with lazy-init, forms — prototype; names — `strutsAction:<fqcn>` / `strutsForm:<fqcn>`.
+- *Why the bean-definition phase*: the engine context lives in the `DispatcherServlet`; its `initMessageSource` runs before regular bean creation, so the `messageSource` bridge (D5) must already exist at that phase — registering from the initializer would be too late. The `ActionServlet` facade keeps its classic init (parsing, message-resources into the ServletContext, plugins); they share the parsing rules.
+- *Why not on-the-fly creation via `AutowireCapableBeanFactory.createBean` without registration*: such beans would be invisible in the context (cannot be overridden, inspected, subscribed to events) and would have a weaker lifecycle. Registration gives the "real" bean status that is requested.
+- *Alternative — component-scanning all classes from the configuration*: rejected; scanning works by packages and would duplicate definitions for every unannotated class.
+- `DynaActionForm` is not registered: it is an internal dynamic class, created via `FormBeanConfig.createActionForm` (`DynaActionFormClass` binding, initial values) as before.
 
-### D2. Резолвер: только Spring
-`StrutsInstanceResolver` упрощается: явная регистрация пользователя побеждает (`getBeanNamesForType`; при единственном кандидате — он; при нескольких — ошибка запуска с перечислением кандидатов вместо тихого выбора первого); иначе — авто-зарегистрированное определение; страховочный путь (класс появился вне конфигурации) — `AutowireCapableBeanFactory.createBean` без кэша прямых экземпляров. Кэш `actionCache` удаляется: singleton-область бина воспроизводит классическое «один экземпляр на класс».
+### D2. Resolver: Spring only
+`StrutsInstanceResolver` is simplified: explicit user registration wins (`getBeanNamesForType`; a single candidate — it is used; several — a startup error listing the candidates instead of silently picking the first); otherwise — the auto-registered definition; the fallback path (a class that appears outside the configuration) — `AutowireCapableBeanFactory.createBean` with no direct-instance cache. The `actionCache` is removed: the bean's singleton scope reproduces the classic "one instance per class".
 
-### D3. Области и хранение форм
-Область из маппинга (`request`/`session`) остаётся местом хранения атрибута (классическое поведение `request-processing`); область бина — временем жизни экземпляра. Пользователь, зарегистрировавший форму как session-scoped бин, при `scope="session"` получает осознанно разделяемое состояние; при `scope="request"` prototype гарантирует свежий экземпляр. Отдельный маппинг «область маппинга → область бина» не вводится, чтобы не менять наблюдаемое поведение.
+### D3. Scopes and form storage
+The scope from the mapping (`request`/`session`) remains where the attribute is stored (classic `request-processing` behavior); the bean scope is the instance's lifetime. A user who registers a form as a session-scoped bean gets deliberately shared state at `scope="session"`; at `scope="request"` the prototype guarantees a fresh instance. No separate "mapping scope → bean scope" mapping is introduced, to avoid changing observable behavior.
 
-### D4. База тегов и сервисы логики
-Новый пакет `org.apache.struts.taglib.spring` в `spring-struts1-taglib`:
-- `SpringTagSupport` / `SpringBodyTagSupport` — пере-родители существующих тегов; дают ленивый доступ к `WebApplicationContext` через `WebApplicationContextUtils` (ServletContext-атрибут — надёжен и без `RequestContextHolder`) и хелперы получения бинов/зависимостей.
-- Сервисы-компоненты (singleton, stateless, данные запроса — аргументами): `TagMessageResolver` (локаль из сессии/запроса, формат `???ru_RU.key???`), `TagUrlBuilder` (context-relative/action URL, модульный префикс), `TagFormLocator` (поиск формы в request/session), `ErrorsMessagesRenderer` (prefix/suffix/header/footer). Теги и `TagUtils` делегируют им.
-- `TagUtils` остаётся статическим фасадом (классический API), но мигрированные методы делегируют сервисам, найденным в контексте текущего запроса — переопределение бина меняет вывод тегов (требование спеки), остальной статический API не трогается.
-- Конфигурация `StrutsTagServicesConfiguration` объявляет сервисы-бины с фиксированными именами; приложения импортируют её явно (стартер фазы 4 подключит автоматически).
+### D4. Tag base and logic services
+A new package `org.apache.struts.taglib.spring` in `spring-struts1-taglib`:
+- `SpringTagSupport` / `SpringBodyTagSupport` — re-parents for existing tags; they provide lazy access to the `WebApplicationContext` via `WebApplicationContextUtils` (the ServletContext attribute is reliable even without `RequestContextHolder`) and helpers for getting beans/dependencies.
+- Service components (singleton, stateless, request data passed as arguments): `TagMessageResolver` (locale from session/request, the `???ru_RU.key???` format), `TagUrlBuilder` (context-relative/action URLs, module prefix), `TagFormLocator` (form lookup in request/session), `ErrorsMessagesRenderer` (prefix/suffix/header/footer). Tags and `TagUtils` delegate to them.
+- `TagUtils` remains a static facade (classic API), but migrated methods delegate to services found in the current request's context — overriding a bean changes tag output (a spec requirement); the rest of the static API is untouched.
+- The `StrutsTagServicesConfiguration` declares the service beans under fixed names; applications import it explicitly (the phase 4 starter will wire it automatically).
 
-### D5. Мост MessageResources → MessageSource
-Регистратор маппит `MessageResourcesConfig` на `MessageSource`-бины: классический `PropertyMessageResources` заворачивается в адаптер `MessageSource`. Если пользовательского бина `messageSource` нет, бандл по умолчанию становится основным `MessageSource` контекста (сценарий `spring:message` из спеки); если есть — бандлы Struts регистрируются под выделенными именами, классические теги продолжают резолвить через `TagMessageResolver` по бандлам Struts, и `spring:message` следует пользовательскому первичному источнику. Статический `MessageResources.getMessageResources` сохраняется для прямой совместимости, теги его больше не используют.
+### D5. MessageResources → MessageSource bridge
+The registrar maps `MessageResourcesConfig` to `MessageSource` beans: the classic `PropertyMessageResources` is wrapped in a `MessageSource` adapter. If the user has no `messageSource` bean, the default bundle becomes the context's primary `MessageSource` (the `spring:message` scenario from the spec); if there is one, the Struts bundles are registered under dedicated names, the classic tags keep resolving via `TagMessageResolver` against the Struts bundles, and `spring:message` follows the user's primary source. The static `MessageResources.getMessageResources` is kept for backward compatibility; tags no longer use it.
 
-### D6. «Spring-JSP-стек» в JSP
-- `spring:message`/`spring:eval` работают поверх того же контекста (`RequestContextAwareTag` сам строит `RequestContext` из `WebApplicationContext`); движок дополнительно регистрирует `RequestContextFilter`, чтобы локаль/контекст запроса были доступны фильтровому коду.
-- EL-доступ к бинам: инициализатор один раз на контекст регистрирует через `JspFactory.getJspApplicationContext(...)` свой `ELResolver` (`BeanNameELResolver` поверх `SpringBeanNameResolver`, контракт EL 6.0: `isNameResolved`/`getBean`), читающий имена singleton-бинов из Spring-контекста; prototype-бины EL не раскрывает. Регистрация — до компиляции первой JSP (после — `IllegalStateException`); повторная — защищается флагом.
-- Смешивание проверяется IT: страница с `html:form`+`html:text`, `spring:message` и EL по бину.
+### D6. The "Spring JSP stack" in JSP
+- `spring:message`/`spring:eval` run on top of the same context (`RequestContextAwareTag` builds the `RequestContext` from the `WebApplicationContext` itself); the engine additionally registers a `RequestContextFilter` so the request locale/context are available to filter-level code.
+- EL access to beans: an initializer registers, once per context via `JspFactory.getJspApplicationContext(...)`, its own `ELResolver` (`BeanNameELResolver` over `SpringBeanNameResolver`, the EL 6.0 contract: `isNameResolved`/`getBean`) that resolves singleton bean names from the Spring context; prototype beans are not exposed to EL. Registration happens before the first JSP is compiled (after that — `IllegalStateException`); re-registration is guarded by a flag.
+- Mixing is verified by an IT: a page with `html:form`+`html:text`, `spring:message`, and EL over a bean.
 
-### D7. Демонстрация и регресс
-Приложение `examples` расширяется страницей-демонстрацией: экшен с `@Autowired`-сервисом, форма с `@Autowired` и `@PostConstruct`, JSP, смешивающая Struts- и Spring-теги. Существующие IT (`blank`, `examples`) — регресс неизменности HTML-вывода; их правки ограничены новой демо-страницей.
+### D7. Demonstration and regression
+The `examples` app gains a demo page: an action with an `@Autowired` service, a form with `@Autowired` and `@PostConstruct`, and a JSP mixing Struts and Spring tags. The existing ITs (`blank`, `examples`) are the regression for unchanged HTML output; their changes are limited to the new demo page.
 
 ## Risks / Trade-offs
 
-- [Несколько пользовательских бинов одного типа экшена/формы] → ошибка старта с перечислением кандидатов вместо тихого выбора первого (сейчас выбирается первый — латентный баг).
-- [Статические `TagUtils` как фасад скрывают, что логика в сервисах] → оставляем только как переходный API; спека закрепляет переопределяемость сервиса; новый код обязан использовать сервисы.
-- [EL-resolver после первой JSP не регистрируется] → регистрация на этапе инициализатора до раздачи запросов; интеграционный тест ловит порядок.
-- [Безаннотационные классы получают пост-обработку бина — BREAKING] → автоваиринг только по аннотациям (не byName/byType-всё), конструктор по умолчанию как в классике; задокументировано в proposal.
-- [Ре-родительская переработка ~98 тегов] → миграция порциями по библиотекам с прогоном приёмочных сценариев после каждой; базовые классы совместимы сигнатурами (наследование от `TagSupport` сохранено).
+- [Several user beans of one action/form type] → a startup error listing the candidates instead of silently picking the first (currently the first is picked — a latent bug).
+- [Static `TagUtils` as a facade hides that the logic lives in services] → kept only as a transitional API; the spec fixes service overridability; new code must use the services.
+- [The EL resolver cannot be registered after the first JSP] → registration at the initializer stage, before serving requests; an integration test catches the ordering.
+- [Unannotated classes get bean post-processing — BREAKING] → autowiring by annotations only (not byName/byType-everything), default constructor as in the classic behavior; documented in the proposal.
+- [Re-parenting rework of ~98 tags] → migration in batches per library with acceptance scenarios run after each; the base classes are signature-compatible (inheritance from `TagSupport` preserved).
 
 ## Migration Plan
 
-Изменение внутреннее и бесшовное по конфигурации: пользовательские артефакты (struts-config, JSP, web.xml) не меняются; новый импорт `StrutsTagServicesConfiguration` добавляется в демо-приложения. Откат — реверс коммита. Порядок внедрения: авто-регистрация/резолвер (core) → мост MessageSource → база тегов и сервисы → миграция тегов по библиотекам (bean → html → logic → nested) → EL/RequestContextFilter → демо и IT.
+The change is internal and seamless with respect to configuration: user artifacts (struts-config, JSP, web.xml) do not change; the new `StrutsTagServicesConfiguration` import is added to the demo apps. Rollback is a commit revert. Implementation order: auto-registration/resolver (core) → MessageSource bridge → tag base and services → tag migration per library (bean → html → logic → nested) → EL/RequestContextFilter → demo and ITs.
 
 ## Open Questions
 
-- Стоит ли делать `Action` реализацией `ServletContextAware`/`ApplicationContextAware` для Spring-нативного получения сервлетного окружения (сейчас адаптер вызывает классический `setServlet`)? Не влияет на спеки — решается при реализации.
+- Should `Action` implement `ServletContextAware`/`ApplicationContextAware` to obtain the servlet environment the Spring-native way (currently the adapter calls the classic `setServlet`)? Does not affect the specs — to be decided during implementation.

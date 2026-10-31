@@ -2,90 +2,90 @@
 
 ## Purpose
 
-Маршрутизирует запросы на экшены Struts по суффиксному маппированию и воспроизводит жизненный цикл запроса Struts 1 — populate → validate → execute → forward — с семантикой форвардов и форм.
+Routes requests to Struts actions by suffix mapping and reproduces the Struts 1 request lifecycle — populate → validate → execute → forward — with forward and form semantics.
 
 ## ADDED Requirements
 
-### Requirement: Суффиксная маршрутизация экшенов
-Запрос к экшену SHALL маршрутизироваться по пути без суффикса: запрос `/x.do` обрабатывается маппингом с `path="/x"`. Суффикс SHALL настраиваться; при смене настроенного суффикса маршрутизация выполняется по нему.
+### Requirement: Suffix routing of actions
+A request to an action SHALL be routed by the path without the suffix: a request to `/x.do` is handled by the mapping with `path="/x"`. The suffix SHALL be configurable; when the configured suffix is changed, routing is performed by it.
 
-#### Scenario: Запрос по суффиксу .do
-- **WHEN** поступает запрос `GET /Welcome.do` и в конфигурации зарегистрирован маппинг `path="/Welcome"`
-- **THEN** запрос обработан этим маппингом
+#### Scenario: Request with the .do suffix
+- **WHEN** a `GET /Welcome.do` request arrives and the configuration has a mapping with `path="/Welcome"` registered
+- **THEN** the request is handled by that mapping
 
-#### Scenario: Настроенный суффикс
-- **WHEN** суффикс настроен как `.act` и поступает запрос `GET /Welcome.act`
-- **THEN** запрос обработан маппингом `path="/Welcome"`
+#### Scenario: Configured suffix
+- **WHEN** the suffix is configured as `.act` and a `GET /Welcome.act` request arrives
+- **THEN** the request is handled by the mapping with `path="/Welcome"`
 
-### Requirement: Незарегистрированный путь возвращает 404
-Запрос к пути, для которого нет зарегистрированного маппинга, SHALL дать ответ 404.
+### Requirement: Unregistered path returns 404
+A request to a path for which no mapping is registered SHALL produce a 404 response.
 
-#### Scenario: Неизвестный экшен
-- **WHEN** поступает запрос `GET /Nope.do` и маппинг `/Nope` не зарегистрирован
-- **THEN** клиент получает ответ 404
+#### Scenario: Unknown action
+- **WHEN** a `GET /Nope.do` request arrives and the `/Nope` mapping is not registered
+- **THEN** the client receives a 404 response
 
-### Requirement: Populate формы из параметров запроса
-Если маппинг объявляет форму, её свойства SHALL быть заполнены параметрами запроса по семантике commons-beanutils до вызова экшена; маппинг без формы SHALL обрабатываться без populate.
+### Requirement: Form populate from request parameters
+If the mapping declares a form, its properties SHALL be populated with request parameters with commons-beanutils semantics before the action is invoked; a mapping without a form SHALL be handled without populate.
 
-#### Scenario: Параметры заполняют свойства формы
-- **WHEN** поступает POST с параметрами, имена которых совпадают со свойствами формы, объявленной в маппинге
-- **THEN** к моменту вызова экшена свойства формы содержат значения параметров
+#### Scenario: Parameters populate form properties
+- **WHEN** a POST arrives with parameter names matching the properties of the form declared in the mapping
+- **THEN** by the time the action is invoked, the form properties contain the parameter values
 
-#### Scenario: Маппинг без формы
-- **WHEN** маппинг не объявляет атрибут `name` с формой
-- **THEN** populate не выполняется и экшен вызывается сразу
+#### Scenario: Mapping without a form
+- **WHEN** the mapping does not declare a `name` attribute with a form
+- **THEN** populate is not performed and the action is invoked immediately
 
-### Requirement: Размещение формы по scope
-Форма SHALL размещаться в области, заданной атрибутом `scope` маппинга (request или session), под именем form-bean из конфигурации.
+### Requirement: Form placement by scope
+The form SHALL be placed in the scope given by the mapping's `scope` attribute (request or session) under the form-bean name from the configuration.
 
-#### Scenario: Форма в request
-- **WHEN** маппинг объявляет `scope="request"` и форма создана для запроса
-- **THEN** форма доступна последующей странице как атрибут запроса
+#### Scenario: Form in request
+- **WHEN** the mapping declares `scope="request"` and a form is created for the request
+- **THEN** the form is available to the subsequent page as a request attribute
 
-#### Scenario: Форма в session
-- **WHEN** маппинг объявляет `scope="session"` и форма создана для запроса
-- **THEN** форма доступна как атрибут сессии и сохраняется между запросами в пределах сессии
+#### Scenario: Form in session
+- **WHEN** the mapping declares `scope="session"` and a form is created for the request
+- **THEN** the form is available as a session attribute and persists between requests within the session
 
-### Requirement: Валидация по флагу validate
-При `validate="true"` валидация формы SHALL выполняться до экшена: обнаруженные ошибки приводят к переходу на страницу `input` без вызова экшена, а ошибки SHALL быть доступны в запросе. При `validate="false"` валидация SHALL не выполняться.
+### Requirement: Validation by the validate flag
+With `validate="true"`, form validation SHALL run before the action: detected errors lead to a transition to the `input` page without invoking the action, and the errors SHALL be available in the request. With `validate="false"`, validation SHALL not run.
 
-#### Scenario: Ошибки валидации уводят на input
-- **WHEN** маппинг объявляет `validate="true"` с `input="/pages/Input.jsp"` и метод validate формы вернул ошибки
-- **THEN** экшен не вызывается, клиент получает страницу `input`, а ошибки доступны в запросе
+#### Scenario: Validation errors lead to input
+- **WHEN** the mapping declares `validate="true"` with `input="/pages/Input.jsp"` and the form's validate method returned errors
+- **THEN** the action is not invoked, the client receives the `input` page, and the errors are available in the request
 
-#### Scenario: Успешная валидация
-- **WHEN** маппинг объявляет `validate="true"` и validate формы вернул без ошибок
-- **THEN** экшен вызывается после валидации
+#### Scenario: Successful validation
+- **WHEN** the mapping declares `validate="true"` and the form's validate returned without errors
+- **THEN** the action is invoked after validation
 
-#### Scenario: Валидация отключена
-- **WHEN** маппинг объявляет `validate="false"`
-- **THEN** validate формы не вызывается и экшен выполняется
+#### Scenario: Validation disabled
+- **WHEN** the mapping declares `validate="false"`
+- **THEN** the form's validate is not called and the action executes
 
-### Requirement: Выполнение экшена и форвард
-Результат метода execute экшена SHALL управлять переходом: возвращённый форвард рендерится клиенту; маппинг с атрибутом `forward` или `include` SHALL обрабатываться как прямой переход на указанный ресурс без вызова экшена.
+### Requirement: Action execution and forward
+The result of the action's execute method SHALL control the transition: the returned forward is rendered to the client; a mapping with the `forward` or `include` attribute SHALL be handled as a direct transition to the specified resource without invoking an action.
 
-#### Scenario: Форвард из execute
-- **WHEN** execute экшена возвращает форвард с `path="/pages/Done.jsp"`
-- **THEN** клиент получает содержимое ресурса по этому пути
+#### Scenario: Forward from execute
+- **WHEN** the action's execute returns a forward with `path="/pages/Done.jsp"`
+- **THEN** the client receives the content of the resource at that path
 
-#### Scenario: Маппинг с атрибутом forward
-- **WHEN** маппинг объявляет `path="/Welcome"` с `forward="/pages/Welcome.jsp"` и не объявляет тип экшена
-- **THEN** запрос обрабатывается переходом на `/pages/Welcome.jsp` без вызова метода экшена
+#### Scenario: Mapping with the forward attribute
+- **WHEN** the mapping declares `path="/Welcome"` with `forward="/pages/Welcome.jsp"` and does not declare an action type
+- **THEN** the request is handled by a transition to `/pages/Welcome.jsp` without invoking the action method
 
-### Requirement: Локальные форварды приоритетнее глобальных
-При совпадении имени локальный форвард маппинга SHALL использоваться вместо глобального форварда с тем же именем.
+### Requirement: Local forwards take priority over global ones
+On a name match, a mapping's local forward SHALL be used instead of the global forward with the same name.
 
-#### Scenario: Конфликт имён форвардов
-- **WHEN** глобальный и локальный форварды объявлены с одинаковым именем, и экшен возвращает форвард по этому имени
-- **THEN** используется путь локального форварда
+#### Scenario: Forward name conflict
+- **WHEN** a global and a local forward are declared with the same name, and the action returns a forward by that name
+- **THEN** the path of the local forward is used
 
-### Requirement: Redirect и dispatch форварды
-Форвард с `redirect="true"` SHALL выполняться как HTTP-редирект (новый запрос клиента); форвард с `redirect="false"` (по умолчанию) SHALL выполняться как dispatch внутри контейнера в том же запросе.
+### Requirement: Redirect and dispatch forwards
+A forward with `redirect="true"` SHALL be executed as an HTTP redirect (a new client request); a forward with `redirect="false"` (the default) SHALL be executed as a dispatch within the container in the same request.
 
-#### Scenario: Редирект
-- **WHEN** форвард объявляет `redirect="true"` с путём `/Done.do`
-- **THEN** клиент получает HTTP-редирект на этот путь
+#### Scenario: Redirect
+- **WHEN** a forward declares `redirect="true"` with the path `/Done.do`
+- **THEN** the client receives an HTTP redirect to that path
 
 #### Scenario: Dispatch
-- **WHEN** форвард объявляет `redirect="false"` с путём `/pages/Done.jsp`
-- **THEN** клиент получает содержимое JSP в ответе того же запроса
+- **WHEN** a forward declares `redirect="false"` with the path `/pages/Done.jsp`
+- **THEN** the client receives the JSP content in the response of the same request

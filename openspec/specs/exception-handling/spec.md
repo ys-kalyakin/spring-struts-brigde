@@ -2,31 +2,31 @@
 
 ## Purpose
 
-Воспроизводит декларативную обработку исключений Struts 1: обработчики из `global-exceptions` и из маппинга переводят исключение в форвард с сообщением, неописанные исключения уходят в контейнер.
+Reproduces Struts 1 declarative exception handling: handlers from `global-exceptions` and from the mapping translate an exception into a forward with a message; undeclared exceptions propagate to the container.
 
 ## Requirements
 
-### Requirement: Обработка объявленных исключений
-Исключение, тип которого объявлен в `global-exceptions` или в `exception` маппинга, SHALL обрабатываться обработчиком по умолчанию: управление переходит на `path` объявления, а сообщение (по `key` из бандла) SHALL быть доступно в запросе как ошибки Struts.
+### Requirement: Handling declared exceptions
+An exception whose type is declared in `global-exceptions` or in the mapping's `exception` SHALL be handled by the default handler: control passes to the declaration's `path`, and the message (by `key` from the bundle) SHALL be available in the request like Struts errors.
 
-#### Scenario: Исключение объявлено глобально
-- **WHEN** execute экшена выбрасывает исключение, тип которого объявлен в `global-exceptions` с `path="/pages/Error.jsp"` и `key="errors.detail"`
-- **THEN** клиент получает страницу `/pages/Error.jsp`, и сообщение по ключу `errors.detail` доступно в запросе
+#### Scenario: Exception declared globally
+- **WHEN** an action's execute throws an exception whose type is declared in `global-exceptions` with `path="/pages/Error.jsp"` and `key="errors.detail"`
+- **THEN** the client receives the page `/pages/Error.jsp`, and the message by key `errors.detail` is available in the request
 
-#### Scenario: Подтип объявленного исключения
-- **WHEN** execute выбрасывает исключение-наследник типа, объявленного в конфигурации
-- **THEN** оно обрабатывается тем же объявлением
+#### Scenario: Subtype of a declared exception
+- **WHEN** execute throws an exception that is a subclass of a type declared in the configuration
+- **THEN** it is handled by the same declaration
 
-### Requirement: Локальный обработчик приоритетнее глобального
-При совпадении типа локальное объявление `exception` в маппинге SHALL использоваться вместо глобального.
+### Requirement: Local handler takes precedence over global
+On a type match, a local `exception` declaration in the mapping SHALL be used instead of the global one.
 
-#### Scenario: Конфликт объявлений
-- **WHEN** тип исключения объявлен и глобально, и в маппинге, и исключение выброшено этим экшеном
-- **THEN** применяется path и key локального объявления
+#### Scenario: Declaration conflict
+- **WHEN** an exception type is declared both globally and in the mapping, and the exception is thrown by this action
+- **THEN** the path and key of the local declaration apply
 
-### Requirement: Неописанные исключения пробрасываются в контейнер
-Исключение, тип которого не объявлен ни глобально, ни в маппинге, SHALL быть проброшено в контейнер сервлетов без перехвата движком.
+### Requirement: Undeclared exceptions propagate to the container
+An exception whose type is declared neither globally nor in the mapping SHALL be propagated to the servlet container without interception by the engine.
 
-#### Scenario: Исключение без объявления
-- **WHEN** execute выбрасывает исключение, не объявленное в конфигурации
-- **THEN** контейнер получает это исключение и обрабатывает как ошибку приложения
+#### Scenario: Exception without a declaration
+- **WHEN** execute throws an exception not declared in the configuration
+- **THEN** the container receives this exception and handles it as an application error

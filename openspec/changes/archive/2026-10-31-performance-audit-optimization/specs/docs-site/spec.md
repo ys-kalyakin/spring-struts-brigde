@@ -2,13 +2,13 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Набор страниц и навигация
-Сайт SHALL содержать семь страниц: главную (обзор библиотеки), быстрое подключение (getting started), руководство по миграции, справочник тэг-библиотек, справочник конфигурации стартера, обзор модулей и страницу производительности (performance) с инструкцией запуска бенчмарков и зафиксированными результатами. Каждая страница SHALL быть достижима из навигации сайта.
+### Requirement: Page set and navigation
+The site SHALL contain seven pages: the home page (library overview), getting started, the migration guide, the tag library reference, the starter configuration reference, the modules overview, and a performance page with instructions for running the benchmarks and recorded results. Each page SHALL be reachable from the site navigation.
 
-#### Scenario: Навигация по сайту
-- **WHEN** посетитель открывает главную страницу
-- **THEN** навигация сайта перечисляет все разделы, и каждая ссылка ведёт на существующую страницу
+#### Scenario: Site navigation
+- **WHEN** a visitor opens the home page
+- **THEN** the site navigation lists all sections, and every link leads to an existing page
 
-#### Scenario: Страница производительности в навигации
-- **WHEN** посетитель открывает страницу производительности из навигации сайта
-- **THEN** страница открывается и содержит инструкцию запуска бенчмарков и таблицу результатов измерений
+#### Scenario: Performance page in navigation
+- **WHEN** a visitor opens the performance page from the site navigation
+- **THEN** the page opens and contains instructions for running the benchmarks and a table of measured results

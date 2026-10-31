@@ -2,50 +2,50 @@
 
 ## Purpose
 
-Измеряет производительность горячих путей конвейера запросов движка: набор бенчмарков воспроизводимо измеряет накладные расходы обработки запроса, populate, резолвинга бинов и форматирования сообщений, чтобы оптимизации опирались на числа, а не на догадки.
+Measures the performance of hot paths of the engine's request pipeline: a benchmark suite reproducibly measures the overhead of request processing, populate, bean resolution, and message formatting, so that optimizations are driven by numbers rather than guesses.
 
 ## Requirements
 
-### Requirement: Запуск бенчмарков одной командой
-Набор бенчмарков SHALL запускаться одной задокументированной командой из корня репозитория в терминале (без IDE) и SHALL выводить результаты измерений в консоль. Порядок запуска и конфигурация прогона SHALL быть описаны в документации проекта.
+### Requirement: Running benchmarks with a single command
+The benchmark suite SHALL be runnable with a single documented command from the repository root in a terminal (without an IDE) and SHALL print measurement results to the console. The run procedure and run configuration SHALL be described in the project documentation.
 
-#### Scenario: Запуск из терминала
-- **WHEN** разработчик выполняет задокументированную команду запуска бенчмарков
-- **THEN** прогоны выполняются и в консоль выводятся результаты измерений (оценки времени на операцию)
+#### Scenario: Running from the terminal
+- **WHEN** a developer executes the documented benchmark run command
+- **THEN** the runs execute and measurement results (time-per-operation estimates) are printed to the console
 
-#### Scenario: Воспроизводимость прогона
-- **WHEN** команда запуска бенчмарков выполняется повторно на том же коде и окружении
-- **THEN** измерения выполняются с той же конфигурацией (число прогревов, итераций, форков), и результаты сопоставимы между прогонами
+#### Scenario: Run reproducibility
+- **WHEN** the benchmark run command is executed again on the same code and environment
+- **THEN** measurements are performed with the same configuration (number of warmups, iterations, forks), and results are comparable between runs
 
-### Requirement: Изоляция бенчмарков от обычной сборки
-Бенчмарки SHALL не выполняться при обычной сборке, прогоне тестов и CI: сборка проекта по умолчанию SHALL проходить без запуска бенчмарков, а зависимости бенчмарков SHALL не попадать в артефакты библиотеки.
+### Requirement: Isolation of benchmarks from the regular build
+Benchmarks SHALL NOT run during the regular build, test run, or CI: the default project build SHALL complete without running benchmarks, and benchmark dependencies SHALL NOT end up in the library artifacts.
 
-#### Scenario: Обычная сборка без бенчмарков
-- **WHEN** выполняется обычная сборка и прогон тестов проекта
-- **THEN** ни один бенчмарк не запускается, сборка и тесты проходят как раньше
+#### Scenario: Regular build without benchmarks
+- **WHEN** the regular build and test run of the project are executed
+- **THEN** no benchmark is started, and the build and tests pass as before
 
-#### Scenario: Артефакты библиотеки без зависимостей бенчмарков
-- **WHEN** собираются публикуемые артефакты библиотеки
-- **THEN** зависимости бенчмарков отсутствуют в их транзитивных зависимостях
+#### Scenario: Library artifacts without benchmark dependencies
+- **WHEN** the publishable library artifacts are built
+- **THEN** benchmark dependencies are absent from their transitive dependencies
 
-### Requirement: Покрытие горячих путей конвейера запроса
-Набор бенчмарков SHALL покрывать по отдельности: полный цикл обработки запроса (populate → validate → execute → forward), populate формы из параметров, форматирование сообщений с аргументами, резолвинг метода dispatch-экшена и резолвинг экземпляров экшена и формы.
+### Requirement: Coverage of hot paths of the request pipeline
+The benchmark suite SHALL cover individually: the full request processing cycle (populate → validate → execute → forward), form populate from parameters, message formatting with arguments, dispatch action method resolution, and resolution of action and form instances.
 
-#### Scenario: Измерение полного цикла запроса
-- **WHEN** запускается бенчмарк полного цикла обработки запроса
-- **THEN** измеряется время обработки запроса от входа в обработчик до форварда на подготовленной конфигурации с формой и экшеном
+#### Scenario: Measuring the full request cycle
+- **WHEN** the full request processing cycle benchmark is run
+- **THEN** the time to process a request from entering the handler to the forward is measured on a prepared configuration with a form and an action
 
-#### Scenario: Измерение populate
-- **WHEN** запускается бенчмарк populate
-- **THEN** измеряется время заполнения свойств формы из набора параметров запроса
+#### Scenario: Measuring populate
+- **WHEN** the populate benchmark is run
+- **THEN** the time to populate form properties from a set of request parameters is measured
 
-#### Scenario: Измерение резолвинга экземпляров
-- **WHEN** запускается бенчмарк резолвинга экшена и формы
-- **THEN** измеряется время получения экземпляров из Spring-контекста для подготовленной конфигурации
+#### Scenario: Measuring instance resolution
+- **WHEN** the action and form resolution benchmark is run
+- **THEN** the time to obtain instances from the Spring context for the prepared configuration is measured
 
-### Requirement: Документирование результатов измерений
-Результаты измерений до и после оптимизаций SHALL быть зафиксированы в документации проекта: для каждого ключевого бенчмарка — значение на операцию и описание окружения измерения (процессор, JVM, способ запуска), достаточное для воспроизведения.
+### Requirement: Documenting measurement results
+Measurement results before and after optimizations SHALL be recorded in the project documentation: for each key benchmark — the per-operation value and a description of the measurement environment (processor, JVM, run method), sufficient for reproduction.
 
-#### Scenario: Результаты зафиксированы
-- **WHEN** изменения по этому предложению завершены
-- **THEN** в документации проекта для каждого ключевого бенчмарка указаны значения до и после оптимизаций и описание окружения измерения
+#### Scenario: Results recorded
+- **WHEN** the work on this proposal is completed
+- **THEN** the project documentation lists, for each key benchmark, the values before and after optimizations and a description of the measurement environment

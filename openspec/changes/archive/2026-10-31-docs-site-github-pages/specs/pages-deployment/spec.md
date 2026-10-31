@@ -2,50 +2,50 @@
 
 ## Purpose
 
-Автоматическая публикация англоязычной документации на GitHub Pages: при каждом изменении документации в основной ветке сайт пересобирается и публикуется без ручных действий, отдельным workflow, не влияющим на CI.
+Automatic publication of the English-language documentation to GitHub Pages: every time the documentation changes in the main branch, the site is rebuilt and published without manual actions, by a separate workflow that does not affect CI.
 
 ## ADDED Requirements
 
-### Requirement: Автоматический деплой сайта
-Публикация сайта SHALL запускаться при push в `main` и при ручном запуске workflow (`workflow_dispatch`); для pull request прогон деплоя SHALL не запускаться. После успешного деплоя обновлённая версия сайта SHALL быть доступна на GitHub Pages.
+### Requirement: Automatic site deployment
+Site publication SHALL run on push to `main` and on manual workflow runs (`workflow_dispatch`); a deployment run SHALL not be triggered for pull requests. After a successful deploy, the updated version of the site SHALL be available on GitHub Pages.
 
-#### Scenario: Push в main
-- **WHEN** коммит с изменениями документации попадает в `main`
-- **THEN** сайт собирается и деплоится, обновлённая версия доступна на GitHub Pages
+#### Scenario: Push to main
+- **WHEN** a commit with documentation changes lands in `main`
+- **THEN** the site is built and deployed, and the updated version is available on GitHub Pages
 
-#### Scenario: Ручной запуск
-- **WHEN** пользователь запускает workflow вручную из GitHub Actions
-- **THEN** сайт собирается и деплоится для выбранной ветки
+#### Scenario: Manual run
+- **WHEN** a user runs the workflow manually from GitHub Actions
+- **THEN** the site is built and deployed for the selected branch
 
-#### Scenario: Ошибка сборки сайта
-- **WHEN** сборка сайта завершилась ошибкой
-- **THEN** деплой не выполняется, и предыдущая версия сайта остаётся опубликованной
+#### Scenario: Site build failure
+- **WHEN** the site build fails
+- **THEN** no deploy is performed, and the previous version of the site remains published
 
-### Requirement: Корректная работа по адресу проекта
-Сайт SHALL корректно открываться по адресу GitHub Pages проекта (`https://ys-kalyakin.github.io/spring-struts-brigde/`): статические ресурсы и внутренние ссылки SHALL использовать базовый путь проекта, а не корень домена.
+### Requirement: Correct operation at the project URL
+The site SHALL open correctly at the project's GitHub Pages URL (`https://ys-kalyakin.github.io/spring-struts-brigde/`): static assets and internal links SHALL use the project's base path, not the domain root.
 
-#### Scenario: Открытие главной страницы
-- **WHEN** посетитель открывает `https://ys-kalyakin.github.io/spring-struts-brigde/`
-- **THEN** главная страница отображается со стилями, скриптами и навигацией
+#### Scenario: Opening the home page
+- **WHEN** a visitor opens `https://ys-kalyakin.github.io/spring-struts-brigde/`
+- **THEN** the home page is displayed with styles, scripts, and navigation
 
-#### Scenario: Переход по внутренней ссылке
-- **WHEN** посетитель переходит по внутренней ссылке с любой страницы сайта
-- **THEN** целевая страница открывается без ошибки 404
+#### Scenario: Following an internal link
+- **WHEN** a visitor follows an internal link from any page of the site
+- **THEN** the target page opens without a 404 error
 
-### Requirement: Воспроизводимая сборка
-Версии инструментов сборки сайта SHALL быть зафиксированы в репозитории, и деплой SHALL использовать именно зафиксированные версии, а не последние доступные на момент прогона.
+### Requirement: Reproducible build
+The build tool versions for the site SHALL be pinned in the repository, and the deploy SHALL use exactly those pinned versions, not the latest ones available at run time.
 
-#### Scenario: Повторный деплой того же коммита
-- **WHEN** деплой одного и того же коммита запускается повторно (в том числе через время)
-- **THEN** сборка сайта выполняется теми же зафиксированными версиями инструментов
+#### Scenario: Redeploying the same commit
+- **WHEN** deploying the same commit is triggered again (including much later)
+- **THEN** the site is built with the same pinned tool versions
 
-### Requirement: Права и конкурентность
-Workflow деплоя SHALL работать с минимальными необходимыми правами (`contents: read`, `pages: write`, `id-token: write`) и без секретов, SHALL отменять незавершённый деплой того же ref при появлении нового запуска и SHALL иметь ограничение времени выполнения. Выполнение деплоя SHALL не влиять на CI-прогон pull request.
+### Requirement: Permissions and concurrency
+The deploy workflow SHALL run with the minimal required permissions (`contents: read`, `pages: write`, `id-token: write`) and without secrets, SHALL cancel an in-progress deploy of the same ref when a new run appears, and SHALL have a run-time limit. The deploy execution SHALL not affect the CI run of a pull request.
 
-#### Scenario: Новый push во время деплоя
-- **WHEN** в `main` попадает новый коммит, пока предыдущий деплой ещё выполняется
-- **THEN** предыдущий деплой отменяется и публикуется версия нового коммита
+#### Scenario: New push during a deploy
+- **WHEN** a new commit lands in `main` while the previous deploy is still running
+- **THEN** the previous deploy is cancelled and the new commit's version is published
 
-#### Scenario: Pull request не затрагивается
-- **WHEN** открывается pull request, изменяющий документацию
-- **THEN** CI-прогон проходит как обычно, и деплой сайта не запускается
+#### Scenario: Pull request unaffected
+- **WHEN** a pull request changing documentation is opened
+- **THEN** the CI run proceeds as usual, and the site deploy is not triggered

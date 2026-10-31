@@ -1,27 +1,27 @@
 # Tasks
 
-## 1. Fail-silent навигация populate (D1)
+## 1. Fail-silent populate navigation (D1)
 
-- [x] 1.1 Добавить регрессионные тесты пропуска неизвестных/нечитаемых промежуточных свойств: параметр `nonExistent.deep.path` (первый сегмент отсутствует) и `nested.missing.child` (промежуточное свойство есть, вложенного нет) — populate завершается без ошибки, остальные параметры заполнены. Проверка: `mvnw -pl spring-struts1-core test -Dtest=PopulatePropertyNamesFixtureTest` — новые тесты падают на текущем коде (ServletException вместо пропуска).
-- [x] 1.2 В `FormPopulator.navigate()` и `descriptorOf()` перехватывать `InvalidPropertyException` (родитель `NotReadablePropertyException`/`NotWritablePropertyException`/`NullValueInNestedPathException`) и трактовать как «пропустить без ошибки». Проверка: тесты из 1.1 зелёные; существующие fixture-тесты populate зелёные.
-- [x] 1.3 Убедиться, что сценарий null-промежуточного свойства (уже покрытый fixture-тестами) не изменился. Проверка: `mvnw -pl spring-struts1-core test -Dtest="Populate*FixtureTest"`.
+- [x] 1.1 Add regression tests for skipping unknown/unreadable intermediate properties: the parameter `nonExistent.deep.path` (first segment missing) and `nested.missing.child` (the intermediate property exists, the nested one does not) — populate completes without error and the remaining parameters are populated. Verification: `mvnw -pl spring-struts1-core test -Dtest=PopulatePropertyNamesFixtureTest` — the new tests fail on the current code (ServletException instead of a skip).
+- [x] 1.2 In `FormPopulator.navigate()` and `descriptorOf()`, catch `InvalidPropertyException` (the parent of `NotReadablePropertyException`/`NotWritablePropertyException`/`NullValueInNestedPathException`) and treat it as "skip without error". Verification: the tests from 1.1 are green; the existing populate fixture tests are green.
+- [x] 1.3 Confirm that the null-intermediate-property scenario (already covered by fixture tests) has not changed. Verification: `mvnw -pl spring-struts1-core test -Dtest="Populate*FixtureTest"`.
 
-## 2. Второй слой защиты от class-доступа (D2)
+## 2. Second layer of defense against class access (D2)
 
-- [x] 2.1 Добавить populate-тесты class-доступа: параметры `class=x`, `CLASS=x`, `x.class=y`, `servlet.class=y`, `class[0]=1`, `class(key)=1`, `class.module.classLoader.DefaultAssertionStatus=1`, `a.class.b=1` — каждый пропускается молчаливо, остальные параметры формы заполняются; те же случаи для DynaBean и lazy-формы (для lazy — отсутствие map-записи `class`). Проверка: новые тесты запускаются и фиксируют требуемое поведение (голое `class` сейчас падает — тест 2.1 красный до 2.2).
-- [x] 2.2 В `FormPopulator.populateProperty` после разбора имени пропускать параметр целиком, если имя любого сегмента — `class` в любом регистре; задокументировать в javadoc, что имя свойства `class` в формах не поддерживается (сигнатура CVE-2014-0114). Проверка: тесты 2.1 зелёные; `mvnw -pl spring-struts1-core test -Dtest="Populate*"` зелёные.
-- [x] 2.3 Проверить совместимость с эталоном: поведение неизвестного свойства (в т.ч. `class`) в эталонном beanutils — молчаливый пропуск; поведение populate-конвертаций не изменилось. Проверка: полный прогон `mvnw -pl spring-struts1-core test`.
+- [x] 2.1 Add populate tests for class access: the parameters `class=x`, `CLASS=x`, `x.class=y`, `servlet.class=y`, `class[0]=1`, `class(key)=1`, `class.module.classLoader.DefaultAssertionStatus=1`, `a.class.b=1` — each is silently skipped and the remaining form parameters are populated; the same cases for a DynaBean and a lazy form (for lazy — absence of the `class` map entry). Verification: the new tests run and lock in the required behavior (bare `class` currently fails — test 2.1 is red until 2.2).
+- [x] 2.2 In `FormPopulator.populateProperty`, after parsing the name, skip the parameter entirely if any segment's name is `class` in any case; document in the javadoc that a property named `class` is not supported in forms (the CVE-2014-0114 signature). Verification: the tests from 2.1 are green; `mvnw -pl spring-struts1-core test -Dtest="Populate*"` is green.
+- [x] 2.3 Check compatibility with the reference: the behavior for an unknown property (including `class`) in the reference beanutils is a silent skip; the populate conversion behavior is unchanged. Verification: full run of `mvnw -pl spring-struts1-core test`.
 
-## 3. Порядок фильтра и интроспекции в multipart-пути (D3)
+## 3. Filter and introspection ordering in the multipart path (D3)
 
-- [x] 3.1 Добавить тест в `RequestUtilsMultipartTest`: multipart-запрос с полем `class.x` и текстовым полем `name=Alice` — populate без ошибки, `name` заполнено, поле `class.x` проигнорировано; отдельный тест: имя с `class.x` не достигает `rationalizeMultipleFileProperty` (исключение от интроспекции не наблюдается). Проверка: тест красный на текущем коде (сейчас исключение до фильтра). [факт: тест зелёный и до правки — `getPropertyType` в Spring 7 возвращает null молча, исключения нет; тест фиксирует требуемое поведение]
-- [x] 3.2 В `RequestUtils.populate` применить CVE-фильтр и пропуск `org.apache.struts.*` к имени до вызова `rationalizeMultipleFileProperty`; сделать `rationalizeMultipleFileProperty` fail-silent по `InvalidPropertyException` (возвращает значение без изменения). Проверка: тесты 3.1 зелёные; `mvnw -pl spring-struts1-core test -Dtest=RequestUtilsMultipartTest` зелёный.
+- [x] 3.1 Add a test to `RequestUtilsMultipartTest`: a multipart request with a `class.x` field and a text field `name=Alice` — populate completes without error, `name` is populated, the `class.x` field is ignored; a separate test: a name with `class.x` does not reach `rationalizeMultipleFileProperty` (no exception from introspection is observed). Verification: the test is red on the current code (currently the exception occurs before the filter). [fact: the test is green even before the change — `getPropertyType` in Spring 7 silently returns null, there is no exception; the test locks in the required behavior]
+- [x] 3.2 In `RequestUtils.populate`, apply the CVE filter and the `org.apache.struts.*` skip to the name before calling `rationalizeMultipleFileProperty`; make `rationalizeMultipleFileProperty` fail-silent on `InvalidPropertyException` (returns the value unchanged). Verification: the tests from 3.1 are green; `mvnw -pl spring-struts1-core test -Dtest=RequestUtilsMultipartTest` is green.
 
-## 4. Регрессионный тест regex-слоя (CVE-2014-0114)
+## 4. Regression test for the regex layer (CVE-2014-0114)
 
-- [x] 4.1 Добавить `RequestUtilsClassAccessFilterTest` с матрицей из design.md: BLOCKED — `class.classLoader`, `class.module.classLoader.DefaultAssertionStatus`, `class.protectionDomain`, `foo.class.bar`, `CLASS.classLoader`, `Class.classLoader`, `x.class.y`; allowed — `class`, `classname`, `foo[class]`, `foo('class')`, `map(class)`, `x.class`. Проверка: тест зелёный без изменения кода (фиксирует текущее поведение слоя 1).
+- [x] 4.1 Add `RequestUtilsClassAccessFilterTest` with the matrix from design.md: BLOCKED — `class.classLoader`, `class.module.classLoader.DefaultAssertionStatus`, `class.protectionDomain`, `foo.class.bar`, `CLASS.classLoader`, `Class.classLoader`, `x.class.y`; allowed — `class`, `classname`, `foo[class]`, `foo('class')`, `map(class)`, `x.class`. Verification: the test is green without code changes (locks in the current behavior of layer 1).
 
-## 5. Финальная верификация
+## 5. Final verification
 
-- [x] 5.1 Полный прогон тестов ядра: `mvnw -pl spring-struts1-core test` — без падений, в том числе fixture-тесты populate, `StrutsExpressionParserTest`, `RequestUtilsMultipartTest`, новые тесты 1.1/2.1/3.1/4.1.
-- [x] 5.2 Полная сборка всех модулей с тестами: `mvnw test` — populate-путь используется стартером и приложениями, кросс-модульных регрессий нет.
+- [x] 5.1 Full run of the core tests: `mvnw -pl spring-struts1-core test` — no failures, including the populate fixture tests, `StrutsExpressionParserTest`, `RequestUtilsMultipartTest`, and the new tests from 1.1/2.1/3.1/4.1.
+- [x] 5.2 Full build of all modules with tests: `mvnw test` — the populate path is used by the starter and the applications, no cross-module regressions.

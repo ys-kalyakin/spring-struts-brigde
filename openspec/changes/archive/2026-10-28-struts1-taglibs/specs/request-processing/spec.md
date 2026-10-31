@@ -2,37 +2,37 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Суффиксная маршрутизация экшенов
-Запрос к экшену SHALL маршрутизироваться по пути без суффикса: запрос `/x.do` обрабатывается маппингом с `path="/x"`. Суффикс SHALL настраиваться; при смене настроенного суффикса маршрутизация выполняется по нему. Маппинг SHALL искаться в модуле, выбранном по префиксу пути запроса; для запроса без префикса модуля — в модуле по умолчанию.
+### Requirement: Suffix-based action routing
+A request to an action SHALL be routed by the path without the suffix: a request to `/x.do` is processed by the mapping with `path="/x"`. The suffix SHALL be configurable; when the configured suffix changes, routing is performed by it. The mapping SHALL be looked up in the module selected by the request path prefix; for a request without a module prefix — in the default module.
 
-#### Scenario: Запрос по суффиксу .do
-- **WHEN** поступает запрос `GET /Welcome.do` и в конфигурации зарегистрирован маппинг `path="/Welcome"`
-- **THEN** запрос обработан этим маппингом
+#### Scenario: Request with the .do suffix
+- **WHEN** a request `GET /Welcome.do` arrives and the configuration registers a mapping `path="/Welcome"`
+- **THEN** the request is processed by this mapping
 
-#### Scenario: Настроенный суффикс
-- **WHEN** суффикс настроен как `.act` и поступает запрос `GET /Welcome.act`
-- **THEN** запрос обработан маппингом `path="/Welcome"`
+#### Scenario: Configured suffix
+- **WHEN** the suffix is configured as `.act` and a request `GET /Welcome.act` arrives
+- **THEN** the request is processed by the mapping `path="/Welcome"`
 
-#### Scenario: Запрос к модулю
-- **WHEN** поступает запрос `GET /exercise/bean-write.do` и модуль `/exercise` зарегистрирован с маппингом `path="/bean-write"`
-- **THEN** запрос обработан маппингом `/bean-write` модуля `/exercise`
+#### Scenario: Request to a module
+- **WHEN** a request `GET /exercise/bean-write.do` arrives and the module `/exercise` is registered with the mapping `path="/bean-write"`
+- **THEN** the request is processed by the `/bean-write` mapping of the `/exercise` module
 
 ## ADDED Requirements
 
-### Requirement: Выбор модуля по пути запроса
-Модуль для обработки запроса SHALL выбираться по префиксу пути: из зарегистрированных модулей берётся тот, чей префикс совпадает с началом пути после контекста; при отсутствии совпадения — модуль по умолчанию. Выбранный модуль SHALL быть доступен обработке запроса.
+### Requirement: Module selection by request path
+The module for processing a request SHALL be selected by the path prefix: of the registered modules, the one whose prefix matches the beginning of the path after the context is taken; if there is no match — the default module. The selected module SHALL be available to request processing.
 
-#### Scenario: Префикс модуля
-- **WHEN** зарегистрированы модуль по умолчанию и модуль `/exercise`, и поступает запрос `GET /exercise/html-form.do`
-- **THEN** запрос обработан в модуле `/exercise`: маппинги и формы берутся из его конфигурации
+#### Scenario: Module prefix
+- **WHEN** the default module and the module `/exercise` are registered, and a request `GET /exercise/html-form.do` arrives
+- **THEN** the request is processed in the `/exercise` module: mappings and forms are taken from its configuration
 
-#### Scenario: Путь без префикса модуля
-- **WHEN** зарегистрирован модуль `/exercise`, и поступает запрос `GET /Welcome.do`
-- **THEN** запрос обработан в модуле по умолчанию
+#### Scenario: Path without a module prefix
+- **WHEN** the module `/exercise` is registered, and a request `GET /Welcome.do` arrives
+- **THEN** the request is processed in the default module
 
-### Requirement: Path-mapped экшены
-Наряду с суффиксным маппированием SHALL поддерживаться path-mapped: при маппировании вида `/action/*` запрос `/action/x` обрабатывается маппингом с `path="/x"` (префикс `/action` отбрасывается).
+### Requirement: Path-mapped actions
+Alongside suffix mapping, path-mapped mapping SHALL be supported: with a servlet mapping of the form `/action/*`, a request to `/action/x` is processed by the mapping with `path="/x"` (the `/action` prefix is stripped).
 
-#### Scenario: Запрос по префиксному маппированию
-- **WHEN** маппирование сервлета настроено как `/action/*` и поступает запрос `GET /action/Welcome`
-- **THEN** запрос обработан маппингом `path="/Welcome"`
+#### Scenario: Request with prefix mapping
+- **WHEN** the servlet mapping is configured as `/action/*` and a request `GET /action/Welcome` arrives
+- **THEN** the request is processed by the mapping `path="/Welcome"`

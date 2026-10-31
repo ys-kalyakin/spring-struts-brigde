@@ -2,68 +2,68 @@
 
 ## Purpose
 
-Поддержка multipart-запросов (загрузка файлов) в классическом контракте Struts 1: интерфейсы `org.apache.struts.upload`, разбор запроса в жизненном цикле populate, изящная обработка превышения лимитов — с поведением эталона weblegacy и совместимостью существующих приложений.
+Support for multipart requests (file uploads) under the classic Struts 1 contract: the `org.apache.struts.upload` interfaces, request parsing in the populate lifecycle, and graceful handling of limit violations — with the behavior of the weblegacy reference and compatibility with existing applications.
 
 ## Requirements
 
-### Requirement: Контракт FormFile и MultipartRequestHandler
-Пакет `org.apache.struts.upload` SHALL предоставлять классический контракт эталона: интерфейс `FormFile` (имя, тип содержимого, размер, данные, поток, destroy) и интерфейс `MultipartRequestHandler` (`handleRequest`, `getTextElements`, `getFileElements`, `getAllElements`, `rollback`, `finish`, константа `ATTRIBUTE_MAX_LENGTH_EXCEEDED`). Форма SHALL предоставлять доступ к своему multipart-обработчику, экшен — к файловому элементу по имени поля.
+### Requirement: FormFile and MultipartRequestHandler contract
+The package `org.apache.struts.upload` SHALL provide the classic reference contract: the `FormFile` interface (name, content type, size, data, stream, destroy) and the `MultipartRequestHandler` interface (`handleRequest`, `getTextElements`, `getFileElements`, `getAllElements`, `rollback`, `finish`, the constant `ATTRIBUTE_MAX_LENGTH_EXCEEDED`). The form SHALL provide access to its multipart handler, and the action SHALL provide access to a file element by field name.
 
-#### Scenario: Доступ к загруженному файлу из экшена
-- **WHEN** форма содержит свойство типа `FormFile`, запрос POST с `multipart/form-data` обработан, и экшен читает файловые элементы формы
-- **THEN** элемент по имени поля реализует `FormFile` и возвращает имя файла, тип содержимого и данные, переданные клиентом
+#### Scenario: Accessing an uploaded file from an action
+- **WHEN** the form has a property of type `FormFile`, a POST request with `multipart/form-data` has been processed, and the action reads the form's file elements
+- **THEN** the element for the field name implements `FormFile` and returns the file name, content type, and data sent by the client
 
-#### Scenario: Данные файла доступны потоком
-- **WHEN** экшен читает загруженный файл через поток `FormFile` (не массив байтов целиком)
-- **THEN** содержимое файла прочитано полностью и корректно
+#### Scenario: File data available as a stream
+- **WHEN** the action reads the uploaded file via the `FormFile` stream (not the whole byte array at once)
+- **THEN** the file content is read completely and correctly
 
-### Requirement: Разбор multipart-запроса до populate
-Multipart-POST-запрос (content-type `multipart/form-data`) SHALL разбираться до populate формы: текстовые поля попадают в populate наравне с обычными параметрами запроса, файловые — заполняют свойства формы соответствующих типов (одиночный `FormFile` — первый файл, массив/коллекция — все файлы). Обычные (не-multipart) запросы SHALL обрабатываться без изменений.
+### Requirement: Parsing the multipart request before populate
+A multipart POST request (content type `multipart/form-data`) SHALL be parsed before form populate: text fields are included in populate on par with regular request parameters, and files populate form properties of the matching types (a single `FormFile` receives the first file, an array/collection receives all files). Regular (non-multipart) requests SHALL be processed unchanged.
 
-#### Scenario: Текстовые и файловые поля одной формы
-- **WHEN** POST `multipart/form-data` содержит текстовое поле и файл, а форма объявляет строковое свойство и свойство `FormFile`
-- **THEN** оба свойства заполнены к моменту вызова экшена: строка — значением текстового поля, `FormFile` — разобранным файлом
+#### Scenario: Text and file fields of one form
+- **WHEN** a POST `multipart/form-data` contains a text field and a file, and the form declares a string property and a `FormFile` property
+- **THEN** both properties are populated by the time the action is invoked: the string with the text field value, the `FormFile` with the parsed file
 
-#### Scenario: Multi-file свойство
-- **WHEN** запрос содержит несколько файлов в одном поле, а форма объявляет свойство-массив `FormFile[]` (или одиночное `FormFile`)
-- **THEN** массив содержит все загруженные файлы (или одиночное свойство — первый из них), как в эталоне
+#### Scenario: Multi-file property
+- **WHEN** the request contains several files under one field, and the form declares an array property `FormFile[]` (or a single `FormFile`)
+- **THEN** the array contains all uploaded files (or the single property contains the first of them), as in the reference
 
-#### Scenario: Обычный POST не меняется
-- **WHEN** поступает обычный POST с `application/x-www-form-urlencoded` на маппинг с формой
-- **THEN** populate выполняется по параметрам запроса без разбора multipart, поведение идентично предыдущим фазам
+#### Scenario: Regular POST unchanged
+- **WHEN** a regular POST with `application/x-www-form-urlencoded` arrives for a mapping with a form
+- **THEN** populate is performed from the request parameters without multipart parsing, and the behavior is identical to previous phases
 
-### Requirement: Класс-обработчик по умолчанию и настройка из конфига
-По умолчанию multipart-запросы SHALL обрабатываться классом `CommonsMultipartRequestHandler`; класс обработчика SHALL настраиваться атрибутом `multipartClass` в `<controller>` или в конкретном маппинге. Лимиты и параметры разбора SHALL браться из атрибутов `<controller>`: `maxFileSize` (по умолчанию 250M), `maxSize` (256M), `maxStringLen` (4K), `fileCountMax` (без ограничения), `memFileSize` (256K), `tempDir`, `bufferSize` (4096).
+### Requirement: Default handler class and configuration from config
+By default, multipart requests SHALL be handled by the class `CommonsMultipartRequestHandler`; the handler class SHALL be configurable via the `multipartClass` attribute in `<controller>` or in a specific mapping. Limits and parsing parameters SHALL be taken from `<controller>` attributes: `maxFileSize` (default 250M), `maxSize` (256M), `maxStringLen` (4K), `fileCountMax` (no limit), `memFileSize` (256K), `tempDir`, `bufferSize` (4096).
 
-#### Scenario: Класс обработчика из маппинга
-- **WHEN** маппинг объявляет `multipartClass` с собственной реализацией обработчика, и приходит multipart-запрос
-- **THEN** запрос разобран указанной реализацией, а не классом по умолчанию
+#### Scenario: Handler class from the mapping
+- **WHEN** a mapping declares `multipartClass` with its own handler implementation, and a multipart request arrives
+- **THEN** the request is parsed by the specified implementation rather than the default class
 
-#### Scenario: Значения по умолчанию как в эталоне
-- **WHEN** конфигурация не объявляет `<controller>` с multipart-атрибутами
-- **THEN** разбор выполняется с лимитами по умолчанию эталона (maxFileSize 250M, maxSize 256M, maxStringLen 4K)
+#### Scenario: Default values as in the reference
+- **WHEN** the configuration does not declare a `<controller>` with multipart attributes
+- **THEN** parsing is performed with the reference defaults (maxFileSize 250M, maxSize 256M, maxStringLen 4K)
 
-### Requirement: Изящная обработка превышения лимитов
-Превышение лимита размера SHALL не приводить к ошибке контейнера: обработчик SHALL выставить request-атрибут `ATTRIBUTE_MAX_LENGTH_EXCEEDED` (и специфичные атрибуты превышения суммарного размера/длины строки/числа файлов, как в эталоне), populate формы SHALL не выполняться, а запрос SHALL продолжить обработку по обычному циклу (валидация формы), где приложение узнаёт о превышении через этот атрибут.
+### Requirement: Graceful handling of limit violations
+Exceeding a size limit SHALL NOT lead to a container error: the handler SHALL set the request attribute `ATTRIBUTE_MAX_LENGTH_EXCEEDED` (and the specific attributes for exceeding total size/string length/file count limits, as in the reference), form populate SHALL NOT be performed, and the request SHALL continue through the normal cycle (form validation), where the application learns of the violation via that attribute.
 
-#### Scenario: Файл больше maxFileSize
-- **WHEN** загружаемый файл превышает `maxFileSize` контроллера, а валидация формы включена и проверяет атрибут превышения
-- **THEN** клиент получает страницу input с ошибкой приложения о превышении размера, а не ответ контейнера 500
+#### Scenario: File larger than maxFileSize
+- **WHEN** the uploaded file exceeds the controller's `maxFileSize`, and form validation is enabled and checks the excess attribute
+- **THEN** the client receives the input page with the application's size-exceeded error instead of a container 500 response
 
-#### Scenario: Populate пропущен при превышении
-- **WHEN** запрос превысил лимит размера
-- **THEN** свойства формы не заполняются данными такого запроса, обработчик доступен форме для очистки временных файлов
+#### Scenario: Populate skipped on excess
+- **WHEN** the request has exceeded a size limit
+- **THEN** form properties are not populated with that request's data, and the handler remains available to the form for cleaning up temporary files
 
-### Requirement: Совместимость с Spring-мультипарсером
-Если запрос уже разобран Spring-механизмом multipart (пользователь объявил свой `MultipartResolver`, и запрос представлен `MultipartHttpServletRequest`), движок SHALL адаптировать его части в тот же контракт: текстовые части — в populate, файловые — как `FormFile`, не запуская собственный разбор повторно.
+### Requirement: Compatibility with the Spring multipart resolver
+If the request has already been parsed by Spring's multipart mechanism (the user declared their own `MultipartResolver`, and the request is represented as `MultipartHttpServletRequest`), the engine SHALL adapt its parts to the same contract: text parts into populate, file parts as `FormFile`, without running its own parsing again.
 
-#### Scenario: Запрос, разобранный Spring-ом
-- **WHEN** пользователь сконфигурировал собственный Spring `MultipartResolver`, и multipart-запрос поступил на маппинг с формой
-- **THEN** форма заполнена и текстовыми, и файловыми частями запроса, повторного разбора не произошло
+#### Scenario: Request parsed by Spring
+- **WHEN** the user has configured their own Spring `MultipartResolver`, and a multipart request arrives at a mapping with a form
+- **THEN** the form is populated with both the text and the file parts of the request, and no repeated parsing occurred
 
-### Requirement: Очистка временных ресурсов
-Временные файлы разбора SHALL освобождаться: при ошибке обработки запроса (исключение до/вместо execute) обработчик SHALL получить `rollback`, при успешной обработке — `finish`.
+### Requirement: Cleanup of temporary resources
+Temporary files from parsing SHALL be released: on request processing failure (an exception before or instead of execute) the handler SHALL receive `rollback`, on successful processing — `finish`.
 
-#### Scenario: Rollback при исключении
-- **WHEN** обработка multipart-запроса прервана исключением (например, ошибкой валидации с переходом по input или сбоем экшена)
-- **THEN** временные файлы обработчика удалены
+#### Scenario: Rollback on exception
+- **WHEN** processing of a multipart request is interrupted by an exception (for example, a validation failure with an input forward or an action failure)
+- **THEN** the handler's temporary files are deleted

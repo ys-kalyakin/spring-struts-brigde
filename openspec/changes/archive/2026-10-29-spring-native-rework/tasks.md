@@ -1,40 +1,40 @@
 # Tasks
 
-## 1. Формы и экшены как Spring-бины (core)
+## 1. Forms and actions as Spring beans (core)
 
-- [x] 1.1 Реализовать `StrutsBeanRegistrar`: после разбора конфигурации регистрирует bean definitions в `BeanDefinitionRegistry` — экшены singleton (lazy-init), формы prototype, имена `strutsAction:<fqcn>`/`strutsForm:<fqcn>`; типы, уже зарегистрированные пользователем, и `DynaActionForm` пропускаются. Verify: unit-тест — конфигурация с экшеном и формой даёт определения с ожидаемыми именами и областями, явная регистрация не дублируется.
-- [x] 1.2 Переработать `StrutsInstanceResolver`: пользовательский бин по типу (один кандидат) → авто-регистрация → страховочный `AutowireCapableBeanFactory.createBean`; несколько кандидатов — ошибка старта с перечислением кандидатов; кэш прямых экземпляров удалён. Verify: обновлённые unit-тесты `StrutsInstanceResolverTest` — приоритет пользовательского бина, создание через Spring, ошибка при двух кандидатах одного типа.
-- [x] 1.3 IT: экшен и форма без аннотаций создаются Spring-ом — зависимость внедрена, singleton-экшен переиспользуется между запросами, форма свежая на каждый запрос, `@PostConstruct` вызван до первого execute, `@PreDestroy` — при закрытии контекста. Verify: IT-тесты в `spring-struts1-core` (TomcatTestServer) зелёные; полный прогон `mvn -pl spring-struts1-core test`.
+- [x] 1.1 Implement `StrutsBeanRegistrar`: after parsing the configuration, registers bean definitions in the `BeanDefinitionRegistry` — actions singleton (lazy-init), forms prototype, names `strutsAction:<fqcn>`/`strutsForm:<fqcn>`; types already registered by the user and `DynaActionForm` are skipped. Verify: unit test — a configuration with an action and a form yields definitions with the expected names and scopes; explicit registration is not duplicated.
+- [x] 1.2 Rework `StrutsInstanceResolver`: user bean by type (a single candidate) → auto-registration → fallback `AutowireCapableBeanFactory.createBean`; several candidates — a startup error listing the candidates; the direct-instance cache removed. Verify: updated `StrutsInstanceResolverTest` unit tests — user bean priority, creation through Spring, error on two candidates of one type.
+- [x] 1.3 IT: an action and a form without annotations are created by Spring — a dependency is injected, the singleton action is reused across requests, the form is fresh per request, `@PostConstruct` fires before the first execute, `@PreDestroy` fires on context close. Verify: IT tests in `spring-struts1-core` (TomcatTestServer) are green; a full run of `mvn -pl spring-struts1-core test`.
 
-## 2. Мост MessageResources → MessageSource
+## 2. MessageResources → MessageSource bridge
 
-- [x] 2.1 Адаптер `MessageSource` поверх классических ресурсов + регистрация бандлов из `MessageResourcesConfig`: бандл по умолчанию становится `messageSource` контекста, если пользовательский не объявлен; именованные — под выделенными именами. Verify: unit-тест — `MessageSource.getMessage` возвращает то же, что классический API, включая локаль из сессии и формат `???ru_RU.key???`.
-- [x] 2.2 Тест приоритета: при пользовательском бине `messageSource` основной не подменяется, бандлы Struts доступны под выделенными именами. Verify: unit-тест с пользовательским `messageSource` зелёный.
+- [x] 2.1 A `MessageSource` adapter over the classic resources + registration of bundles from `MessageResourcesConfig`: the default bundle becomes the context's `messageSource` if the user has not declared one; named bundles go under dedicated names. Verify: unit test — `MessageSource.getMessage` returns the same as the classic API, including the session locale and the `???ru_RU.key???` format.
+- [x] 2.2 Priority test: with a user `messageSource` bean, the primary source is not replaced, and the Struts bundles are available under dedicated names. Verify: unit test with a custom `messageSource` is green.
 
-## 3. База тегов и сервисы логики (taglib)
+## 3. Tag base and logic services (taglib)
 
-- [x] 3.1 Ввести `SpringTagSupport`/`SpringBodyTagSupport` (ленивый доступ к `WebApplicationContext`, хелперы получения бинов) и `StrutsTagServicesConfiguration` с фиксированными именами сервисов. Verify: unit-тест — тег на новой базе получает контекст и бин сервиса.
-- [x] 3.2 Реализовать `TagMessageResolver` (локаль из сессии/запроса, формат `???ru_RU.key???`) как Spring-компонент. Verify: unit-тесты локали и формата отсутствующих ключей.
-- [x] 3.3 Реализовать `TagUrlBuilder`, `TagFormLocator`, `ErrorsMessagesRenderer` как Spring-компоненты. Verify: unit-тесты — URL с модульным префиксом и кодированием, поиск формы в request/session, рендер ошибок с header/footer/prefix/suffix.
-- [x] 3.4 Мигрировать соответствующие методы `TagUtils` на делегирование сервисам из контекста текущего запроса, остальной статический API без изменений. Verify: существующие тесты `TagUtils` проходят; тест переопределения сервиса меняет вывод.
+- [x] 3.1 Introduce `SpringTagSupport`/`SpringBodyTagSupport` (lazy access to the `WebApplicationContext`, bean-lookup helpers) and `StrutsTagServicesConfiguration` with fixed service names. Verify: unit test — a tag on the new base gets the context and a service bean.
+- [x] 3.2 Implement `TagMessageResolver` (locale from session/request, the `???ru_RU.key???` format) as a Spring component. Verify: unit tests for locale and the missing-key format.
+- [x] 3.3 Implement `TagUrlBuilder`, `TagFormLocator`, `ErrorsMessagesRenderer` as Spring components. Verify: unit tests — URLs with module prefix and encoding, form lookup in request/session, error rendering with header/footer/prefix/suffix.
+- [x] 3.4 Migrate the relevant `TagUtils` methods to delegate to services from the current request's context; the rest of the static API unchanged. Verify: existing `TagUtils` tests pass; a test where overriding a service changes output.
 
-## 4. Перевод тегов на Spring-реализацию
+## 4. Move tags to the Spring implementation
 
-- [x] 4.1 Библиотека `bean` — теги на новой базе и сервисах. Verify: приёмочные сценарии спеки `bean-taglib` (write, message, define, size, header/cookie/parameter) проходят, вывод идентичен.
-- [x] 4.2 Библиотека `html` — теги на новой базе и сервисах (form, виджеты, errors/messages, img/link/rewrite). Verify: приёмочные сценарии спеки `html-taglib` проходят, HTML-вывод идентичен.
-- [x] 4.3 Библиотека `logic` — теги на новой базе и сервисах (iterate, сравнения, present/empty, redirect/forward). Verify: приёмочные сценарии спеки `logic-taglib` проходят.
-- [x] 4.4 Библиотека `nested` — теги на новой базе и сервисах. Verify: приёмочные сценарии спеки `nested-taglib` проходят.
+- [x] 4.1 The `bean` library — tags on the new base and services. Verify: the acceptance scenarios of the `bean-taglib` spec (write, message, define, size, header/cookie/parameter) pass, output identical.
+- [x] 4.2 The `html` library — tags on the new base and services (form, widgets, errors/messages, img/link/rewrite). Verify: the acceptance scenarios of the `html-taglib` spec pass, HTML output identical.
+- [x] 4.3 The `logic` library — tags on the new base and services (iterate, comparisons, present/empty, redirect/forward). Verify: the acceptance scenarios of the `logic-taglib` spec pass.
+- [x] 4.4 The `nested` library — tags on the new base and services. Verify: the acceptance scenarios of the `nested-taglib` spec pass.
 
-## 5. Spring-JSP-стек
+## 5. Spring JSP stack
 
-- [x] 5.1 Зарегистрировать `RequestContextFilter` в конфигурации движка. Verify: IT — `spring:message` на странице движка рендерит сообщение из бандла Struts.
-- [x] 5.2 Регистрировать `BeanNameResolver` (имена из Spring-контекста) через `JspApplicationContext` однократно до первой JSP. Verify: IT — EL-выражение по имени бина отрендерено; повторная инициализация не падает.
-- [x] 5.3 IT смешанной страницы: `html:form` с `html:text`, `spring:message` и EL-доступ к бину на одной JSP. Verify: IT зелёный, все три конструкции отрендерены.
+- [x] 5.1 Register the `RequestContextFilter` in the engine configuration. Verify: IT — `spring:message` on an engine page renders a message from a Struts bundle.
+- [x] 5.2 Register the `BeanNameResolver` (names from the Spring context) via `JspApplicationContext` once, before the first JSP. Verify: IT — an EL expression over a bean name is rendered; repeated initialization does not fail.
+- [x] 5.3 Mixed-page IT: `html:form` with `html:text`, `spring:message`, and EL access to a bean on one JSP. Verify: IT green, all three constructs rendered.
 
-## 6. Демонстрация и финальная интеграция
+## 6. Demonstration and final integration
 
-- [x] 6.1 Демо-страница и экшен в `examples`: экшен с `@Autowired`-сервисом, форма с `@Autowired` и `@PostConstruct`, JSP, смешивающая Struts- и Spring-теги. Verify: IT `ExamplesTest` покрывает демо-сценарий.
-- [x] 6.2 Полный регресс: `mvn test` всех модулей, существующие IT `blank` и `examples` без изменений ожиданий. Verify: сборка зелёная целиком; `openspec validate --strict` по изменению проходит.
+- [x] 6.1 Demo page and action in `examples`: an action with an `@Autowired` service, a form with `@Autowired` and `@PostConstruct`, a JSP mixing Struts and Spring tags. Verify: the `ExamplesTest` IT covers the demo scenario.
+- [x] 6.2 Full regression: `mvn test` of all modules, existing ITs `blank` and `examples` with unchanged expectations. Verify: the build is green as a whole; `openspec validate --strict` on the change passes.
 
 ## Workflow follow-up
 

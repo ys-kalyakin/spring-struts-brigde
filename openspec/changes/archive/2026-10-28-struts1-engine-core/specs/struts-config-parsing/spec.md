@@ -2,35 +2,35 @@
 
 ## Purpose
 
-Читает и объединяет конфигурацию из `struts-config.xml` — главного источника конфигурации движка: маппинги, формы, форварды, исключения, message-resources и плагины регистрируются при старте приложения.
+Reads and merges the configuration from `struts-config.xml` — the engine's main source of configuration: action mappings, forms, forwards, exceptions, message-resources and plugins are registered at application startup.
 
 ## ADDED Requirements
 
-### Requirement: Регистрация элементов конфигурации
-При старте приложение с валидным `struts-config.xml` SHALL зарегистрировать все объявленные элементы: маппинги экшенов (с их локальными форвардами и исключениями), формы, глобальные форварды, глобальные исключения, message-resources и плагины.
+### Requirement: Registration of configuration elements
+At startup, an application with a valid `struts-config.xml` SHALL register all declared elements: action mappings (with their local forwards and exceptions), forms, global forwards, global exceptions, message-resources and plugins.
 
-#### Scenario: Старт с конфигурацией приложения blank
-- **WHEN** приложение стартует с `struts-config.xml`, содержащим action `path="/Welcome"` с атрибутом `forward="/pages/Welcome.jsp"`, глобальный форвард `name="welcome"` с `path="/Welcome.do"` и `<message-resources parameter="MessageResources"/>`
-- **THEN** маппинг `/Welcome`, глобальный форвард `welcome` и message-resources с параметром `MessageResources` зарегистрированы и доступны обработке запросов
+#### Scenario: Startup with the blank application configuration
+- **WHEN** the application starts with a `struts-config.xml` containing an action `path="/Welcome"` with the attribute `forward="/pages/Welcome.jsp"`, a global forward `name="welcome"` with `path="/Welcome.do"` and `<message-resources parameter="MessageResources"/>`
+- **THEN** the `/Welcome` mapping, the `welcome` global forward and the message-resources with parameter `MessageResources` are registered and available to request processing
 
-#### Scenario: Форма и плагин из конфигурации
-- **WHEN** `struts-config.xml` объявляет `<form-bean>` и `<plug-in className="...">`
-- **THEN** форма зарегистрирована по имени, а плагин включён в список плагинов конфигурации
+#### Scenario: Form and plugin from the configuration
+- **WHEN** `struts-config.xml` declares a `<form-bean>` and a `<plug-in className="...">`
+- **THEN** the form is registered by name, and the plugin is included in the configuration's plugin list
 
-### Requirement: Объединение списка файлов конфигурации
-Значение init-param `config` SHALL интерпретироваться как список путей к конфигурационным файлам (разделитель — запятая); все файлы списка SHALL быть прочитаны и объединены в конфигурацию модуля по умолчанию.
+### Requirement: Merging the configuration file list
+The init-param `config` value SHALL be interpreted as a list of configuration file paths (separator — comma); all files in the list SHALL be read and merged into the default module configuration.
 
-#### Scenario: Несколько файлов в config
-- **WHEN** init-param `config` равен `/WEB-INF/struts-config.xml,/WEB-INF/struts-config-extra.xml` и оба файла существуют
-- **THEN** элементы обоих файлов зарегистрированы в конфигурации модуля по умолчанию
+#### Scenario: Multiple files in config
+- **WHEN** init-param `config` equals `/WEB-INF/struts-config.xml,/WEB-INF/struts-config-extra.xml` and both files exist
+- **THEN** the elements of both files are registered in the default module configuration
 
-### Requirement: Ошибка старта при некорректной конфигурации
-Если файл из init-param `config` отсутствует или не может быть разобран, старт приложения SHALL завершиться ошибкой, содержащей имя этого файла.
+### Requirement: Startup error on invalid configuration
+If a file from init-param `config` is missing or cannot be parsed, application startup SHALL fail with an error containing that file's name.
 
-#### Scenario: Отсутствующий файл
-- **WHEN** init-param `config` указывает на файл, которого нет в приложении
-- **THEN** старт завершается ошибкой, и в сообщении ошибки назван путь отсутствующего файла
+#### Scenario: Missing file
+- **WHEN** init-param `config` points to a file that does not exist in the application
+- **THEN** startup fails with an error, and the error message names the path of the missing file
 
-#### Scenario: Некорректный XML
-- **WHEN** конфигурационный файл содержит синтаксически некорректный XML или не соответствует DTD
-- **THEN** старт завершается ошибкой с именем файла в сообщении
+#### Scenario: Invalid XML
+- **WHEN** a configuration file contains syntactically invalid XML or does not conform to the DTD
+- **THEN** startup fails with an error naming the file in the message

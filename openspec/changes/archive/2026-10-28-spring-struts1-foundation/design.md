@@ -2,32 +2,32 @@
 
 ## Context
 
-Change перепрофилирован: он доставляет только документ-роадмап, реализация пойдёт отдельными изменениями (см. proposal.md). Технические решения будущего движка (DispatcherServlet + HandlerMapping/HandlerAdapter, commons-digester для парсинга, commons-beanutils для populate, стек Spring Boot 4.0.x / Framework 7) переезжают из этого change в роадмап и в спеки/design соответствующих фазовых changes — здесь они фиксируются только как содержимое документа.
+The change has been re-scoped: it delivers only a roadmap document; implementation will proceed via separate changes (see proposal.md). The technical decisions for the future engine (DispatcherServlet + HandlerMapping/HandlerAdapter, commons-digester for parsing, commons-beanutils for populate, the Spring Boot 4.0.x / Framework 7 stack) move out of this change into the roadmap and into the specs/design of the corresponding phase changes — here they are captured only as the content of the document.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- `ROADMAP.md` в корне репозитория, достаточно детальный, чтобы каждая фаза превращалась в отдельный OpenSpec-изменение без повторного исследования.
+- `ROADMAP.md` at the repository root, detailed enough that each phase can be turned into a separate OpenSpec change without renewed investigation.
 
 **Non-Goals:**
-- Любая реализация (код, сборка, зависимости) — вне этого change.
+- Any implementation (code, build, dependencies) — outside this change.
 
 ## Decisions
 
-**D1. Расположение и язык.** `ROADMAP.md` в корне репозитория, на русском языке (рабочий язык проекта; README останется точкой входа со ссылкой).
-*Альтернатива:* `docs/ROADMAP.md` — для одного документа корень проще; при разрастании документации перенести в `docs/`.
+**D1. Location and language.** `ROADMAP.md` at the repository root, in Russian (the project's working language; README remains the entry point with a link).
+*Alternative:* `docs/ROADMAP.md` — for a single document the root is simpler; move it to `docs/` if the documentation grows.
 
-**D2. Структура документа.** Видение → принципы совместимости (пакеты `org.apache.struts.*`, `struts-config.xml` как источник конфигурации, тэг-библиотеки с теми же TLD/URI, jakarta-стек) → целевой стек → фазы 1–4. Каждая фаза: объём, целевое приложение weblegacy, критерии приёмки (сюда входят поведенческие сценарии ядра из спек-дельт, снятых при перепрофилировании change), рекомендуемое имя будущего change, известные риски.
+**D2. Document structure.** Vision → compatibility principles (the `org.apache.struts.*` packages, `struts-config.xml` as the configuration source, tag libraries with the same TLD/URIs, the jakarta stack) → target stack → phases 1–4. Each phase: scope, target weblegacy application, acceptance criteria (these include the core behavioral scenarios from the spec deltas removed when the change was re-scoped), a recommended name for the future change, and known risks.
 
-**D3. Соответствие фаз и изменений.** Фаза → один или несколько мелких changes; базовое соответствие: фаза 1 → `struts1-engine-core`, фаза 2 → `struts1-taglibs`, фаза 3 → `struts1-tiles-validation`, фаза 4 → `struts1-starter-migration`. Фаза может быть разбита, если при запуске окажется крупной — это решение принимается в момент создания change фазы, не в роадмапе.
+**D3. Phase-to-change mapping.** A phase maps to one or more small changes; the base mapping is: phase 1 → `struts1-engine-core`, phase 2 → `struts1-taglibs`, phase 3 → `struts1-tiles-validation`, phase 4 → `struts1-starter-migration`. A phase may be split if it turns out to be too large at kickoff — that decision is made when the phase's change is created, not in the roadmap.
 
-**D4. Судьба снятых спек-дельт.** Требования `struts-request-processing` и `struts-spring-integration` (жизненный цикл запроса, бины-экшены/формы, фолбэк-совместимость, PlugIn) не удаляются, а включаются в критерии приёмки фазы 1 роадмапа; при создании фазового change они станут его spec-дельтами.
+**D4. Fate of the removed spec deltas.** The requirements of `struts-request-processing` and `struts-spring-integration` (request lifecycle, action/form beans, fallback compatibility, PlugIn) are not discarded but included in the acceptance criteria of phase 1 of the roadmap; when the phase change is created, they will become its spec deltas.
 
 ## Risks / Trade-offs
 
-- [Роадмап устареет относительно реальности фазовых changes] → критерии приёмки фаз формулировать наблюдаемым поведением (по сценариям), а не деталями реализации; при ревизии фазового change синхронизировать роадмап.
-- [Документ на русском ограничит внешних контрибьюторов] → перевод на английский отложить до появления потребности; структура документа переводоустойчива.
+- [The roadmap will drift out of sync with the reality of the phase changes] → formulate phase acceptance criteria as observable behavior (per scenarios) rather than implementation details; sync the roadmap when a phase change is revised.
+- [A document in Russian will limit external contributors] → defer an English translation until the need arises; the document structure is translation-friendly.
 
 ## Open Questions
 
-Нет — вопросы, зафиксированные ранее (точная минорная версия Boot 4, объём init-param контракта ActionServlet, populate на beanutils vs ConversionService, path-mapped экшены), перенесены в роадмап как открытые вопросы соответствующих фаз.
+None — the questions recorded earlier (the exact minor version of Boot 4, the scope of the ActionServlet init-param contract, populate via beanutils vs ConversionService, path-mapped actions) have been moved into the roadmap as open questions of the corresponding phases.

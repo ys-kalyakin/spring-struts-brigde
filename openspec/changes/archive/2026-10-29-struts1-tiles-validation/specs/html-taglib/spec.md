@@ -2,9 +2,9 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Отложенный валидаторный тег
-Тег `html:javascript` реализуется в фазе валидации: он SHALL генерировать клиентские скрипты commons-validator по правилам validation.xml (поведение определено в спеке `struts-validator`); TLD-объявление тега остаётся без изменений.
+### Requirement: The deferred validator tag
+The `html:javascript` tag is implemented in the validation phase: it SHALL generate commons-validator client scripts from the validation.xml rules (the behavior is defined in the `struts-validator` spec); the tag's TLD declaration remains unchanged.
 
-#### Scenario: Использование тега javascript
-- **WHEN** JSP использует `<html:javascript formName="..."/>`, и validation.xml объявляет правила этой формы
-- **THEN** страница содержит сгенерированный JavaScript валидации формы, а не ошибку обработки
+#### Scenario: Using the javascript tag
+- **WHEN** a JSP uses `<html:javascript formName="..."/>`, and validation.xml declares the rules of that form
+- **THEN** the page contains the generated form validation JavaScript instead of a processing error

@@ -2,155 +2,155 @@
 
 ## Purpose
 
-Определяет семантику заполнения (populate) форм Struts значениями запроса: источники значений, синтаксис имён свойств, правила конвертации и обработку ошибок — с поведением, совместимым с commons-beanutils и эталоном weblegacy/struts1 1.5.x.
+Defines the semantics of populating Struts forms with request values: value sources, property name syntax, conversion rules and error handling — with behavior compatible with commons-beanutils and the weblegacy/struts1 1.5.x reference.
 
 ## Requirements
 
-### Requirement: Источники значений populate
-Значения для заполнения формы SHALL браться из параметров запроса (все значения имени — как массив строк); для multipart-запроса — из разобранных элементов multipart (текстовые — как параметры, файловые — в свойства типов `FormFile`); разбор multipart SHALL соответствовать спеке `multipart-upload`. Параметры, чьи имена начинаются с `org.apache.struts.`, SHALL пропускаться. Имена с доступом к `class` SHALL игнорироваться (CVE-2014-0114): параметр, в пути свойств которого `class` (в любом регистре) фигурирует как имя свойства — сам по себе, в начале пути, вложенно, с индексом (`class[0]`) или с ключом (`class(key)`) — SHALL пропускаться без ошибки и без изменения формы до любой иной обработки имени, включая разрешение типов файловых полей multipart. Ключ отображаемого свойства (например, `map(class)` или `foo('class')`) именем свойства не является и доступом к `class` не считается.
+### Requirement: Populate value sources
+Values for populating the form SHALL be taken from request parameters (all values of a name — as an array of strings); for a multipart request — from parsed multipart items (text ones as parameters, file ones into properties of `FormFile` types); multipart parsing SHALL conform to the `multipart-upload` spec. Parameters whose names start with `org.apache.struts.` SHALL be skipped. Names with access to `class` SHALL be ignored (CVE-2014-0114): a parameter whose property path contains `class` (in any case) as a property name — by itself, at the start of the path, nested, with an index (`class[0]`) or with a key (`class(key)`) — SHALL be skipped without error and without modifying the form, before any other processing of the name, including resolution of multipart file field types. A mapped property key (for example, `map(class)` or `foo('class')`) is not a property name and does not count as access to `class`.
 
-#### Scenario: Параметры запроса как источники значений
-- **WHEN** POST-запрос содержит параметры `name=Alice` и `age=30`, и форма имеет свойства `name` и `age`
-- **THEN** оба свойства заполнены соответствующими значениями к моменту вызова экшена
+#### Scenario: Request parameters as value sources
+- **WHEN** a POST request contains parameters `name=Alice` and `age=30`, and the form has properties `name` and `age`
+- **THEN** both properties are populated with the corresponding values by the time the action is invoked
 
-#### Scenario: Служебные параметры пропускаются
-- **WHEN** запрос содержит параметр `org.apache.struts.action.CANCEL`
-- **THEN** попытка заполнить свойство с таким именем не выполняется и форма не изменяется
+#### Scenario: Service parameters are skipped
+- **WHEN** the request contains parameter `org.apache.struts.action.CANCEL`
+- **THEN** no attempt to populate a property with that name is made and the form is unchanged
 
-#### Scenario: Файловое поле multipart заполняет FormFile-свойство
-- **WHEN** POST `multipart/form-data` содержит файловое поле `theFile` и форма имеет свойство `FormFile`
-- **THEN** свойство содержит разобранный файл, а текстовые поля формы заполнены из multipart-элементов
+#### Scenario: Multipart file field populates a FormFile property
+- **WHEN** a POST `multipart/form-data` contains file field `theFile` and the form has a `FormFile` property
+- **THEN** the property contains the parsed file, and the form's text fields are populated from the multipart items
 
-#### Scenario: Голое имя class игнорируется
-- **WHEN** запрос содержит параметр `class=value` (или `CLASS=value`)
-- **THEN** populate завершается без ошибки, форма не изменяется, остальные параметры заполнены
+#### Scenario: Bare class name is ignored
+- **WHEN** the request contains parameter `class=value` (or `CLASS=value`)
+- **THEN** populate completes without error, the form is unchanged, the remaining parameters are populated
 
-#### Scenario: Вложенный доступ через class игнорируется
-- **WHEN** запрос содержит параметры `class.module.classLoader.DefaultAssertionStatus=1`, `a.class.b=1`, `class[0]=1`, `class(key)=1`
-- **THEN** каждый такой параметр пропущен без ошибки и без изменения формы; остальные параметры заполнены
+#### Scenario: Nested access through class is ignored
+- **WHEN** the request contains parameters `class.module.classLoader.DefaultAssertionStatus=1`, `a.class.b=1`, `class[0]=1`, `class(key)=1`
+- **THEN** each such parameter is skipped without error and without modifying the form; the remaining parameters are populated
 
-#### Scenario: Файловое поле multipart с class-именем игнорируется
-- **WHEN** multipart-запрос содержит поле `class.x` и текстовое поле `name=Alice`, форма имеет свойство `name`
-- **THEN** populate завершается без ошибки, свойство `name` заполнено, поле `class.x` проигнорировано до попытки разрешения типа свойства
+#### Scenario: Multipart file field with a class name is ignored
+- **WHEN** a multipart request contains field `class.x` and text field `name=Alice`, and the form has property `name`
+- **THEN** populate completes without error, property `name` is populated, field `class.x` is ignored before the attempt to resolve the property type
 
-### Requirement: Синтаксис имён свойств
-Имена параметров SHALL обрабатываться в beanutils-синтаксисе: простое имя задаёт свойство, `prop[i]` — индексированное свойство (массив или список), `prop(key)` — отображаемое свойство (`Map`), `a.b` — вложенное свойство, а также их комбинации. Имя, не соответствующее ни одному свойству формы, SHALL пропускаться без ошибки; недоступное вложенное свойство SHALL пропускаться без ошибки — как при промежуточном значении `null`, так и при неизвестном или нечитаемом промежуточном свойстве на любом шаге вложенного пути; populate при этом SHALL продолжать обработку остальных параметров. Отображаемое свойство SHALL получать исходное значение параметра (массив строк) без конвертации.
+### Requirement: Property name syntax
+Parameter names SHALL be processed in beanutils syntax: a simple name designates a property, `prop[i]` — an indexed property (array or list), `prop(key)` — a mapped property (`Map`), `a.b` — a nested property, as well as combinations thereof. A name that matches no form property SHALL be skipped without error; an inaccessible nested property SHALL be skipped without error — both when an intermediate value is `null` and when an intermediate property is unknown or unreadable at any step of the nested path; populate SHALL continue processing the remaining parameters. A mapped property SHALL receive the raw parameter value (array of strings) without conversion.
 
-#### Scenario: Индексированный параметр
-- **WHEN** запрос содержит параметр `intIndexed[0]=5` и форма имеет массив `int[]` `intIndexed`
-- **THEN** первый элемент массива равен 5, остальные элементы не изменены
+#### Scenario: Indexed parameter
+- **WHEN** the request contains parameter `intIndexed[0]=5` and the form has an `int[]` array `intIndexed`
+- **THEN** the first element of the array is 5, the other elements are unchanged
 
-#### Scenario: Отображаемый параметр
-- **WHEN** запрос содержит параметр `value(color)=red` и форма имеет свойство-`Map` `value`
-- **THEN** по ключу `color` в Map лежит исходное значение параметра — массив строк
+#### Scenario: Mapped parameter
+- **WHEN** the request contains parameter `value(color)=red` and the form has a `Map` property `value`
+- **THEN** under key `color` the Map holds the raw parameter value — an array of strings
 
-#### Scenario: Вложенный параметр
-- **WHEN** запрос содержит параметр `nested.intProperty=7` и форма имеет вложенный бин `nested` со свойством `intProperty`
-- **THEN** свойство `intProperty` вложенного бина равно 7
+#### Scenario: Nested parameter
+- **WHEN** the request contains parameter `nested.intProperty=7` and the form has nested bean `nested` with property `intProperty`
+- **THEN** property `intProperty` of the nested bean is 7
 
-#### Scenario: Неизвестное имя параметра
-- **WHEN** запрос содержит параметр, не соответствующий ни одному свойству формы
-- **THEN** populate завершается без ошибки, форма не изменяется по этому параметру
+#### Scenario: Unknown parameter name
+- **WHEN** the request contains a parameter that matches no form property
+- **THEN** populate completes without error, the form is unchanged for that parameter
 
-#### Scenario: Комбинация индексированного и отображаемого
-- **WHEN** запрос содержит параметр `nested.maps[0](color)=red`, элемент `maps[0]` существует и является `Map`
-- **THEN** по ключу `color` этой Map лежит первый элемент параметра как строка
+#### Scenario: Combination of indexed and mapped
+- **WHEN** the request contains parameter `nested.maps[0](color)=red`, element `maps[0]` exists and is a `Map`
+- **THEN** under key `color` of this Map holds the first element of the parameter as a string
 
-#### Scenario: Неизвестное промежуточное свойство вложенного пути
-- **WHEN** запрос содержит параметры `nonExistent.deep.path=1` и `name=Alice`, форма имеет свойство `name`
-- **THEN** populate завершается без ошибки, свойство `name` заполнено, параметр `nonExistent.deep.path` пропущен
+#### Scenario: Unknown intermediate property of a nested path
+- **WHEN** the request contains parameters `nonExistent.deep.path=1` and `name=Alice`, and the form has property `name`
+- **THEN** populate completes without error, property `name` is populated, parameter `nonExistent.deep.path` is skipped
 
-#### Scenario: Нечитаемое промежуточное свойство вложенного пути
-- **WHEN** запрос содержит параметр `nested.missing.child=1`, форма имеет вложенный бин `nested`, у которого нет свойства `missing`
-- **THEN** populate завершается без ошибки, параметр пропущен
+#### Scenario: Unreadable intermediate property of a nested path
+- **WHEN** the request contains parameter `nested.missing.child=1`, and the form has nested bean `nested` which has no property `missing`
+- **THEN** populate completes without error, the parameter is skipped
 
-### Requirement: Конвертация скалярных значений
-Строковое значение SHALL конвертироваться в объявленный тип свойства с семантикой дефолтного реестра commons-beanutils: примитивы и обёртки чисел (значение триммируется; некорректный ввод, пустая строка или переполнение дают нулевое значение типа без ошибки), `Character` (первый символ; пустая строка даёт пробел без ошибки), `BigDecimal`/`BigInteger` (некорректный ввод или пустая строка — ошибка populate), `String` (без преобразования). Конвертация SHALL выполняться сервисом конвертации движка (Spring `ConversionService`); статический глобальный реестр commons-beanutils в populate не участвует.
+### Requirement: Scalar value conversion
+A string value SHALL be converted to the declared property type with the semantics of the default commons-beanutils registry: primitives and numeric wrappers (the value is trimmed; invalid input, an empty string or overflow produce the zero value of the type without error), `Character` (the first character; an empty string yields a space without error), `BigDecimal`/`BigInteger` (invalid input or an empty string — a populate error), `String` (no transformation). Conversion SHALL be performed by the engine's conversion service (Spring `ConversionService`); the static global commons-beanutils registry does not participate in populate.
 
-#### Scenario: Строка в числовое свойство
-- **WHEN** параметр `age=30` заполняет свойство `int`/`Integer` `age`
-- **THEN** значение свойства равно числу 30
+#### Scenario: String into a numeric property
+- **WHEN** parameter `age=30` populates an `int`/`Integer` property `age`
+- **THEN** the property value is the number 30
 
-#### Scenario: Символ из строки
-- **WHEN** параметр `grade=A` заполняет свойство `char`/`Character` `grade`
-- **THEN** значение свойства равно символу `A`
+#### Scenario: Character from a string
+- **WHEN** parameter `grade=A` populates a `char`/`Character` property `grade`
+- **THEN** the property value is character `A`
 
-#### Scenario: Некорректное число даёт нулевое значение
-- **WHEN** параметр `age=abc` заполняет числовое свойство `age`, содержавшее значение 11
-- **THEN** ошибок нет, значение свойства заменено нулевым (0), как и для пустой строки и переполнения
+#### Scenario: Invalid number produces the zero value
+- **WHEN** parameter `age=abc` populates numeric property `age` that held value 11
+- **THEN** there is no error and the property value is replaced with the zero value (0), as with an empty string and overflow
 
-#### Scenario: BigDecimal с некорректным вводом
-- **WHEN** параметр `amount=abc` заполняет свойство `BigDecimal` `amount`
-- **THEN** populate завершается ошибкой (см. требование об ошибках populate)
+#### Scenario: BigDecimal with invalid input
+- **WHEN** parameter `amount=abc` populates `BigDecimal` property `amount`
+- **THEN** populate fails (see the populate errors requirement)
 
-#### Scenario: Тип без конвертера
-- **WHEN** параметр со строковым значением заполняет свойство типа без конвертера в дефолтном реестре (`java.util.Date`, enum, `Calendar`)
-- **THEN** populate завершается ошибкой — у типа нет конвертера (совместимо с дефолтным реестром)
+#### Scenario: Type without a converter
+- **WHEN** a parameter with a string value populates a property of a type without a converter in the default registry (`java.util.Date`, enum, `Calendar`)
+- **THEN** populate fails — the type has no converter (compatible with the default registry)
 
-### Requirement: Литералы Boolean
-Значение SHALL конвертироваться в `Boolean`/`boolean` литералами `true`, `yes`, `y`, `on`, `1` (истина) и `false`, `no`, `n`, `off`, `0` (ложь) без учёта регистра; любой другой ввод SHALL давать значение `false` (нулевое значение типа) без ошибки.
+### Requirement: Boolean literals
+A value SHALL be converted to `Boolean`/`boolean` with the literals `true`, `yes`, `y`, `on`, `1` (true) and `false`, `no`, `n`, `off`, `0` (false) case-insensitively; any other input SHALL produce the value `false` (the zero value of the type) without error.
 
-#### Scenario: Литерал истины
-- **WHEN** параметр `confirm=yes` заполняет свойство `boolean` `confirm`
-- **THEN** значение свойства равно `true`
+#### Scenario: True literal
+- **WHEN** parameter `confirm=yes` populates `boolean` property `confirm`
+- **THEN** the property value is `true`
 
-#### Scenario: Литерал лжи
-- **WHEN** параметр `confirm=Off` заполняет свойство `Boolean` `confirm`
-- **THEN** значение свойства равно `Boolean.FALSE`
+#### Scenario: False literal
+- **WHEN** parameter `confirm=Off` populates `Boolean` property `confirm`
+- **THEN** the property value is `Boolean.FALSE`
 
-#### Scenario: Недопустимый ввод даёт ложь
-- **WHEN** параметр `confirm=maybe` заполняет свойство `boolean` `confirm`, содержавшее значение `true`
-- **THEN** ошибок нет, значение свойства заменено на `false`
+#### Scenario: Invalid input yields false
+- **WHEN** parameter `confirm=maybe` populates `boolean` property `confirm` that held value `true`
+- **THEN** there is no error and the property value is replaced with `false`
 
-### Requirement: Массивы и коллекции
-Массив значений параметра SHALL заполнять свойство-массив покомпонентно (каждый элемент конвертируется в тип компонента по правилам скалярной конвертации; некорректный элемент даёт нулевое значение компонента без ошибки); одно значение SHALL заполнять скалярное свойство первым элементом массива параметров; одиночный `FormFile` SHALL заполнять свойство `FormFile`, а массив `FormFile` — свойство массива или списка файлов. Коллекции (например, `List`) SHALL не заполняться из массива параметров — populate завершается ошибкой.
+### Requirement: Arrays and collections
+An array of parameter values SHALL populate an array property element-wise (each element is converted to the component type per the scalar conversion rules; an invalid element yields the zero component value without error); a single value SHALL populate a scalar property with the first element of the parameter array; a single `FormFile` SHALL populate a `FormFile` property, and an array of `FormFile` — an array or list of files property. Collections (for example, `List`) SHALL not be populated from a parameter array — populate fails.
 
-#### Scenario: Строковый массив покомпонентно
-- **WHEN** запрос содержит параметр `langs=java&langs=go` и форма имеет свойство `String[]` `langs`
-- **THEN** массив свойства равен `[java, go]`
+#### Scenario: String array element-wise
+- **WHEN** the request contains parameter `langs=java&langs=go` and the form has a `String[]` property `langs`
+- **THEN** the property array is `[java, go]`
 
-#### Scenario: Массив чисел из multibox
-- **WHEN** запрос содержит параметр `intMultibox=1&intMultibox=3` и форма имеет свойство `int[]` `intMultibox`
-- **THEN** массив свойства равен `[1, 3]`
+#### Scenario: Numeric array from multibox
+- **WHEN** the request contains parameter `intMultibox=1&intMultibox=3` and the form has an `int[]` property `intMultibox`
+- **THEN** the property array is `[1, 3]`
 
-#### Scenario: Некорректный элемент числового массива
-- **WHEN** запрос содержит параметр `intMultibox=1&intMultibox=abc` и форма имеет свойство `int[]`
-- **THEN** ошибок нет, массив свойства равен `[1, 0]`
+#### Scenario: Invalid element of a numeric array
+- **WHEN** the request contains parameter `intMultibox=1&intMultibox=abc` and the form has an `int[]` property
+- **THEN** there is no error and the property array is `[1, 0]`
 
-#### Scenario: Коллекция не заполняется из параметров
-- **WHEN** запрос содержит параметр `langs=java&langs=go` и форма имеет свойство `List<String>` `langs`
-- **THEN** populate завершается ошибкой (нет конвертера в коллекцию)
+#### Scenario: Collection is not populated from parameters
+- **WHEN** the request contains parameter `langs=java&langs=go` and the form has a `List<String>` property `langs`
+- **THEN** populate fails (no converter into a collection)
 
-#### Scenario: Одиночный файл в свойство FormFile
-- **WHEN** multipart-запрос передаёт один файл в поле `theFile`, разрешённое формой как одиночное `FormFile`-свойство
-- **THEN** свойство содержит единственный разобранный файл
+#### Scenario: Single file into a FormFile property
+- **WHEN** a multipart request submits one file in field `theFile`, resolved by the form as a single `FormFile` property
+- **THEN** the property contains the single parsed file
 
-### Requirement: Populate динамических и lazy-форм
-Динамические формы SHALL заполняться по объявленным в конфигурации типам `form-property` (включая отображаемые) с той же конвертацией, что и статические формы, включая нулевые значения при некорректном вводе; отображаемое свойство динамической формы SHALL получать исходное значение параметра. Для lazy-форм (например, `LazyValidatorForm`) свойства, не объявленные в конфигурации, SHALL добавляться со значением первого элемента параметра как строкой, а объявленные SHALL конвертироваться по объявленному типу.
+### Requirement: Populate of dynamic and lazy forms
+Dynamic forms SHALL be populated according to the `form-property` types declared in the configuration (including mapped ones) with the same conversion as static forms, including zero values on invalid input; a mapped property of a dynamic form SHALL receive the raw parameter value. For lazy forms (for example, `LazyValidatorForm`), properties not declared in the configuration SHALL be added with the value of the first element of the parameter as a string, and declared ones SHALL be converted according to the declared type.
 
-#### Scenario: Параметры заполняют динамическую форму
-- **WHEN** запрос содержит параметры `testString=hello` и `confirmed=true`, и динамическая форма объявляет свойства `java.lang.String` и `java.lang.Boolean`
-- **THEN** свойства динамической формы содержат строку `hello` и `Boolean.TRUE`
+#### Scenario: Parameters populate a dynamic form
+- **WHEN** the request contains parameters `testString=hello` and `confirmed=true`, and the dynamic form declares properties `java.lang.String` and `java.lang.Boolean`
+- **THEN** the dynamic form properties contain string `hello` and `Boolean.TRUE`
 
-#### Scenario: Некорректный ввод динамической формы
-- **WHEN** запрос содержит параметр `count=abc` и динамическая форма объявляет свойство `java.lang.Integer`
-- **THEN** ошибок нет, свойство равно `Integer` 0
+#### Scenario: Invalid input of a dynamic form
+- **WHEN** the request contains parameter `count=abc` and the dynamic form declares a `java.lang.Integer` property
+- **THEN** there is no error and the property is `Integer` 0
 
-#### Scenario: Отображаемый параметр динамической формы
-- **WHEN** запрос содержит параметр `map(key)=value` и динамическая форма объявляет отображаемое свойство `map`
-- **THEN** по ключу `key` динамического свойства лежит исходное значение параметра (массив строк)
+#### Scenario: Mapped parameter of a dynamic form
+- **WHEN** the request contains parameter `map(key)=value` and the dynamic form declares mapped property `map`
+- **THEN** under key `key` the dynamic property holds the raw parameter value (array of strings)
 
-#### Scenario: Необъявленное свойство lazy-формы
-- **WHEN** запрос содержит параметр `extra=1&extra=2`, и lazy-форма не объявляет свойство `extra`
-- **THEN** свойство `extra` добавлено в форму как строка `"1"` (первый элемент)
+#### Scenario: Undeclared property of a lazy form
+- **WHEN** the request contains parameter `extra=1&extra=2`, and the lazy form does not declare property `extra`
+- **THEN** property `extra` is added to the form as string `"1"` (the first element)
 
-### Requirement: Ошибки populate
-Неустранимая ошибка populate SHALL прерывать обработку запроса ошибкой сервлета с сообщением, совместимым с эталоном (`BeanUtils.populate`), и экшен SHALL не вызываться. Ошибку SHALL давать: тип свойства без конвертера (`java.util.Date`, enum, `Calendar`), неудачная конвертация `BigDecimal`/`BigInteger`, коллекция как цель заполнения, неверный формат значения для `java.sql.Date`/`Time`/`Timestamp` (JDBC-форматы), неверное имя класса для `Class`, невалидный `URL`. Присвоения, выполненные до первой ошибки, SHALL сохраняться.
+### Requirement: Populate errors
+An unrecoverable populate error SHALL abort request processing with a servlet error with a message compatible with the reference (`BeanUtils.populate`), and the action SHALL not be invoked. An error SHALL be produced by: a property type without a converter (`java.util.Date`, enum, `Calendar`), a failed `BigDecimal`/`BigInteger` conversion, a collection as the populate target, an invalid value format for `java.sql.Date`/`Time`/`Timestamp` (JDBC formats), an invalid class name for `Class`, an invalid `URL`. Assignments made before the first error SHALL be preserved.
 
-#### Scenario: Экшен не вызывается при ошибке конвертации
-- **WHEN** запрос содержит параметр со значением, не разбираемым в JDBC-формат, для свойства `java.sql.Date`
-- **THEN** populate завершается ошибкой сервлета и метод execute экшена не вызывается
+#### Scenario: Action not invoked on a conversion error
+- **WHEN** the request contains a parameter with a value not parseable into a JDBC format for a `java.sql.Date` property
+- **THEN** populate fails with a servlet error and the action's execute method is not invoked
 
-#### Scenario: Частичное заполнение сохраняется
-- **WHEN** запрос содержит корректный параметр строкового свойства и параметр, дающий ошибку populate для `BigDecimal`
-- **THEN** populate завершается ошибкой, но строковое свойство остаётся заполненным
+#### Scenario: Partial population is preserved
+- **WHEN** the request contains a valid parameter for a string property and a parameter that causes a populate error for `BigDecimal`
+- **THEN** populate fails, but the string property remains populated

@@ -2,39 +2,39 @@
 
 ## Purpose
 
-Связывает экшены и формы Struts со Spring: аннотированные классы становятся Spring-бинами с внедрением зависимостей, а классы без регистрации в Spring продолжают работать через прямое создание.
+Links Struts actions and forms with Spring: annotated classes become Spring beans with dependency injection, while classes not registered in Spring keep working through direct creation.
 
 ## ADDED Requirements
 
-### Requirement: Экшены как singleton-бины
-Класс экшена, помеченный `@StrutsAction` и зарегистрированный в Spring, SHALL существовать в одном экземпляре: один и тот же экземпляр переиспользуется между запросами.
+### Requirement: Actions as singleton beans
+An action class marked `@StrutsAction` and registered in Spring SHALL exist as a single instance: the same instance is reused between requests.
 
-#### Scenario: Переиспользование экземпляра экшена
-- **WHEN** два запроса обрабатываются одним экшеном, помеченным `@StrutsAction`
-- **THEN** оба запроса обслуживаются одним и тем же экземпляром
+#### Scenario: Action instance reuse
+- **WHEN** two requests are handled by one action marked `@StrutsAction`
+- **THEN** both requests are served by the same instance
 
-#### Scenario: Внедрение зависимостей в экшен
-- **WHEN** экшен с `@StrutsAction` объявляет зависимость Spring-бина
-- **THEN** зависимость внедрена и доступна в методе execute
+#### Scenario: Dependency injection into an action
+- **WHEN** an action with `@StrutsAction` declares a Spring bean dependency
+- **THEN** the dependency is injected and available in the execute method
 
-### Requirement: Формы как prototype-бины
-Класс формы, помеченный `@StrutsForm` и зарегистрированный в Spring, SHALL создавать новый экземпляр на каждый запрос: состояние формы не разделяется между запросами.
+### Requirement: Forms as prototype beans
+A form class marked `@StrutsForm` and registered in Spring SHALL produce a new instance for each request: form state is not shared between requests.
 
-#### Scenario: Новый экземпляр на каждый запрос
-- **WHEN** два запроса используют форму, помеченную `@StrutsForm`
-- **THEN** каждый запрос получает собственный экземпляр формы, и состояние первого запроса не видно второму
+#### Scenario: New instance per request
+- **WHEN** two requests use a form marked `@StrutsForm`
+- **THEN** each request gets its own form instance, and the state of the first request is not visible to the second
 
-#### Scenario: Внедрение зависимостей в форму
-- **WHEN** форма с `@StrutsForm` объявляет зависимость Spring-бина
-- **THEN** зависимость внедрена в созданный для запроса экземпляр
+#### Scenario: Dependency injection into a form
+- **WHEN** a form with `@StrutsForm` declares a Spring bean dependency
+- **THEN** the dependency is injected into the instance created for the request
 
-### Requirement: Фолбэк прямого создания
-Класс, не зарегистрированный в Spring, SHALL создаваться напрямую по имени из конфигурации: приложение без аннотаций работает без Spring-регистрации.
+### Requirement: Direct-creation fallback
+A class not registered in Spring SHALL be created directly by the name from the configuration: an application without annotations works without Spring registration.
 
-#### Scenario: Экшен без аннотаций
-- **WHEN** маппинг объявляет тип экшена, класс которого не помечен аннотациями и не зарегистрирован в Spring
-- **THEN** экземпляр создаётся напрямую и запрос обрабатывается
+#### Scenario: Action without annotations
+- **WHEN** the mapping declares an action type whose class is not marked with annotations and is not registered in Spring
+- **THEN** the instance is created directly and the request is handled
 
-#### Scenario: Форма без аннотаций
-- **WHEN** маппинг объявляет имя формы, класс которой не зарегистрирован в Spring
-- **THEN** экземпляр формы создаётся напрямую и заполняется параметрами запроса
+#### Scenario: Form without annotations
+- **WHEN** the mapping declares a form name whose class is not registered in Spring
+- **THEN** the form instance is created directly and populated with request parameters

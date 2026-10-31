@@ -2,17 +2,17 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Фасад ActionServlet
-`ActionServlet` SHALL работать как фасад совместимости: конфигурация задаётся init-param `config` из web.xml (классический WAR-режим) либо свойствами стартера `spring.struts1.*` (Boot-режим), а экшены через `action.getServlet()` получают работающий servlet, через который доступны конфигурация модуля и init-params. В Boot-режиме init-params фасада SHALL соответствовать свойствам стартера с той же семантикой.
+### Requirement: ActionServlet facade
+The `ActionServlet` SHALL work as a compatibility facade: configuration is given by the `config` init-param from web.xml (classic WAR mode) or by the starter properties `spring.struts1.*` (Boot mode), and actions obtain a working servlet via `action.getServlet()`, through which module configuration and init-params are available. In Boot mode, the facade's init-params SHALL match the starter properties with the same semantics.
 
-#### Scenario: Init-param config из web.xml
-- **WHEN** web.xml объявляет init-param `config` со значением `/WEB-INF/struts-config.xml`
-- **THEN** конфигурация загружается из этого файла и `getServlet().getInitParameter("config")` возвращает то же значение
+#### Scenario: config init-param from web.xml
+- **WHEN** web.xml declares the init-param `config` with the value `/WEB-INF/struts-config.xml`
+- **THEN** configuration is loaded from that file and `getServlet().getInitParameter("config")` returns the same value
 
-#### Scenario: Свойства стартера в Boot-режиме
-- **WHEN** Boot-приложение задаёт `spring.struts1.config=/WEB-INF/struts-config.xml`
-- **THEN** конфигурация загружается из этого ресурса и `getServlet().getInitParameter("config")` возвращает то же значение
+#### Scenario: Starter properties in Boot mode
+- **WHEN** a Boot application sets `spring.struts1.config=/WEB-INF/struts-config.xml`
+- **THEN** configuration is loaded from that resource and `getServlet().getInitParameter("config")` returns the same value
 
-#### Scenario: Ссылка на servlet в экшене
-- **WHEN** execute экшена вызывает `action.getServlet()`
-- **THEN** возвращается работающий ActionServlet текущего приложения
+#### Scenario: Servlet reference in an action
+- **WHEN** an action's execute calls `action.getServlet()`
+- **THEN** the working ActionServlet of the current application is returned

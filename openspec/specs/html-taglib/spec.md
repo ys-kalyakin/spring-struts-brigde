@@ -2,75 +2,75 @@
 
 ## Purpose
 
-Тэг-библиотека `struts-html` (URI `http://struts.apache.org/tags-html`): формы и виджеты ввода, вывод ошибок и сообщений, построение URL (img/link/rewrite) и xhtml-режим — с TLD, именами и структурой HTML-вывода эталона weblegacy.
+The `struts-html` tag library (URI `http://struts.apache.org/tags-html`): forms and input widgets, rendering errors and messages, URL building (img/link/rewrite) and xhtml mode — with the TLD, names and HTML output structure of the weblegacy reference.
 
 ## Requirements
 
-### Requirement: Идентичность TLD, URI и имён тегов
-TLD библиотеки SHALL быть идентична эталонной weblegacy (`struts-html.tld`, 30 тегов): тот же URI `http://struts.apache.org/tags-html`, те же имена тегов и атрибуты; декларация в JSP — `<%@ taglib uri="http://struts.apache.org/tags-html" prefix="html" %>`.
+### Requirement: TLD, URI and tag name identity
+The library TLD SHALL be identical to the weblegacy reference (`struts-html.tld`, 30 tags): the same URI `http://struts.apache.org/tags-html`, the same tag and attribute names; the JSP declaration — `<%@ taglib uri="http://struts.apache.org/tags-html" prefix="html" %>`.
 
-#### Scenario: Подключение и компиляция JSP
-- **WHEN** JSP декларирует библиотеку по URI `http://struts.apache.org/tags-html` и использует `html:form` с виджетами
-- **THEN** JSP компилируется и теги обрабатываются без дополнительных объявлений
+#### Scenario: JSP inclusion and compilation
+- **WHEN** a JSP declares the library by URI `http://struts.apache.org/tags-html` and uses `html:form` with widgets
+- **THEN** the JSP compiles and the tags are processed without additional declarations
 
-### Requirement: Форма тегом html:form
-`html:form` SHALL рендерить элемент `<form>`: с `action` — URL действия (по маппингу, с контекстом приложения, методом `post` по умолчанию и кодированием URL); без `action` — форму без атрибута action; атрибуты `focus`, `onsubmit` и произвольные динамические атрибуты переносятся в вывод; вместе с формой рендерятся скрытые поля токенов, если используются.
+### Requirement: Form via html:form
+`html:form` SHALL render the `<form>` element: with `action` — the action URL (per the mapping, with the application context, `post` method by default and URL encoding); without `action` — a form without the action attribute; the `focus`, `onsubmit` attributes and arbitrary dynamic attributes are carried over into the output; together with the form, token hidden fields are rendered, if used.
 
-#### Scenario: Форма по действию
-- **WHEN** JSP содержит `<html:form action="/InputSubmit.do">` с `<html:text property="name"/>`
-- **THEN** выведен `<form name="..." action="/ctx/InputSubmit.do" method="post">` c `<input type="text" name="name" value="...">`, где value берётся из формы в области
+#### Scenario: Form by action
+- **WHEN** the JSP contains `<html:form action="/InputSubmit.do">` with `<html:text property="name"/>`
+- **THEN** `<form name="..." action="/ctx/InputSubmit.do" method="post">` is rendered with `<input type="text" name="name" value="...">`, where value comes from the form in scope
 
-#### Scenario: Форма без действия
-- **WHEN** JSP содержит `<html:form>` без атрибута action (как exercise-страница html-form)
-- **THEN** выводится `<form>` без атрибута action, тело обрабатывается
+#### Scenario: Form without action
+- **WHEN** the JSP contains `<html:form>` without the action attribute (as the html-form exercise page)
+- **THEN** `<form>` is rendered without the action attribute, and the body is processed
 
-### Requirement: Виджеты ввода
-Теги `text`, `password`, `hidden`, `textarea`, `checkbox`, `multibox`, `radio`, `select`, `option`, `options`, `optionsCollection`, `submit`, `reset`, `button`, `cancel`, `image`, `file`, `textarea` SHALL рендерить соответствующие элементы с именем из `property`, значением из формы в области (или из `value`), атрибутами событий и стилей из одноимённых атрибутов тега; `html:errors`-относящиеся атрибуты `errorKey` и пр. соблюдаются.
+### Requirement: Input widgets
+Tags `text`, `password`, `hidden`, `textarea`, `checkbox`, `multibox`, `radio`, `select`, `option`, `options`, `optionsCollection`, `submit`, `reset`, `button`, `cancel`, `image`, `file`, `textarea` SHALL render the corresponding elements with the name from `property`, the value from the form in scope (or from `value`), event and style attributes from the same-named tag attributes; the `html:errors`-related attributes `errorKey` etc. are honored.
 
-#### Scenario: Текстовое поле со значением формы
-- **WHEN** форма в области содержит `name = "Ivan"`, и JSP содержит `<html:text property="name"/>`
-- **THEN** выведено `<input type="text" name="name" value="Ivan">`
+#### Scenario: Text field with the form value
+- **WHEN** the form in scope contains `name = "Ivan"`, and the JSP contains `<html:text property="name"/>`
+- **THEN** `<input type="text" name="name" value="Ivan">` is rendered
 
-#### Scenario: Селект с опциями
-- **WHEN** JSP содержит `<html:select property="color">` с `<html:option value="blue">Blue</html:option>` и форма содержит `color = "blue"`
-- **THEN** выведен `select` с выбранной опцией `blue` (атрибут `selected` на соответствующем option)
+#### Scenario: Select with options
+- **WHEN** the JSP contains `<html:select property="color">` with `<html:option value="blue">Blue</html:option>` and the form contains `color = "blue"`
+- **THEN** a `select` is rendered with option `blue` selected (attribute `selected` on the corresponding option)
 
-#### Scenario: Чекбокс из свойства
-- **WHEN** JSP содержит `<html:checkbox property="active"/>` и свойство формы `active = true`
-- **THEN** выведен `<input type="checkbox" name="active" checked="checked">` (атрибут checked по значению)
+#### Scenario: Checkbox from a property
+- **WHEN** the JSP contains `<html:checkbox property="active"/>` and the form property `active = true`
+- **THEN** `<input type="checkbox" name="active" checked="checked">` is rendered (checked attribute according to the value)
 
-### Requirement: Вывод ошибок и сообщений
-`html:errors` SHALL рендерить ошибки из запроса/сессии (`ActionErrors` под ключом движка): каждый ошибочный элемент обёрнут `errors.prefix`/`errors.suffix`, список — `errors.header`/`errors.footer` (по умолчанию `<UL>`/`<LI>`/`</LI>`/`</UL>`), текст — из бандла по ключу сообщения с аргументами; `property` фильтрует по свойству. `html:messages` SHALL рендерить произвольные `ActionMessages` с заданными header/footer/prefix/suffix и переменной `id`.
+### Requirement: Rendering errors and messages
+`html:errors` SHALL render errors from the request/session (`ActionErrors` under the engine's key): each error element is wrapped with `errors.prefix`/`errors.suffix`, the list — with `errors.header`/`errors.footer` (by default `<UL>`/`<LI>`/`</LI>`/`</UL>`), the text — from the bundle by the message key with arguments; `property` filters by property. `html:messages` SHALL render arbitrary `ActionMessages` with the given header/footer/prefix/suffix and the `id` variable.
 
-#### Scenario: Рендер списка ошибок
-- **WHEN** в запросе лежат две ошибки (ключи `errors.required` с аргументом и `errors.invalid`), и JSP содержит `<html:errors/>`
-- **THEN** выведен `<UL>` с двумя `<LI>`, текст каждого — сообщение из бандла с подставленным аргументом
+#### Scenario: Rendering an error list
+- **WHEN** the request holds two errors (keys `errors.required` with an argument and `errors.invalid`), and the JSP contains `<html:errors/>`
+- **THEN** a `<UL>` with two `<LI>` is rendered, the text of each being the bundle message with the substituted argument
 
-#### Scenario: Ошибки конкретного свойства
-- **WHEN** JSP содержит `<html:errors property="name"/>`
-- **THEN** выведены только ошибки свойства `name`
+#### Scenario: Errors of a specific property
+- **WHEN** the JSP contains `<html:errors property="name"/>`
+- **THEN** only errors of property `name` are rendered
 
-### Requirement: Построение URL: img, link, rewrite
-`html:link` SHALL строить `<a href>` по `forward` (из глобальных форвардов), `action` или `href` с контекстом приложения, добавлением параметров (`paramId`/`paramName` или вложенные `html:param`) и кодированием; `html:rewrite` SHALL выдавать только URL (без элемента `<a>`); `html:img` SHALL рендерить `<img>` с URL по контексту и параметрами; `html:base` SHALL рендерить `<base href>` по текущему запросу; `html:html` SHALL рендерить `<html>` с атрибутом `lang` из локали.
+### Requirement: URL building: img, link, rewrite
+`html:link` SHALL build `<a href>` by `forward` (from global forwards), `action` or `href` with the application context, parameter addition (`paramId`/`paramName` or nested `html:param`) and encoding; `html:rewrite` SHALL output only the URL (without the `<a>` element); `html:img` SHALL render `<img>` with a context-aware URL and parameters; `html:base` SHALL render `<base href>` per the current request; `html:html` SHALL render `<html>` with the `lang` attribute from the locale.
 
-#### Scenario: Ссылка по форварду
-- **WHEN** глобальный форвард `welcome` ведёт на `/Welcome.do`, и JSP содержит `<html:link forward="welcome">Go</html:link>`
-- **THEN** выведено `<a href="/ctx/Welcome.do">Go</a>` (с контекстом приложения)
+#### Scenario: Link by forward
+- **WHEN** the global forward `welcome` leads to `/Welcome.do`, and the JSP contains `<html:link forward="welcome">Go</html:link>`
+- **THEN** `<a href="/ctx/Welcome.do">Go</a>` is rendered (with the application context)
 
-#### Scenario: Ссылка с параметром
-- **WHEN** JSP содержит `<html:link href="/list.do" paramId="id" paramName="bean" paramProperty="key">…</html:link>` и бин содержит `key = 7`
-- **THEN** выведен `<a href="/ctx/list.do?id=7">…</a>`
+#### Scenario: Link with a parameter
+- **WHEN** the JSP contains `<html:link href="/list.do" paramId="id" paramName="bean" paramProperty="key">…</html:link>` and the bean contains `key = 7`
+- **THEN** `<a href="/ctx/list.do?id=7">…</a>` is rendered
 
-### Requirement: Xhtml-режим
-При включённом xhtml-режиме (атрибут движка/тег `html:xhtml`) теги библиотеки SHALL рендерить валидный XHTML: самозакрывающиеся элементы (`<input ... />`), атрибуты значений в виде `selected="selected"`/`checked="checked"`, корректный вывод `javascript`-содержимого; при выключенном — классический HTML-вывод.
+### Requirement: Xhtml mode
+With xhtml mode enabled (engine attribute / `html:xhtml` tag), the library tags SHALL render valid XHTML: self-closing elements (`<input ... />`), value attributes in the form `selected="selected"`/`checked="checked"`, correct output of `javascript` content; when disabled — classic HTML output.
 
-#### Scenario: Самозакрывающиеся элементы в xhtml
-- **WHEN** xhtml-режим включён, и JSP содержит `<html:text property="name"/>`
-- **THEN** выведено `<input type="text" name="name" value="..."/>` (самозакрывающийся элемент)
+#### Scenario: Self-closing elements in xhtml
+- **WHEN** xhtml mode is enabled, and the JSP contains `<html:text property="name"/>`
+- **THEN** `<input type="text" name="name" value="..."/>` is rendered (a self-closing element)
 
-### Requirement: Отложенный валидаторный тег
-Тег `html:javascript` реализуется в фазе валидации: он SHALL генерировать клиентские скрипты commons-validator по правилам validation.xml (поведение определено в спеке `struts-validator`); TLD-объявление тега остаётся без изменений.
+### Requirement: Deferred validator tag
+The `html:javascript` tag is implemented in the validation phase: it SHALL generate commons-validator client scripts per the validation.xml rules (behavior defined in the `struts-validator` spec); the tag's TLD declaration remains unchanged.
 
-#### Scenario: Использование тега javascript
-- **WHEN** JSP использует `<html:javascript formName="..."/>`, и validation.xml объявляет правила этой формы
-- **THEN** страница содержит сгенерированный JavaScript валидации формы, а не ошибку обработки
+#### Scenario: Using the javascript tag
+- **WHEN** the JSP uses `<html:javascript formName="..."/>`, and validation.xml declares rules for this form
+- **THEN** the page contains the generated form validation JavaScript, not a processing error

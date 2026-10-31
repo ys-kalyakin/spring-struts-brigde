@@ -2,68 +2,68 @@
 
 ## Context
 
-См. `proposal.md` — Why. Сборка проекта уже воспроизводима локально: `./mvnw -B -ntp verify` на JDK 17 собирает 10 модулей реактора, прогоняет 205 тестов (включая интеграционные на embedded Tomcat с портом `0`) за ~31 с на прогретом кэше и даёт 4 WAR и 4 JAR. Maven wrapper зафиксирован на 3.9.9, `maven.compiler.release=17`. Основная ветка в `origin` — `main`; GitHub-репозиторий — `ys-kalyakin/spring-struts-brigde` (написание в remote сохранено как есть).
+See `proposal.md` — Why. The project build is already reproducible locally: `./mvnw -B -ntp verify` on JDK 17 builds the 10 reactor modules, runs 205 tests (including integration tests on embedded Tomcat with port `0`) in ~31 s on a warm cache, and produces 4 WARs and 4 JARs. The Maven wrapper is pinned to 3.9.9, `maven.compiler.release=17`. The primary branch in `origin` is `main`; the GitHub repository is `ys-kalyakin/spring-struts-brigde` (the spelling in the remote is kept as is).
 
-Ограничения: workflow должен работать на fork-PR без секретов, не требовать самописных runner-ов и не менять pom/команду сборки; ветка `main` не должна собираться дважды из разных workflow.
+Constraints: the workflow must work on fork PRs without secrets, must not require self-hosted runners, and must not change the pom or the build command; the `main` branch must not be built twice by different workflows.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Один воспроизводимый pipeline для PR, `main` и ручного запуска с одинаковым набором проверок.
-- Диагностируемость: отчёты тестов доступны даже при падении, WAR/JAR — при успехе.
-- Минимальные права и предсказуемое время выполнения.
+- One reproducible pipeline for PRs, `main`, and manual runs, with the same set of checks.
+- Diagnosability: test reports are available even on failure, WAR/JAR files on success.
+- Minimal permissions and predictable execution time.
 
 **Non-Goals:**
 
-- Публикация в Maven Central, релизы по тегам, деплой, Docker-образы.
-- Матрица JDK/OS, CodeQL/SAST, dependency review, Dependabot.
-- Настройка branch protection: включение проверки как required — операция администратора репозитория, а не файла workflow (см. Migration Plan).
+- Publishing to Maven Central, tag-based releases, deployment, Docker images.
+- A JDK/OS matrix, CodeQL/SAST, dependency review, Dependabot.
+- Configuring branch protection: enabling the check as required is a repository administrator operation, not a workflow file change (see Migration Plan).
 
 ## Decisions
 
-### D1. Один workflow `ci.yml` вместо отдельных PR/main workflow
+### D1. One `ci.yml` workflow instead of separate PR/main workflows
 
-`on: pull_request` (ветка `main`), `on: push` (ветка `main`), `on: workflow_dispatch`. Один job `build` с именем `CI / build` даёт стабильное имя проверки для branch protection и исключает расхождение шагов между PR и main. Альтернатива — `pr.yml` + `main.yml` — отвергнута: дублирование конфигурации и два разных статуса для одной и той же сборки.
+`on: pull_request` (branch `main`), `on: push` (branch `main`), `on: workflow_dispatch`. A single job `build` named `CI / build` provides a stable check name for branch protection and rules out step divergence between PR and main. The alternative — `pr.yml` + `main.yml` — was rejected: configuration duplication and two different statuses for the same build.
 
 ### D2. JDK 17, Temurin, Maven wrapper
 
-`actions/setup-java@v4` с `distribution: temurin`, `java-version: '17'`, `cache: maven`. JDK 17 — минимальная версия проекта (`maven.compiler.release=17`) и совпадает с локальной проверкой; матрица 17/21/25 отклонена пользователем как избыточная для текущего этапа. Сборка — только `./mvnw -B -ntp verify`: wrapper фиксирует Maven 3.9.9, `verify` включает compile, surefire (unit + IT), packaging. Флаги пропуска тестов не используются. Для детерминизма окружения задаётся `LANG: C.UTF-8` (JSP и кириллические ресурсы).
+`actions/setup-java@v4` with `distribution: temurin`, `java-version: '17'`, `cache: maven`. JDK 17 is the project minimum (`maven.compiler.release=17`) and matches the local check; the 17/21/25 matrix was rejected by the user as excessive for the current stage. The build is only `./mvnw -B -ntp verify`: the wrapper pins Maven 3.9.9, and `verify` covers compile, surefire (unit + IT), and packaging. Test-skipping flags are not used. For environment determinism, `LANG: C.UTF-8` is set (JSPs and Cyrillic resources).
 
-### D3. Два уровня кэша: Maven-репозиторий и wrapper
+### D3. Two cache levels: Maven repository and wrapper
 
-`setup-java` с `cache: maven` кэширует `~/.m2/repository` по хэшу `**/pom.xml` (все модули). Дополнительно `actions/cache@v4` кэширует `~/.m2/wrapper` по хэшу `.mvn/wrapper/maven-wrapper.properties`, потому что `setup-java` не покрывает дистрибутив wrapper-а. `restore-keys` не задаётся: промах кэша — штатная холодная сборка, а не ошибка. Кэш fork-PR доступен только на чтение, поэтому отравление кэша из fork исключено.
+`setup-java` with `cache: maven` caches `~/.m2/repository` keyed on the hash of `**/pom.xml` (all modules). Additionally, `actions/cache@v4` caches `~/.m2/wrapper` keyed on the hash of `.mvn/wrapper/maven-wrapper.properties`, because `setup-java` does not cover the wrapper distribution. `restore-keys` is not set: a cache miss is a normal cold build, not an error. A fork PR's cache is read-only, so cache poisoning from a fork is impossible.
 
-### D4. Отчёты — всегда, артефакты — только при успехе
+### D4. Reports — always, artifacts — only on success
 
-Surefire-отчёты (`**/target/surefire-reports/**`) загружаются `actions/upload-artifact@v4` с `if: always()` и `if-no-files-found: warn`: при падении тестов отчёты — главный источник диагностики. WAR/JAR загружаются отдельным артефактом `build-artifacts` с `if: success()` и `if-no-files-found: error`: неуспешная сборка не должна выглядеть как поставка. Срок хранения — 7 дней, этого достаточно для разбора PR и не раздувает storage. Дополнительно шаг `if: always()` собирает сводку `tests/failures/errors/skipped` из `TEST-*.xml` в `$GITHUB_STEP_SUMMARY` (python3 есть на ubuntu-latest), чтобы итог был виден без скачивания артефакта.
+Surefire reports (`**/target/surefire-reports/**`) are uploaded by `actions/upload-artifact@v4` with `if: always()` and `if-no-files-found: warn`: when tests fail, the reports are the primary source of diagnosis. WAR/JAR files are uploaded as a separate `build-artifacts` artifact with `if: success()` and `if-no-files-found: error`: a failed build must not look like a delivery. Retention is 7 days — enough for PR triage without bloating storage. Additionally, an `if: always()` step collects a `tests/failures/errors/skipped` summary from `TEST-*.xml` into `$GITHUB_STEP_SUMMARY` (python3 is available on ubuntu-latest), so the outcome is visible without downloading the artifact.
 
-Альтернатива — сторонний JUnit-reporter action — отвергнута: лишняя зависимость и права; нативная сводка + артефакт закрывают потребность.
+The alternative — a third-party JUnit reporter action — was rejected: an extra dependency and extra permissions; the native summary + artifact covers the need.
 
-### D5. Конкурентность и таймауты
+### D5. Concurrency and timeouts
 
-`concurrency.group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}`, `cancel-in-progress: true`: новый коммит в PR отменяет устаревший прогон, новый push в `main` — предыдущий. `timeout-minutes: 30` на job (холодная сборка с загрузкой зависимостей укладывается с большим запасом; локально прогретая — ~31 с). Это защищает от зависших embedded-Tomcat тестов, которые иначе держали бы runner.
+`concurrency.group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}`, `cancel-in-progress: true`: a new commit in a PR cancels the outdated run, and a new push to `main` cancels the previous one. `timeout-minutes: 30` on the job (a cold build with dependency downloads fits with a large margin; a locally warmed one takes ~31 s). This protects against hung embedded-Tomcat tests that would otherwise keep holding the runner.
 
-### D6. Минимальные права, только официальные actions
+### D6. Minimal permissions, official actions only
 
-`permissions: contents: read` на уровне workflow, секреты не используются, поэтому fork-PR работают без `pull_request_target` (и его рисков). Используются только `actions/checkout@v4`, `actions/setup-java@v4`, `actions/cache@v4`, `actions/upload-artifact@v4`; версии — major-теги, обновление — отдельной задачей сопровождения. Никаких `secrets.*`, `GITHUB_TOKEN` с write-правами и сторонних action-ов.
+`permissions: contents: read` at the workflow level, no secrets used, so fork PRs work without `pull_request_target` (and its risks). Only `actions/checkout@v4`, `actions/setup-java@v4`, `actions/cache@v4`, `actions/upload-artifact@v4` are used; versions are major tags, updating them is a separate maintenance task. No `secrets.*`, no `GITHUB_TOKEN` with write permissions, no third-party actions.
 
-### D7. Бейдж в README
+### D7. Badge in README
 
-Бейдж `ci.yml` со ссылкой на `actions/workflows/ci.yml` и `branch=main`; URL репозитория — фактический `ys-kalyakin/spring-struts-brigde`. Отдельный workflow для бейджа не нужен.
+A badge for `ci.yml` linking to `actions/workflows/ci.yml` with `branch=main`; the repository URL is the actual `ys-kalyakin/spring-struts-brigde`. A separate workflow for the badge is not needed.
 
 ## Risks / Trade-offs
 
-- [Cold build скачивает зависимости и wrapper] → два кэша (D3); промах не ломает сборку, только замедляет.
-- [Интеграционные тесты поднимают embedded Tomcat] → порт `0`, тесты изолированы; таймаут 30 мин и `cancel-in-progress` не дают зависшему прогону блокировать очередь.
-- [Артефакты PR занимают storage] → retention 7 дней и только успешные сборки для WAR/JAR; отчёты тестов малы.
-- [Major-теги actions могут быть перетегированы] → используем только официальные `actions/*`; при ужесточении требований безопасности — пиннинг по SHA отдельной задачей.
-- [Branch protection не настраивается из workflow] → в Migration Plan зафиксирован ручной шаг администратора: сделать `CI / build` required для `main`.
-- [Локальный remote содержит опечатку `brigde`] → бейдж и ссылки используют фактический URL; переименование репозитория — вне объёма.
+- [A cold build downloads dependencies and the wrapper] → two caches (D3); a miss does not break the build, only slows it down.
+- [Integration tests start an embedded Tomcat] → port `0`, tests are isolated; the 30-minute timeout and `cancel-in-progress` prevent a hung run from blocking the queue.
+- [PR artifacts consume storage] → 7-day retention and successful builds only for WAR/JAR; test reports are small.
+- [Major tags of actions can be re-pointed] → only official `actions/*` are used; if security requirements tighten, SHA pinning as a separate task.
+- [Branch protection cannot be configured from a workflow] → the Migration Plan records a manual administrator step: make `CI / build` required for `main`.
+- [The local remote contains the `brigde` typo] → the badge and links use the actual URL; renaming the repository is out of scope.
 
 ## Migration Plan
 
-1. Добавить `.github/workflows/ci.yml` и бейдж в README; прогнать YAML-валидацию и `./mvnw -B -ntp verify` локально.
-2. Открыть тестовый PR: убедиться, что workflow стартует, отчёты и артефакты доступны, а падение теста (временный коммит) даёт failed и всё равно сохраняет surefire-отчёты; затем откатить временный коммит.
-3. Администратор репозитория включает `CI / build` как required status check для `main` (branch protection/ruleset) — это единственный шаг вне репозитория.
-4. Откат: удалить `.github/workflows/ci.yml` и бейдж; на код, сборку и артефакты это не влияет.
+1. Add `.github/workflows/ci.yml` and the badge to README; run YAML validation and `./mvnw -B -ntp verify` locally.
+2. Open a test PR: confirm that the workflow starts, reports and artifacts are available, and that a failing test (a temporary commit) yields failed while still uploading the surefire reports; then revert the temporary commit.
+3. A repository administrator enables `CI / build` as a required status check for `main` (branch protection/ruleset) — the only step outside the repository.
+4. Rollback: delete `.github/workflows/ci.yml` and the badge; code, the build, and artifacts are unaffected.

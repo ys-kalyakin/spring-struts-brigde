@@ -2,89 +2,89 @@
 
 ## Context
 
-Движок конфигурируется приложениями вручную: web.xml объявляет `DispatcherServlet` с `AnnotationConfigWebApplicationContext` и классическими init-params (`config`, `config/<prefix>`, `validating`), контекст приложения импортирует `StrutsEngineConfiguration` (+ `StrutsTagServicesConfiguration`). `StrutsEngineInitializer` и `StrutsEngineRegistrar` получают `ServletConfig` через `ServletConfigAware` — в классическом режиме их обрабатывает дочерний контекст фронт-сервлета, где `ServletConfig` известен. Spring Boot в проекте не используется; Spring Framework закреплён на 7.0.10, Tomcat 11.0.27, Java 17. Интеграционные тесты приложений гоняются на встроенном `TomcatTestServer` (реальный контейнер).
+The engine is configured by applications manually: web.xml declares a `DispatcherServlet` with an `AnnotationConfigWebApplicationContext` and classic init-params (`config`, `config/<prefix>`, `validating`), and the application context imports `StrutsEngineConfiguration` (+ `StrutsTagServicesConfiguration`). `StrutsEngineInitializer` and `StrutsEngineRegistrar` receive the `ServletConfig` via `ServletConfigAware` — in classic mode these are processed by the front servlet's child context, where the `ServletConfig` is known. Spring Boot is not used in the project; Spring Framework is pinned at 7.0.10, Tomcat 11.0.27, Java 17. Application integration tests run on the embedded `TomcatTestServer` (a real container).
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Стартер = единственная точка подключения движка для Boot-приложения: бины, фронт-сервлет, контракт init-params через свойства.
-- Классический WAR-режим (web.xml + `@Import`) остаётся рабочим без изменений.
-- Миграция приложений `apps/*` и демо с аннотациями как исполняемое Boot-приложение.
-- Руководство, матрица совместимости, инфраструктура публикации.
+- Starter = the single point of engine wiring for a Boot application: beans, front servlet, init-params contract via properties.
+- The classic WAR mode (web.xml + `@Import`) keeps working unchanged.
+- Migration of the `apps/*` applications and an annotated demo as an executable Boot application.
+- Guide, compatibility matrix, publishing infrastructure.
 
 **Non-Goals:**
 
-- Поддержка Boot 3.5.x (матрица заявляет только 4.0.x; движок использует базовый MVC API, откат возможен, но не проверяется в этом изменении).
-- Публикация во внешний репозиторий (Maven Central): требуются учётные данные вне репозитория.
-- Изменения семантик движка и тэг-библиотек; struts-el.
+- Boot 3.5.x support (the matrix declares only 4.0.x; the engine uses the base MVC API, a backport is possible but not verified in this change).
+- Publishing to an external repository (Maven Central): requires credentials outside the repository.
+- Changes to engine and tag-library semantics; struts-el.
 
 ## Decisions
 
-### 1. Модуль и зависимости стартера
+### 1. Starter module and dependencies
 
-Новый модуль `spring-struts1-starter` (артефакт `spring-struts1-starter`, пакет `org.apache.struts.spring.boot`). Зависимости: `spring-struts1-core` (обязательная), `spring-struts1-taglib` (optional — для условной интеграции), `spring-boot-autoconfigure`. Стартер не тянет веб-стартеры Boot (не навязывает приложениею стек); демо подключает `spring-boot-starter-webmvc` (актуальное имя в Boot 4; `spring-boot-starter-web` объявлен deprecated). Версия Boot закрепляется в родительском pom (линия 4.0, патч 4.0.6 — актуальная на момент планирования; финальная версия фиксируется при реализации по актуальному патч-релизу 4.0.x). Регистрация авто-конфигурации — `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
+New module `spring-struts1-starter` (artifact `spring-struts1-starter`, package `org.apache.struts.spring.boot`). Dependencies: `spring-struts1-core` (mandatory), `spring-struts1-taglib` (optional — for conditional integration), `spring-boot-autoconfigure`. The starter does not pull in Boot web starters (it does not impose a stack on the application); the demo adds `spring-boot-starter-webmvc` (the current name in Boot 4; `spring-boot-starter-web` is declared deprecated). The Boot version is pinned in the parent pom (the 4.0 line, patch 4.0.6 — the current one at planning time; the final version is fixed at implementation time to the current 4.0.x patch release). Auto-configuration registration — `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
 
-Альтернатива, отклонённая: держать тэг-сервисы в стартере безусловно — это потребовало бы жёсткой зависимости на taglib и ломало бы приложения без тэг-библиотек.
+Rejected alternative: keeping the tag services in the starter unconditionally — that would require a hard dependency on taglib and would break applications without the tag libraries.
 
-### 2. ServletConfig в Boot root-контексте (ключевая проблема)
+### 2. ServletConfig in the Boot root context (key problem)
 
-В Boot root-контексте (`ServletWebServerApplicationContext`) `ServletConfigAware`-бины получают `null`: Boot регистрирует `WebApplicationContextServletContextAwareProcessor`, который резолвит `ServletContext` лениво, но `ServletConfig` всегда `null` (проверено по байткоду spring-boot-web-server 4.0.9). Классический режим не затронут: там конфигурацию бинов движка обрабатывает дочерний контекст фронт-сервлета, где `ServletConfig` известен.
+In the Boot root context (`ServletWebServerApplicationContext`), `ServletConfigAware` beans receive `null`: Boot registers a `WebApplicationContextServletContextAwareProcessor`, which resolves the `ServletContext` lazily, but the `ServletConfig` is always `null` (verified against the spring-boot-web-server 4.0.9 bytecode). Classic mode is unaffected: there, the engine bean configuration is processed by the front servlet's child context, where the `ServletConfig` is known.
 
-Дополнительное ограничение порядка фаз: `StrutsEngineRegistrar` — `BeanDefinitionRegistryPostProcessor` и инстанцируется в фазе bean-factory post-processing, **до** регистрации `BeanPostProcessor`-бинов; значит, `@Bean`-объявленный BPP стартера не может доставить адаптер регистратору. Зато `ServletContextAware`/`EnvironmentAware` в root-контексте обрабатываются стандартным процессором, зарегистрированным до фазы BFPP, и работают даже для ранних бинов.
+An additional phase-ordering constraint: `StrutsEngineRegistrar` is a `BeanDefinitionRegistryPostProcessor` and is instantiated during the bean-factory post-processing phase, **before** `BeanPostProcessor` beans are registered; therefore a starter BPP declared via `@Bean` cannot deliver the adapter to the registrar. Meanwhile, `ServletContextAware`/`EnvironmentAware` in the root context are processed by a standard processor registered before the BFPP phase and work even for early beans.
 
-Решение — два уровня:
+The solution has two levels:
 
-- **Движок (аддитивно, поведение не меняется)**: новый класс `org.apache.struts.spring.EnvironmentServletConfig` — адаптер `ServletConfig` над `Environment` (ленивое чтение свойств) с резолвингом ресурсов `classpath:` через classloader и остальных путей через `ServletContext`. `StrutsEngineRegistrar` дополнительно получает `ServletContextAware`/`EnvironmentAware`: если `ServletConfig` не внедрён (Boot-режим), но доступен контекст сервлета или задано свойство `spring.struts1.config`, он сам собирает адаптер; иначе ведёт себя как прежде (no-op с debug-логом). Обычный путь классического режима и ресурс-резолвинг не меняются.
-- **Стартер**: ранний `BeanPostProcessor` (static `@Bean`, регистрируется в фазе `registerBeanPostProcessors`) внедряет адаптер остальным `ServletConfigAware`-бинам (инициализатор и прочие обычные бины) и синхронизирует маппинг `StrutsHandlerMapping` со свойством. Обычные бины создаются после старта веб-сервера, поэтому `ServletContext` к этому моменту доступен.
+- **Engine (additive, no behavior change)**: a new class `org.apache.struts.spring.EnvironmentServletConfig` — a `ServletConfig` adapter over the `Environment` (lazy property reads) that resolves `classpath:` resources via the classloader and other paths via the `ServletContext`. `StrutsEngineRegistrar` additionally implements `ServletContextAware`/`EnvironmentAware`: if a `ServletConfig` was not injected (Boot mode) but a servlet context is available or the `spring.struts1.config` property is set, it assembles the adapter itself; otherwise it behaves as before (a no-op with a debug log). The normal classic-mode path and resource resolution are unchanged.
+- **Starter**: an early `BeanPostProcessor` (a static `@Bean`, registered in the `registerBeanPostProcessors` phase) injects the adapter into the remaining `ServletConfigAware` beans (the initializer and other ordinary beans) and synchronizes the `StrutsHandlerMapping` mapping with the property. Ordinary beans are created after the web server has started, so the `ServletContext` is available by then.
 
-Альтернативы, отклонённые: (а) конструкторная передача `ServletConfig` из авто-конфигурации — registrar обязан быть `BeanDefinitionRegistryPostProcessor`, обычный @Bean-инстанс не поддерживается; (б) только BPP — не достаёт до регистратора по порядку фаз; (в) переопределение бина регистратора в стартере — конфликт имён с `StrutsEngineConfiguration` и дублирование списка бинов движка.
+Rejected alternatives: (a) constructor injection of the `ServletConfig` from the auto-configuration — the registrar must be a `BeanDefinitionRegistryPostProcessor`, an ordinary @Bean instance is not supported; (b) a BPP only — it misses the registrar due to phase ordering; (c) overriding the registrar bean in the starter — a name conflict with `StrutsEngineConfiguration` and duplication of the engine bean list.
 
-### 3. Адаптер читает Environment, а не @ConfigurationProperties-бин
+### 3. The adapter reads the Environment, not a @ConfigurationProperties bean
 
-`StrutsEngineRegistrar` и `BeanPostProcessor` стартера срабатывают в фазах, когда `ConfigurationPropertiesBindingPostProcessor` ещё не гарантированно зарегистрирован; принудительное создание типизированного бина свойств на этом пути дало бы незабинженные значения. Адаптер резолвит init-params лениво (при вызовах `getInitParameter`) прямо из `Environment`: `spring.struts1.config`, `spring.struts1.config.<префикс>` (перечисление property sources), `spring.struts1.validating`. Типизированный `Struts1Properties` (`spring.struts1.*`) используется только поздними бинами (регистрация сервлета), где биндинг гарантирован.
+`StrutsEngineRegistrar` and the starter's `BeanPostProcessor` run at phases where `ConfigurationPropertiesBindingPostProcessor` is not yet guaranteed to be registered; forcing creation of a typed properties bean on that path would yield unbound values. The adapter resolves init-params lazily (on `getInitParameter` calls) directly from the `Environment`: `spring.struts1.config`, `spring.struts1.config.<prefix>` (enumerating property sources), `spring.struts1.validating`. The typed `Struts1Properties` (`spring.struts1.*`) is used only by late beans (servlet registration), where binding is guaranteed.
 
-### 4. Фронт-сервлет и маппинг
+### 4. Front servlet and mapping
 
-Авто-конфигурация определяет собственные бины `DispatcherServlet` (имя `dispatcherServlet`) и `ServletRegistrationBean` (имя `dispatcherServletRegistration`) с шаблонами из `spring.struts1.mapping.url-pattern` (по умолчанию `*.do`, список) **плюс `/error`**: с не-корневым маппингом контейнерный error-dispatch иначе не находит сервлет, и незарегистрированные пути не дают корректных 404. Имена — канонические для Boot: его `DispatcherServletAutoConfiguration` в Boot 4 уходит в сторону по **имени** бина (не по типу), и его регистрация отступает при наличии `dispatcherServletRegistration`; типизация имени избавляет от зависимости от порядка обработки авто-конфигураций. `@AutoConfigureBefore` (по имени класса Boot) сохранён для определённости. Сервлет, созданный как бин root-контекста, получает его же через `ApplicationContextAware` (так работает и авто-конфигурация Boot — проверено по исходнику `FrameworkServlet`), child-контекст не создаётся, и движок находит в root-контексте `StrutsHandlerMapping`/`StrutsHandlerAdapter`. То же свойство настраивает маппинг обработчика запросов движка, а его приоритет поднимается до высшего: в root-контексте resource-handler Boot (`/**`) иначе перехватывает запросы `*.do` раньше маппинга движка. Для error-страниц Boot дополнительно публикуется бин `DispatcherServletPath` (mounted at root). Альтернатива, отклонённая: дочерний `AnnotationConfigWebApplicationContext` как в классическом режиме — дублирует контекст Boot и отрезает сервлет от бинов приложения.
+The auto-configuration defines its own `DispatcherServlet` bean (name `dispatcherServlet`) and `ServletRegistrationBean` (name `dispatcherServletRegistration`) with patterns from `spring.struts1.mapping.url-pattern` (default `*.do`, a list) **plus `/error`**: with a non-root mapping, the container error-dispatch otherwise cannot find the servlet, and unregistered paths do not produce correct 404s. The names are canonical for Boot: Boot's `DispatcherServletAutoConfiguration` in Boot 4 backs off by **bean name** (not by type), and its registration backs off when `dispatcherServletRegistration` is present; naming the beans removes the dependency on auto-configuration processing order. `@AutoConfigureBefore` (by Boot class name) is kept for determinism. A servlet created as a root-context bean receives that context via `ApplicationContextAware` (this is how Boot's own auto-configuration works too — verified against the `FrameworkServlet` source), no child context is created, and the engine finds `StrutsHandlerMapping`/`StrutsHandlerAdapter` in the root context. The same property configures the engine's request-handler mapping, and its priority is raised to highest: in the root context, Boot's resource handler (`/**`) would otherwise intercept `*.do` requests before the engine's mapping. For Boot error pages, a `DispatcherServletPath` bean (mounted at root) is additionally published. Rejected alternative: a child `AnnotationConfigWebApplicationContext` as in classic mode — it duplicates the Boot context and cuts the servlet off from application beans.
 
-Дополнительно: multipart в Boot-режиме остаётся за движком — стартер публикует no-op `multipartResolver`, чтобы `DispatcherServlet.checkMultipart` не перехватывал multipart-запросы до populate (классическая семантика разбора multipart внутри жизненного цикла), а авто-конфигурация Boot отступала.
+Additionally: multipart in Boot mode remains with the engine — the starter publishes a no-op `multipartResolver` so that `DispatcherServlet.checkMultipart` does not intercept multipart requests before populate (classic semantics of multipart parsing inside the lifecycle) and so that Boot's auto-configuration backs off.
 
-### 5. Условная интеграция тэг-сервисов
+### 5. Conditional tag-services integration
 
-Nested `@Configuration` внутри авто-конфигурации: `@ConditionalOnClass(StrutsTagServicesConfiguration.class)` + `@Import`. Зависимость на taglib — optional, поэтому условие по классу, а не по бину.
+A nested `@Configuration` inside the auto-configuration: `@ConditionalOnClass(StrutsTagServicesConfiguration.class)` + `@Import`. The taglib dependency is optional, hence the condition is by class, not by bean.
 
-### 6. Миграция приложений apps/*
+### 6. Migrating the apps/* applications
 
-Для каждого приложения: зависимость `spring-struts1-starter`; класс `<App>Application extends SpringBootServletInitializer` с `@SpringBootApplication`; web.xml сокращается до минимума (display-name, welcome-file-list) — сервлет, маппинг и init-params больше не объявляются; модульные конфиги `config/<prefix>` переносятся в свойства `spring.struts1.config.<префикс>` там, где использовались. struts-config.xml остаётся в `/WEB-INF` (значение по умолчанию свойства `spring.struts1.config` совпадает с классическим). Интеграционные тесты (`TomcatTestServer`) не меняются: Boot-контекст стартует внутри развёрнутого WAR.
+For each application: the `spring-struts1-starter` dependency; an `<App>Application extends SpringBootServletInitializer` class with `@SpringBootApplication`; web.xml reduced to the minimum (display-name, welcome-file-list) — the servlet, mapping, and init-params are no longer declared; module configs `config/<prefix>` are moved to `spring.struts1.config.<prefix>` properties where they were used. struts-config.xml stays in `/WEB-INF` (the default of the `spring.struts1.config` property matches the classic one). Integration tests (`TomcatTestServer`) are unchanged: the Boot context starts inside the deployed WAR.
 
-### 7. Демо-приложение
+### 7. Demo application
 
-Модуль `spring-struts1-apps/demo` (артефакт `spring-struts1-demo`): executable WAR без web.xml (аннотационный бутстрап Boot) с `tomcat-embed-jasper` — JSP в Boot работают в executable WAR (в executable jar JSP не поддерживаются, руководство фиксирует это). Экшен и форма с `@StrutsAction`/`@StrutsForm`, зависимость экшена через `@Autowired`; struts-config.xml, JSP и message-resources — классические. IT: (а) разворачивание собранного WAR на `TomcatTestServer` — полный набор сценариев вровень с другими приложениями; (b) smoke-запуск через `SpringApplication` (эквивалент `java -jar`) с docBase `src/main/webapp` на случайном порту — страница, форма, сообщение.
+Module `spring-struts1-apps/demo` (artifact `spring-struts1-demo`): an executable WAR without web.xml (annotation-based Boot bootstrap) with `tomcat-embed-jasper` — JSPs work in Boot within an executable WAR (JSPs are not supported in an executable jar; the guide records this). Action and form with `@StrutsAction`/`@StrutsForm`, the action's dependency injected via `@Autowired`; struts-config.xml, JSPs, and message-resources are classic. ITs: (a) deploying the built WAR to the `TomcatTestServer` — the full scenario set on par with the other applications; (b) a smoke run via `SpringApplication` (equivalent to `java -jar`) with docBase `src/main/webapp` on a random port — page, form, message.
 
-### 8. Публикация
+### 8. Publishing
 
-Профиль `publication` в родительском pom: `distributionManagement` с URL/credentials из пользовательских свойств (`-Dpublication.release.url=...` и т.п.), по умолчанию не активен. Проверка — deploy в файловый репозиторий (`file:`) и подключение опубликованных артефактов. Выбор внешнего канала остаётся открытым вопросом роадмапа и решается владельцем репозитория снаружи кода; README документирует запуск.
+A `publication` profile in the parent pom: `distributionManagement` with URLs/credentials from user properties (`-Dpublication.release.url=...` etc.), inactive by default. Verification — deploy to a file repository (`file:`) and consuming the published artifacts. The choice of external channel remains an open roadmap question and is resolved by the repository owner outside the code; the README documents how to run it.
 
-### 9. Версии и выравнивание Spring
+### 9. Versions and Spring alignment
 
-Импорт `spring-boot-dependencies` BOM (4.0.x) в `dependencyManagement` родителя; явная `spring.version` проекта выравнивается с версией, управляемой Boot, чтобы избежать конфликта Spring Framework 7.0.x. Полный `./mvnw verify` — арбитр.
+Import the `spring-boot-dependencies` BOM (4.0.x) into the parent's `dependencyManagement`; the project's explicit `spring.version` is aligned with the Boot-managed version to avoid a Spring Framework 7.0.x conflict. A full `./mvnw verify` is the arbiter.
 
 ## Risks / Trade-offs
 
-- [Boot root-контекст не внедряет `ServletConfigAware`] → адаптер на стороне движка (`EnvironmentServletConfig`) для регистратора + BPP стартера для обычных бинов (решение 2); классический режим не затронут, IT приложений покрывают оба режима.
-- [BPP стартера не достаёт до `BeanDefinitionRegistryPostProcessor`-бинов по порядку фаз] → регистратор собирает адаптер сам из `ServletContextAware`/`EnvironmentAware` (решение 2).
-- [Ранняя инициализация бинов при чтении свойств в фазе BFPP] → адаптер читает `Environment` лениво, `@ConfigurationProperties`-бин вне критического пути (решение 3).
-- [Fallback-адаптер мог бы менять поведение не-web контекстов, импортирующих движок] → адаптер собирается только при доступном `ServletContext` или явно заданном `spring.struts1.config`; иначе прежний no-op (решение 2).
-- [Двойная регистрация `DispatcherServlet` с авто-конфигурацией Boot] → собственные бины сервлета/регистрации, Boot уходит по `@ConditionalOnMissingBean`; IT демо проверяют отсутствие дубликата.
-- [JSP в executable jar не работают] → демо и руководство: executable WAR с jasper (решение 7).
-- [Конфликт версий Spring Framework проекта и Boot 4.0.x] → импорт BOM Boot, полный verify (решение 9).
-- [Boot 4 переименовывает артефакты и свойства] → используются актуальные имена (`spring-boot-starter-webmvc`); точные имена свойств (например, регистрация JSP-сервлета) проверяются при реализации.
+- [Boot root context does not inject `ServletConfigAware`] → an engine-side adapter (`EnvironmentServletConfig`) for the registrar + the starter BPP for ordinary beans (decision 2); classic mode is unaffected, application ITs cover both modes.
+- [The starter BPP misses `BeanDefinitionRegistryPostProcessor` beans due to phase ordering] → the registrar assembles the adapter itself from `ServletContextAware`/`EnvironmentAware` (decision 2).
+- [Early bean initialization when reading properties during the BFPP phase] → the adapter reads the `Environment` lazily; the `@ConfigurationProperties` bean is off the critical path (decision 3).
+- [A fallback adapter could change behavior of non-web contexts importing the engine] → the adapter is assembled only when a `ServletContext` is available or `spring.struts1.config` is explicitly set; otherwise the previous no-op (decision 2).
+- [Double registration of `DispatcherServlet` with Boot's auto-configuration] → own servlet/registration beans; Boot backs off via `@ConditionalOnMissingBean`; demo ITs check there is no duplicate.
+- [JSPs do not work in an executable jar] → demo and guide: executable WAR with jasper (decision 7).
+- [Conflict between the project's Spring Framework version and Boot 4.0.x] → import the Boot BOM, full verify (decision 9).
+- [Boot 4 renames artifacts and properties] → current names are used (`spring-boot-starter-webmvc`); exact property names (e.g., JSP servlet registration) are verified at implementation time.
 
 ## Migration Plan
 
-Изменение аддитивно: классический режим не меняется, приложения мигрируют на стартер внутри этого изменения. Откат — revert ветки: движок и приложения возвращаются к ручному бутстрапу.
+The change is additive: classic mode is unchanged, applications migrate to the starter within this change. Rollback — revert the branch: the engine and applications return to manual bootstrap.
 
 ## Open Questions
 
-- Точный патч-релиз Boot 4.0.x фиксируется при реализации (решение 1); на подход, спеки и задачи не влияет.
+- The exact Boot 4.0.x patch release is fixed at implementation time (decision 1); it does not affect the approach, specs, or tasks.

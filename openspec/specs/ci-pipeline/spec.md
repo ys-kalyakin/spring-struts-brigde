@@ -2,94 +2,94 @@
 
 ## Purpose
 
-Обеспечивает воспроизводимую автоматическую проверку каждого pull request и основной ветки: полную сборку проекта, все тесты и сохранение результатов для диагностики.
+Provides reproducible automatic verification of every pull request and the main branch: a full project build, all tests, and saving results for diagnostics.
 
 ## Requirements
 
-### Requirement: Проверка pull request
-CI SHALL запускаться для каждого pull request, нацеленного на `main`, при открытии, повторном открытии и обновлении head-коммита. Результат прогона SHALL отображаться как проверка PR и SHALL быть неуспешным, если любая стадия сборки завершилась ошибкой.
+### Requirement: Pull request check
+CI SHALL run for every pull request targeting `main` on open, reopen and head-commit update. The run result SHALL be displayed as a PR check and SHALL be unsuccessful if any build stage fails.
 
-#### Scenario: Новый pull request
-- **WHEN** создан pull request в `main`
-- **THEN** запускается CI-прогон, и его статус появляется в списке проверок pull request
+#### Scenario: New pull request
+- **WHEN** a pull request to `main` is created
+- **THEN** a CI run starts and its status appears in the pull request checks list
 
-#### Scenario: Обновление pull request
-- **WHEN** в pull request добавлен новый коммит
-- **THEN** CI запускается заново для нового head-коммита
+#### Scenario: Pull request update
+- **WHEN** a new commit is added to a pull request
+- **THEN** CI runs again for the new head commit
 
-#### Scenario: Падение сборки в pull request
-- **WHEN** компиляция, unit-тест или интеграционный тест в PR завершился ошибкой
-- **THEN** проверка PR получает статус failed и прогон не считается успешным
+#### Scenario: Build failure in a pull request
+- **WHEN** compilation, a unit test or an integration test in the PR fails
+- **THEN** the PR check gets status failed and the run is not considered successful
 
-### Requirement: Проверка основной ветки и ручной запуск
-CI SHALL запускаться при push в `main` и SHALL поддерживать ручной запуск из GitHub Actions. Прогон для `main` SHALL выполнять тот же полный набор проверок, что и прогон для pull request.
+### Requirement: Main branch check and manual run
+CI SHALL run on push to `main` and SHALL support manual runs from GitHub Actions. The run for `main` SHALL execute the same full set of checks as the pull request run.
 
-#### Scenario: Push в main
-- **WHEN** коммит попадает в `main`
-- **THEN** запускается полный CI-прогон для этого коммита
+#### Scenario: Push to main
+- **WHEN** a commit lands in `main`
+- **THEN** a full CI run starts for that commit
 
-#### Scenario: Ручной запуск
-- **WHEN** пользователь запускает workflow вручную через `workflow_dispatch`
-- **THEN** выполняется полный CI-прогон выбранной ветки или коммита
+#### Scenario: Manual run
+- **WHEN** a user runs the workflow manually via `workflow_dispatch`
+- **THEN** a full CI run executes for the selected branch or commit
 
-### Requirement: Полная сборка и тесты на JDK 17
-CI SHALL собирать проект Maven wrapper-ом на JDK 17 и SHALL выполнять `verify` для всех модулей, включая компиляцию, unit-тесты, интеграционные тесты на embedded Tomcat и упаковку WAR/JAR. Тесты SHALL выполняться, а не пропускаться флагами `-DskipTests`/`-Dmaven.test.skip`.
+### Requirement: Full build and tests on JDK 17
+CI SHALL build the project with the Maven wrapper on JDK 17 and SHALL run `verify` for all modules, including compilation, unit tests, integration tests on embedded Tomcat and WAR/JAR packaging. Tests SHALL run rather than be skipped with the `-DskipTests`/`-Dmaven.test.skip` flags.
 
-#### Scenario: Успешная полная сборка
-- **WHEN** CI собирает коммит, в котором все модули компилируются и все тесты проходят
-- **THEN** прогон завершается успешно, а WAR и JAR всех модулей собраны
+#### Scenario: Successful full build
+- **WHEN** CI builds a commit where all modules compile and all tests pass
+- **THEN** the run completes successfully and the WAR and JAR of all modules are built
 
-#### Scenario: Падение интеграционного теста
-- **WHEN** интеграционный тест на embedded Tomcat завершается ошибкой
-- **THEN** прогон останавливается с ненулевым кодом и не публикует артефакты как успешные
+#### Scenario: Integration test failure
+- **WHEN** an integration test on embedded Tomcat fails
+- **THEN** the run stops with a non-zero exit code and does not publish artifacts as successful
 
-### Requirement: Кэширование зависимостей
-CI SHALL кэшировать Maven-репозиторий и дистрибутив Maven wrapper между прогонами. Ключ кэша SHALL учитывать содержимое `pom.xml` и `.mvn/wrapper/maven-wrapper.properties`, чтобы изменение зависимостей или версии Maven не приводило к использованию устаревшего кэша. Промах кэша SHALL приводить к обычной сборке, а не к ошибке.
+### Requirement: Dependency caching
+CI SHALL cache the Maven repository and the Maven wrapper distribution between runs. The cache key SHALL take into account the contents of `pom.xml` and `.mvn/wrapper/maven-wrapper.properties`, so that a change of dependencies or the Maven version does not lead to a stale cache being used. A cache miss SHALL lead to a normal build, not an error.
 
-#### Scenario: Повторный прогон с тем же набором зависимостей
-- **WHEN** CI запускается повторно без изменений в `pom.xml` и wrapper-свойствах
-- **THEN** Maven-зависимости восстанавливаются из кэша, и сборка проходит
+#### Scenario: Repeated run with the same dependency set
+- **WHEN** CI runs again with no changes in `pom.xml` and the wrapper properties
+- **THEN** Maven dependencies are restored from cache and the build passes
 
-#### Scenario: Изменение зависимостей
-- **WHEN** в `pom.xml` изменена версия зависимости или версия Maven в wrapper-свойствах
-- **THEN** используется новый ключ кэша, и сборка выполняется с актуальными зависимостями
+#### Scenario: Dependency change
+- **WHEN** a dependency version in `pom.xml` or the Maven version in the wrapper properties changes
+- **THEN** a new cache key is used and the build runs with up-to-date dependencies
 
-### Requirement: Сохранение отчётов о тестах
-CI SHALL сохранять отчёты surefire как артефакт прогона независимо от результата сборки, включая случай падения тестов. Сохранённые отчёты SHALL содержать результаты каждого тестового класса и SHALL быть доступны для скачивания после завершения прогона.
+### Requirement: Saving test reports
+CI SHALL save surefire reports as a run artifact regardless of the build result, including the case of test failures. The saved reports SHALL contain the results of each test class and SHALL be available for download after the run completes.
 
-#### Scenario: Успешный прогон
-- **WHEN** все тесты прошли успешно
-- **THEN** отчёты surefire доступны как артефакт прогона
+#### Scenario: Successful run
+- **WHEN** all tests pass
+- **THEN** surefire reports are available as a run artifact
 
-#### Scenario: Падение тестов
-- **WHEN** один или несколько тестов завершились ошибкой
-- **THEN** отчёты surefire всё равно загружаются и доступны для диагностики
+#### Scenario: Test failure
+- **WHEN** one or more tests fail
+- **THEN** surefire reports are still uploaded and available for diagnostics
 
-### Requirement: Публикация артефактов сборки
-CI SHALL сохранять собранные WAR и JAR модулей как артефакт успешного прогона. Артефакт SHALL включать все исполняемые результаты реактора: библиотечные JAR, WAR тестовых приложений и JAR dao-модуля.
+### Requirement: Publishing build artifacts
+CI SHALL save the built WAR and JAR of the modules as an artifact of a successful run. The artifact SHALL include all executable reactor results: library JARs, WARs of test applications and the dao module JAR.
 
-#### Scenario: Успешная сборка main
-- **WHEN** полный прогон для `main` завершился успешно
-- **THEN** WAR/JAR всех модулей доступны как артефакт прогона
+#### Scenario: Successful main build
+- **WHEN** a full run for `main` completes successfully
+- **THEN** the WAR/JAR of all modules are available as a run artifact
 
-#### Scenario: Неуспешная сборка
-- **WHEN** прогон завершился ошибкой
-- **THEN** артефакт с WAR/JAR не публикуется как результат успешной сборки
+#### Scenario: Unsuccessful build
+- **WHEN** the run fails
+- **THEN** the artifact with WAR/JAR is not published as a successful build result
 
-### Requirement: Конкурентность и безопасность прогонов
-CI SHALL отменять устаревшие прогоны для того же pull request или ветки при появлении нового коммита. Workflow SHALL работать с минимальными правами (`contents: read`), без секретов и внешних сервисов, и SHALL иметь ограничение времени выполнения, чтобы зависший прогон не блокировал очередь.
+### Requirement: Concurrency and run safety
+CI SHALL cancel outdated runs for the same pull request or branch when a new commit arrives. The workflow SHALL run with minimal permissions (`contents: read`), without secrets and external services, and SHALL have a run time limit so that a hung run does not block the queue forever.
 
-#### Scenario: Новый коммит в активном PR
-- **WHEN** в pull request приходит новый коммит, пока предыдущий прогон ещё выполняется
-- **THEN** предыдущий прогон отменяется, и проверяется только новый коммит
+#### Scenario: New commit in an active PR
+- **WHEN** a pull request receives a new commit while the previous run is still in progress
+- **THEN** the previous run is cancelled and only the new commit is checked
 
-#### Scenario: Зависший прогон
-- **WHEN** сборка превышает установленный лимит времени
-- **THEN** прогон завершается ошибкой по таймауту и не остаётся в очереди навсегда
+#### Scenario: Hung run
+- **WHEN** a build exceeds the configured time limit
+- **THEN** the run fails by timeout and does not remain in the queue forever
 
-### Requirement: Отображение статуса CI
-README проекта SHALL содержать бейдж статуса workflow CI со ссылкой на страницу запусков GitHub Actions.
+### Requirement: CI status display
+The project README SHALL contain a CI workflow status badge linking to the GitHub Actions runs page.
 
-#### Scenario: Просмотр README
-- **WHEN** пользователь открывает README на GitHub
-- **THEN** он видит актуальный статус CI и может перейти к списку прогонов
+#### Scenario: Viewing the README
+- **WHEN** a user opens the README on GitHub
+- **THEN** they see the current CI status and can navigate to the list of runs
