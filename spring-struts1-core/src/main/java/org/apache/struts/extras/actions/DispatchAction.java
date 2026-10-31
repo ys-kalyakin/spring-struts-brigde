@@ -2,7 +2,8 @@ package org.apache.struts.extras.actions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,9 +43,10 @@ public abstract class DispatchAction extends BaseAction {
 
     /**
      * The set of Method objects we have introspected for this Action,
-     * keyed by method name.
+     * keyed by method name. A concurrent map: dispatch lookups do not
+     * serialize concurrent requests to the same action.
      */
-    protected HashMap<String, Method> methods = new HashMap<>();
+    protected Map<String, Method> methods = new ConcurrentHashMap<>();
 
     /**
      * The Class instance of this DispatchAction class.
@@ -251,16 +253,17 @@ public abstract class DispatchAction extends BaseAction {
      * <code>execute</code> method does.
      */
     protected Method getMethod(String name) throws NoSuchMethodException {
-        synchronized (methods) {
-            Method method = methods.get(name);
+        Method method = methods.get(name);
 
-            if (method == null) {
-                method = clazz.getMethod(name, types);
-                methods.put(name, method);
+        if (method == null) {
+            method = clazz.getMethod(name, types);
+            Method previous = methods.putIfAbsent(name, method);
+            if (previous != null) {
+                method = previous;
             }
-
-            return (method);
         }
+
+        return (method);
     }
 
     /**

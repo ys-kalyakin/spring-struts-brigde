@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springstruts</groupId>
+    <artifactId>spring-struts1-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>spring-struts1-benchmarks</artifactId>
+  <packaging>jar</packaging>
+
+  <name>spring-struts1-benchmarks</name>
+  <description>JMH benchmarks of the request-processing hot paths; compiled with the reactor but never executed by the default build or CI (run: mvn -pl spring-struts1-benchmarks -am -Pjmh package)</description>
+
+  <properties>
+    <jmh.version>1.37</jmh.version>
+    <!-- JMH run parameters, overridable on the command line -->
+    <jmh.include>.*</jmh.include>
+    <jmh.forks>2</jmh.forks>
+    <jmh.warmupIterations>3</jmh.warmupIterations>
+    <jmh.measurementIterations>5</jmh.measurementIterations>
+    <jmh.results>jmh-result.json</jmh.results>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springstruts</groupId>
+      <artifactId>spring-struts1-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>${jakarta.servlet-api.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+      <version>${jmh.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-generator-annprocess</artifactId>
+      <version>${jmh.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- No-op binding: benchmark results must not pay for logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+  </dependencies>
+
+  <profiles>
+    <!--
+      Runs the JMH suite as part of the reactor build so a single command
+      both builds the dependencies and measures:
+        mvn -pl spring-struts1-benchmarks -am -Pjmh package
+      Scope selection: -Djmh.include=<regex>; result file: -Djmh.results=...
+      JMH forks measurement JVMs, which cannot see the Maven process
+      classpath of exec:java — so the suite runs through antrun's
+      forked <java> task over the module runtime classpath. The profile
+      exists only in this module, so upstream modules of `-am` are built
+      and tested as usual and never execute benchmarks.
+    -->
+    <profile>
+      <id>jmh</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>run-jmh</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <java classname="org.openjdk.jmh.Main" fork="true"
+                      failonerror="true">
+                      <classpath>
+                        <path refid="maven.runtime.classpath"/>
+                        <pathelement
+                          path="${project.build.outputDirectory}"/>
+                      </classpath>
+                      <arg value="${jmh.include}"/>
+                      <arg value="-f"/>
+                      <arg value="${jmh.forks}"/>
+                      <arg value="-wi"/>
+                      <arg value="${jmh.warmupIterations}"/>
+                      <arg value="-i"/>
+                      <arg value="${jmh.measurementIterations}"/>
+                      <arg value="-r"/>
+                      <arg value="1"/>
+                      <arg value="-w"/>
+                      <arg value="1"/>
+                      <arg value="-foe"/>
+                      <arg value="true"/>
+                      <arg value="-rf"/>
+                      <arg value="json"/>
+                      <arg value="-rff"/>
+                      <arg value="${jmh.results}"/>
+                    </java>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

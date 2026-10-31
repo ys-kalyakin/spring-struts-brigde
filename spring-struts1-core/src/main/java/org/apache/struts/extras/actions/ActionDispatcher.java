@@ -2,7 +2,8 @@ package org.apache.struts.extras.actions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -115,9 +116,10 @@ public class ActionDispatcher {
      * The set of Method objects we have introspected for this class, keyed
      * by method name. This collection is populated as different methods are
      * called, so that introspection needs to occur only once per method
-     * name.
+     * name. A concurrent map: dispatch lookups do not serialize concurrent
+     * requests sharing the dispatcher.
      */
-    protected HashMap<String, Method> methods = new HashMap<>();
+    protected Map<String, Method> methods = new ConcurrentHashMap<>();
 
     /**
      * The set of argument type classes for the reflected method call. These
@@ -331,16 +333,17 @@ public class ActionDispatcher {
      * @throws NoSuchMethodException if no such method can be found
      */
     protected Method getMethod(String name) throws NoSuchMethodException {
-        synchronized (methods) {
-            Method method = methods.get(name);
+        Method method = methods.get(name);
 
-            if (method == null) {
-                method = clazz.getMethod(name, types);
-                methods.put(name, method);
+        if (method == null) {
+            method = clazz.getMethod(name, types);
+            Method previous = methods.putIfAbsent(name, method);
+            if (previous != null) {
+                method = previous;
             }
-
-            return (method);
         }
+
+        return (method);
     }
 
     /**

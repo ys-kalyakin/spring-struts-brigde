@@ -1,8 +1,9 @@
 package org.apache.struts.util;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +36,12 @@ public abstract class MessageResources {
 
     /**
      * The set of previously created MessageFormat objects, keyed by the
-     * locale and message key.
+     * locale and message key. A concurrent map: the per-message cache
+     * access does not serialize threads, so concurrent requests never
+     * queue behind the formats lock (the <code>format()</code> call itself
+     * runs outside any lock, as it did before).
      */
-    protected HashMap<String, MessageFormat> formats = new HashMap<>();
+    protected Map<String, MessageFormat> formats = new ConcurrentHashMap<>();
 
     /**
      * Indicates whether a <code>null</code> String is returned instead of an
@@ -135,28 +139,25 @@ public abstract class MessageResources {
      * matching message is found, or if <code>returnNull</code> is set.
      */
     public String getMessage(Locale locale, String key, Object[] args) {
-        if (locale == null) {
-            locale = defaultLocale;
-        }
+        final Locale resolvedLocale =
+            (locale != null) ? locale : defaultLocale;
 
-        MessageFormat format = null;
-        String formatKey = messageKey(locale, key);
+        String formatKey = messageKey(resolvedLocale, key);
 
-        synchronized (formats) {
-            format = formats.get(formatKey);
+        MessageFormat format = formats.get(formatKey);
+        if (format == null) {
+            String formatString = getMessage(resolvedLocale, key);
 
-            if (format == null) {
-                String formatString = getMessage(locale, key);
-
-                if (formatString == null) {
-                    return returnNull ? null
-                        : ("???" + formatKey + "???");
-                }
-
-                format = new MessageFormat(escape(formatString));
-                format.setLocale(locale);
-                formats.put(formatKey, format);
+            if (formatString == null) {
+                return returnNull ? null
+                    : ("???" + formatKey + "???");
             }
+
+            format = formats.computeIfAbsent(formatKey, k -> {
+                MessageFormat created = new MessageFormat(escape(formatString));
+                created.setLocale(resolvedLocale);
+                return created;
+            });
         }
 
         return format.format(args);

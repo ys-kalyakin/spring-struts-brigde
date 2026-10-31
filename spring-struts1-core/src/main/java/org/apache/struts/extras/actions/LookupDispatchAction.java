@@ -3,6 +3,7 @@ package org.apache.struts.extras.actions;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,10 +66,12 @@ public abstract class LookupDispatchAction extends DispatchAction {
         LoggerFactory.getLogger(LookupDispatchAction.class);
 
     /**
-     * Reverse lookup map from resource value to resource key.
+     * Reverse lookup map from resource value to resource key. A concurrent
+     * map: locale lookups do not serialize concurrent requests to the same
+     * action.
      */
-    protected HashMap<Locale, Map<String, String>> localeMap =
-        new HashMap<>();
+    protected Map<Locale, Map<String, String>> localeMap =
+        new ConcurrentHashMap<>();
 
     /**
      * Resource key to method name lookup.
@@ -138,18 +141,9 @@ public abstract class LookupDispatchAction extends DispatchAction {
     protected String getLookupMapName(HttpServletRequest request,
         String keyName, ActionMapping mapping) throws ServletException {
         // Based on this request's Locale get the lookupMap
-        Map<String, String> lookupMap = null;
-
-        synchronized (localeMap) {
-            Locale userLocale = this.getLocale(request);
-
-            lookupMap = this.localeMap.get(userLocale);
-
-            if (lookupMap == null) {
-                lookupMap = this.initLookupMap(request, userLocale);
-                this.localeMap.put(userLocale, lookupMap);
-            }
-        }
+        Map<String, String> lookupMap =
+            this.localeMap.computeIfAbsent(this.getLocale(request),
+                userLocale -> this.initLookupMap(request, userLocale));
 
         // Find the key for the resource
         String key = lookupMap.get(keyName);

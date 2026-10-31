@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaProperty;
@@ -56,6 +58,29 @@ final class FormPopulator {
      */
     static final String POPULATE_ERROR_MESSAGE = "BeanUtils.populate";
 
+    /**
+     * Entry limits of the populate caches. Parameter names arrive with
+     * requests, so the caches are capped: legitimate forms fit comfortably,
+     * while floods of unique attacker-chosen names stop growing the maps.
+     */
+    private static final int MAX_CACHED_ENTRIES = 1024;
+
+    /**
+     * Parsed parameter-name segments, keyed by the raw parameter name: the
+     * names of a form repeat on every request, so the parse runs once per
+     * name instead of once per request.
+     */
+    private static final ConcurrentHashMap<String, List<Segment>>
+        PARSED_NAMES = new ConcurrentHashMap<>();
+
+    /**
+     * Resolved indexed write methods (<code>set&lt;Name&gt;(int, T)</code>),
+     * keyed by class name and method name; <code>Optional.empty()</code>
+     * marks classes without such a method so the scan does not repeat.
+     */
+    private static final ConcurrentHashMap<String, Optional<Method>>
+        INDEXED_WRITE_METHODS = new ConcurrentHashMap<>();
+
     private FormPopulator() {
     }
 
@@ -80,7 +105,7 @@ final class FormPopulator {
 
     private static void populateProperty(Object bean, String name,
         Object value) {
-        List<Segment> segments = StrutsExpressionParser.parse(name);
+        List<Segment> segments = parsedSegments(name);
         if (segments.isEmpty()) {
             return;
         }
@@ -147,6 +172,23 @@ final class FormPopulator {
         } else {
             assignToBean(wrapperOf(target), segment, value);
         }
+    }
+
+    /**
+     * Parse a parameter name into its segments through the cache: a
+     * repeated name (the normal case — form fields repeat on every
+     * request) is served from the parsed segments.
+     */
+    private static List<Segment> parsedSegments(String name) {
+        List<Segment> cached = PARSED_NAMES.get(name);
+        if (cached != null) {
+            return cached;
+        }
+        List<Segment> parsed = StrutsExpressionParser.parse(name);
+        if (PARSED_NAMES.size() < MAX_CACHED_ENTRIES) {
+            PARSED_NAMES.putIfAbsent(name, parsed);
+        }
+        return parsed;
     }
 
     // ------------------------------------------------------ plain beans
@@ -251,30 +293,55 @@ final class FormPopulator {
      * (<code>set&lt;Name&gt;(int index, T value)</code>), the pattern
      * beanutils resolves for properties without an array or list field
      * (as in the weblegacy example forms). A missing method is skipped
-     * silently.
+     * silently; the method scan is cached per class and method name.
      */
     private static void invokeIndexedWriteMethod(Object target,
         Segment segment, Object value) {
         String methodName = "set" + Character.toUpperCase(
             segment.getName().charAt(0)) + segment.getName().substring(1);
-        for (Method method : target.getClass().getMethods()) {
+        Method method = indexedWriteMethodOf(target.getClass(), methodName);
+        if (method == null) {
+            return;
+        }
+        Object converted = convertFor(TypeDescriptor.valueOf(
+            StrutsConversionService.boxedType(
+                method.getParameterTypes()[1])), value);
+        try {
+            method.invoke(target, segment.getIndex(), converted);
+        } catch (IllegalAccessException e) {
+            // not invocable: skipped silently
+        } catch (InvocationTargetException e) {
+            throw new IllegalStateException(e.getTargetException());
+        }
+    }
+
+    /**
+     * Return the indexed write method of the given name (two parameters,
+     * the first an <code>int</code>) through the cache, or null when the
+     * class declares none (the negative result is cached as well).
+     */
+    private static Method indexedWriteMethodOf(Class<?> clazz,
+        String methodName) {
+        String key = clazz.getName() + '#' + methodName;
+        Optional<Method> cached = INDEXED_WRITE_METHODS.get(key);
+        if (cached != null) {
+            return cached.orElse(null);
+        }
+        Method found = null;
+        for (Method method : clazz.getMethods()) {
             if (!method.getName().equals(methodName)
                 || method.getParameterCount() != 2
                 || !isIntParameter(method.getParameterTypes()[0])) {
                 continue;
             }
-            Object converted = convertFor(TypeDescriptor.valueOf(
-                StrutsConversionService.boxedType(
-                    method.getParameterTypes()[1])), value);
-            try {
-                method.invoke(target, segment.getIndex(), converted);
-            } catch (IllegalAccessException e) {
-                // not invocable: skipped silently
-            } catch (InvocationTargetException e) {
-                throw new IllegalStateException(e.getTargetException());
-            }
-            return;
+            found = method;
+            break;
         }
+        if (INDEXED_WRITE_METHODS.size() < MAX_CACHED_ENTRIES) {
+            INDEXED_WRITE_METHODS.putIfAbsent(key,
+                Optional.ofNullable(found));
+        }
+        return found;
     }
 
     private static boolean isIntParameter(Class<?> type) {

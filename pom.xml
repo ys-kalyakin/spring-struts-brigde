@@ -18,6 +18,7 @@
     <module>spring-struts1-tiles</module>
     <module>spring-struts1-starter</module>
     <module>spring-struts1-apps</module>
+    <module>spring-struts1-benchmarks</module>
   </modules>
 
   <properties>

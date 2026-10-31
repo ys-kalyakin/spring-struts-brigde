@@ -1,5 +1,7 @@
 package org.apache.struts.spring;
 
+import java.util.List;
+
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -46,6 +48,13 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
     private final StrutsInstanceResolver instanceResolver;
 
     private ServletContext servletContext;
+
+    /**
+     * The definition-forward resolvers resolved from the application
+     * context once on first use; an empty list is cached too (bean
+     * definitions registered later are not picked up).
+     */
+    private volatile List<DefinitionForwardResolver> definitionResolvers;
 
     public StrutsHandlerAdapter(ActionServlet actionServlet,
         StrutsInstanceResolver instanceResolver) {
@@ -347,19 +356,28 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
 
     /**
      * Offer the raw forward path to the registered
-     * {@link DefinitionForwardResolver} beans (if any).
+     * {@link DefinitionForwardResolver} beans (if any). The resolver list
+     * is resolved from the application context once (an empty list is
+     * cached as well) instead of scanning bean definitions on every
+     * forward.
      *
      * @return <code>true</code> if a resolver produced the response
      */
     protected boolean resolveDefinitionForward(String path,
         HttpServletRequest request, HttpServletResponse response)
         throws Exception {
-        ApplicationContext context = actionServlet.getApplicationContext();
-        if (context == null) {
-            return false;
+        List<DefinitionForwardResolver> resolvers = this.definitionResolvers;
+        if (resolvers == null) {
+            ApplicationContext context = actionServlet
+                .getApplicationContext();
+            if (context == null) {
+                return false;
+            }
+            resolvers = List.copyOf(context
+                .getBeansOfType(DefinitionForwardResolver.class).values());
+            this.definitionResolvers = resolvers;
         }
-        for (DefinitionForwardResolver resolver : context
-            .getBeansOfType(DefinitionForwardResolver.class).values()) {
+        for (DefinitionForwardResolver resolver : resolvers) {
             if (resolver.resolveForward(path, request, response)) {
                 return true;
             }
