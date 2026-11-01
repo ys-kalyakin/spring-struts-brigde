@@ -54,6 +54,25 @@ The form SHALL be placed in the scope given by the mapping's `scope` attribute (
 - **WHEN** the mapping declares `scope="session"` and the form is created for the request
 - **THEN** the form is available as a session attribute and persists between requests within the session
 
+### Requirement: Serialized form lifecycle for session-scoped forms
+For a session-scoped form, acquiring or creating the session instance, running `reset()`, and populating it (regular or multipart, including multipart handler attachment) SHALL be serialized per session: concurrent requests of one session SHALL NOT interleave these steps, and a concurrent create SHALL NOT replace an instance being populated. Validation and execution SHALL run outside the window (classic shared-state semantics). Request-scope forms SHALL NOT be serialized.
+
+#### Scenario: Concurrent populate of a session-scoped form does not interleave
+- **WHEN** two concurrent POST requests of the same session arrive at a mapping with a session-scoped form, and the form's `reset()` and property setters record their calling threads
+- **THEN** for each request, reset and populate run atomically with respect to the other request: no setter of one request runs between the reset and the last setter of the other
+
+#### Scenario: Concurrent multipart and regular request on a session form
+- **WHEN** a multipart POST and a regular POST of the same session arrive concurrently at mappings sharing a session-scoped form
+- **THEN** one request's reset/populate (including multipart parsing and handler attachment) completes before the other's begins, and no request ends up with another request's multipart handler
+
+#### Scenario: Concurrent creation does not double-store
+- **WHEN** two concurrent requests of the same session are the first to use a session-scoped form
+- **THEN** exactly one instance is created and stored in the session, and both requests proceed with that single instance
+
+#### Scenario: Request-scope forms stay parallel
+- **WHEN** two concurrent requests (same or different sessions) arrive at mappings with request-scoped forms
+- **THEN** each request populates its own instance without serialization, as before
+
 ### Requirement: Validation by the validate flag
 With `validate="true"`, form validation SHALL run before the action: detected errors lead to a transition to the `input` page without invoking the action, and the errors SHALL be available in the request. With `validate="false"`, validation SHALL NOT run.
 

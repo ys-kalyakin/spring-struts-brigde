@@ -37,7 +37,7 @@ A form SHALL be a Spring bean that creates a new instance for every request: the
 - **THEN** the class is automatically registered in the context as a prototype, the instance is created by Spring, dependencies are injected, and populate proceeds as before
 
 ### Requirement: Priority of explicit registration
-If a form or action class is explicitly registered by the user in Spring (component scan, Java or XML configuration), the engine SHALL use the user's bean definition as is: auto-registration does not replace it, and the scope and name of the user's bean are respected.
+If a form or action class is explicitly registered by the user in Spring (component scan, Java or XML configuration), the engine SHALL use the user's bean definition as is: auto-registration does not replace it, and the scope and name of the user's bean are respected — with one exception for forms: a user-registered form in singleton scope SHALL fail startup (see the no-singleton-form-beans requirement). Actions SHALL keep working as singletons.
 
 #### Scenario: User's action bean takes priority
 - **WHEN** an action class is registered by the user as a bean, and the same class is declared in struts-config
@@ -46,6 +46,25 @@ If a form or action class is explicitly registered by the user in Spring (compon
 #### Scenario: User's form scope is respected
 - **WHEN** the user has registered a form with session scope, and the mapping declares session scope
 - **THEN** a single instance of the user's bean is used in the session
+
+#### Scenario: User's singleton form is rejected
+- **WHEN** the user has registered a form with singleton scope
+- **THEN** startup fails instead of silently serving the same instance to every session
+
+### Requirement: No singleton form beans
+A form type explicitly registered by the user with singleton Spring scope SHALL fail application startup with an error naming the form type and the user's bean: a singleton form instance is shared across all sessions and users, which the form lifecycle (fresh state per request or per session) never assumes. Form beans in prototype, request, or session scope SHALL be accepted as before. Automatic engine registration of forms SHALL remain prototype.
+
+#### Scenario: Singleton user form fails startup
+- **WHEN** the user registers a form type as a plain Spring bean (singleton scope) and the type is declared as a form-bean in struts-config
+- **THEN** application startup fails with an error identifying the form type and the singleton bean registration, instead of running with a cross-session shared instance
+
+#### Scenario: Prototype user form is accepted
+- **WHEN** the user registers a form type with prototype scope
+- **THEN** startup succeeds and each request receives a fresh instance from that definition
+
+#### Scenario: Session-scoped user form is accepted
+- **WHEN** the user registers a form type with session scope and the mapping declares session scope
+- **THEN** startup succeeds and a single instance of the user's bean is used in the session, with the serialized form lifecycle protection applied
 
 ### Requirement: Spring bean lifecycle
 Form and action instances SHALL go through the full Spring bean lifecycle: `@PostConstruct` callbacks are invoked before the first use of the instance, `BeanPostProcessor`s are applied, and `@PreDestroy` callbacks are invoked at context shutdown for singleton instances.
