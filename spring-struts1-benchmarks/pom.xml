@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>io.github.ys-kalyakin.springstruts</groupId>
     <artifactId>spring-struts1-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
   </parent>
 
   <artifactId>spring-struts1-benchmarks</artifactId>
@@ -89,30 +87,28 @@
                 </goals>
                 <configuration>
                   <target>
-                    <java classname="org.openjdk.jmh.Main" fork="true"
-                      failonerror="true">
+                    <java classname="org.openjdk.jmh.Main" fork="true" failonerror="true">
                       <classpath>
-                        <path refid="maven.runtime.classpath"/>
-                        <pathelement
-                          path="${project.build.outputDirectory}"/>
+                        <path refid="maven.runtime.classpath" />
+                        <pathelement path="${project.build.outputDirectory}" />
                       </classpath>
-                      <arg value="${jmh.include}"/>
-                      <arg value="-f"/>
-                      <arg value="${jmh.forks}"/>
-                      <arg value="-wi"/>
-                      <arg value="${jmh.warmupIterations}"/>
-                      <arg value="-i"/>
-                      <arg value="${jmh.measurementIterations}"/>
-                      <arg value="-r"/>
-                      <arg value="1"/>
-                      <arg value="-w"/>
-                      <arg value="1"/>
-                      <arg value="-foe"/>
-                      <arg value="true"/>
-                      <arg value="-rf"/>
-                      <arg value="json"/>
-                      <arg value="-rff"/>
-                      <arg value="${jmh.results}"/>
+                      <arg value="${jmh.include}" />
+                      <arg value="-f" />
+                      <arg value="${jmh.forks}" />
+                      <arg value="-wi" />
+                      <arg value="${jmh.warmupIterations}" />
+                      <arg value="-i" />
+                      <arg value="${jmh.measurementIterations}" />
+                      <arg value="-r" />
+                      <arg value="1" />
+                      <arg value="-w" />
+                      <arg value="1" />
+                      <arg value="-foe" />
+                      <arg value="true" />
+                      <arg value="-rf" />
+                      <arg value="json" />
+                      <arg value="-rff" />
+                      <arg value="${jmh.results}" />
                     </java>
                   </target>
                 </configuration>
