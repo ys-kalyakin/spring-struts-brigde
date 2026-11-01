@@ -31,8 +31,8 @@
 
 ## 6. Portal setup, smoke publication and first release
 
-- [ ] 6.1 Generate a Central Portal user token and add it as the `CENTRAL_USERNAME`/`CENTRAL_TOKEN` repository secrets. Verify: the secrets are listed in repository settings (manual check).
-- [ ] 6.2 Generate a GPG key pair (per design D3 fallback: the Portal has no server-side signing): `gpg --full-generate-key`, publish the public key to `keyserver.ubuntu.com` / `keys.openpgp.org`, and add the repository secrets `GPG_PRIVATE_KEY` (output of `gpg --armor --export-secret-keys <keyid>`) and `GPG_PASSPHRASE`. Verify: the secrets are listed in repository settings and `gpg --keyserver keyserver.ubuntu.com --recv-keys <keyid>` returns the public key (manual checks).
+- [x] 6.1 Generate a Central Portal user token and add it as the `CENTRAL_USERNAME`/`CENTRAL_TOKEN` repository secrets. Verify: the secrets are listed in repository settings (manual check).
+- [x] 6.2 Generate a GPG key pair (per design D3 fallback: the Portal has no server-side signing): `gpg --full-generate-key`, publish the public key to `keyserver.ubuntu.com` / `keys.openpgp.org`, and add the repository secrets `GPG_PRIVATE_KEY` (output of `gpg --armor --export-secret-keys <keyid>`) and `GPG_PASSPHRASE`. Verify: the secrets are listed in repository settings and `gpg --keyserver keyserver.ubuntu.com --recv-keys <keyid>` returns the public key (manual checks).
 - [ ] 6.3 Snapshot smoke test: push to `main`, confirm the `publish-snapshots` job publishes `io.github.ys-kalyakin.springstruts:*:0.1.0-SNAPSHOT`. Verify: the five artifacts are resolvable from the Central Portal snapshot repository.
 - [ ] 6.4 Cut the first release (maintainer confirms timing): `./mvnw -B release:prepare`, confirm the `v0.1.0` CI run publishes. Verify: `io.github.ys-kalyakin.springstruts:spring-struts1-starter:0.1.0` (with sources and javadoc classifiers) is visible on central.sonatype.com and resolves in a fresh local build.
 
