@@ -4,13 +4,37 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-parent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>spring-struts1-parent</name>
   <description>Struts 1 recreated on Spring MVC — drop-in replacement for weblegacy/struts1 1.5.x (jakarta)</description>
+
+  <url>https://github.com/ys-kalyakin/spring-struts-brigde</url>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>ys-kalyakin</id>
+      <name>ys-kalyakin</name>
+      <email>ys.kalyakin@gmail.com</email>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/ys-kalyakin/spring-struts-brigde.git</connection>
+    <developerConnection>scm:git:git@github.com:ys-kalyakin/spring-struts-brigde.git</developerConnection>
+    <url>https://github.com/ys-kalyakin/spring-struts-brigde</url>
+  </scm>
 
   <modules>
     <module>spring-struts1-core</module>
@@ -46,6 +70,10 @@
     <!-- maven-checkstyle-plugin 3.6.0 bundles Checkstyle 9.3; run the current stable 10.x line instead -->
     <checkstyle.version>10.26.1</checkstyle.version>
     <spotbugs-plugin.version>4.10.5.0</spotbugs-plugin.version>
+    <central-publishing-plugin.version>0.11.0</central-publishing-plugin.version>
+    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+    <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+    <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -190,6 +218,33 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${maven-source-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${maven-javadoc-plugin.version}</version>
+          <configuration>
+            <!-- Ported Struts 1 javadoc is 2001-era HTML4 (uppercase headings,
+                 align attributes, raw <base>/<html> in text): ~55 doclint
+                 errors across the modules. HTML5-strict doclint is disabled
+                 for the legacy port; a doclint-strict pass would be a
+                 dedicated documentation change. -->
+            <doclint>none</doclint>
+            <quiet>true</quiet>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>${maven-release-plugin.version}</version>
+          <configuration>
+            <tagNameFormat>v@{project.version}</tagNameFormat>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -201,27 +256,39 @@
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
+      <!-- Maven Central publishing channel (Central Portal). Declared here in
+           full because <extensions> must be active where the plugin runs.
+           Credentials come from a settings.xml server entry with id "central"
+           (CI supplies it via setup-java). See README, section "Publishing". -->
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>${central-publishing-plugin.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+          <autoPublish>true</autoPublish>
+          <waitUntil>published</waitUntil>
+          <!-- Demo applications and benchmarks are never published -->
+          <excludeArtifacts>
+            <excludeArtifact>spring-struts1-apps</excludeArtifact>
+            <excludeArtifact>spring-struts1-blank</excludeArtifact>
+            <excludeArtifact>spring-struts1-examples</excludeArtifact>
+            <excludeArtifact>spring-struts1-cookbook</excludeArtifact>
+            <excludeArtifact>spring-struts1-mailreader-dao</excludeArtifact>
+            <excludeArtifact>spring-struts1-mailreader</excludeArtifact>
+            <excludeArtifact>spring-struts1-demo</excludeArtifact>
+            <excludeArtifact>spring-struts1-benchmarks</excludeArtifact>
+          </excludeArtifacts>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
-  <!-- Publication channel is external configuration: the repositories are
-       supplied through properties when this profile is active
-       (-Dpublication.release.url, -Dpublication.snapshot.url), so the build
-       itself carries no repository coordinates. See README, section
-       "Публикация". -->
-  <profiles>
-    <profile>
-      <id>publication</id>
-      <distributionManagement>
-        <repository>
-          <id>publication-release</id>
-          <url>${publication.release.url}</url>
-        </repository>
-        <snapshotRepository>
-          <id>publication-snapshot</id>
-          <url>${publication.snapshot.url}</url>
-        </snapshotRepository>
-      </distributionManagement>
-    </profile>
-  </profiles>
+  <!-- Publication goes through the Maven Central Portal: the
+       central-publishing-maven-plugin (see <build><plugins>) routes -SNAPSHOT
+       deploys to the portal snapshot repository and release deploys to the
+       portal for validation and publishing. Credentials live in CI secrets or
+       a local settings.xml server entry with id "central". See README,
+       section "Publishing". -->
 </project>

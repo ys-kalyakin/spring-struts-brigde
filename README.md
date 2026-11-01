@@ -23,7 +23,7 @@ A recreation of the **Struts 1** framework on top of modern Spring. An existing 
 
 ## Modules
 
-Group `org.springstruts`:
+Group `io.github.ys-kalyakin.springstruts`:
 
 | Artifact | Purpose |
 |---|---|
@@ -40,18 +40,18 @@ Add the starter (it brings the whole engine) and the tag libraries your JSPs use
 
 ```xml
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-starter</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-taglib</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
 <!-- Only if you use Tiles: -->
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-tiles</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
@@ -78,6 +78,47 @@ To run the checks alone:
 ```
 
 Generated code (the ANTLR validwhen parser, JMH-generated benchmark classes) is not analyzed.
+
+## Publishing
+
+Library artifacts are published to [Maven Central](https://central.sonatype.com/) under the group `io.github.ys-kalyakin.springstruts`:
+
+| Artifact | Kind |
+|---|---|
+| `spring-struts1-parent` | pom (parent) |
+| `spring-struts1-core` | jar |
+| `spring-struts1-taglib` | jar |
+| `spring-struts1-tiles` | jar |
+| `spring-struts1-starter` | jar |
+
+Each jar is published with `sources` and `javadoc` classifiers and signed by the Central Portal. The demo applications and the benchmarks module are not published.
+
+### Consuming
+
+Release artifacts resolve from Maven Central with no extra repository configuration. Development (`-SNAPSHOT`) builds resolve from the Central Portal snapshot repository — add this repository while on a snapshot version and drop it once you use a release:
+
+```xml
+<repository>
+  <id>central-portal-snapshots</id>
+  <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+  <releases><enabled>false</enabled></releases>
+  <snapshots><enabled>true</enabled></snapshots>
+</repository>
+```
+
+### Snapshot policy
+
+Every successful build of `main` (the CI `publish-snapshots` job) refreshes the `-SNAPSHOT` artifacts in the portal snapshot repository. A failing build never updates snapshots, and release versions are never published to the snapshot repository.
+
+### Release runbook
+
+Prerequisites (one-time): the repository secrets `CENTRAL_USERNAME` and `CENTRAL_TOKEN` (a Central Portal user token), and a portal-generated signing key pair in the Central Portal settings.
+
+Cutting a release:
+
+1. On a clean, up-to-date `main` run `./mvnw -B release:prepare` — it runs the full verification build, sets the release version, pushes the tag `v<version>` and bumps the working version to the next `-SNAPSHOT`.
+2. The pushed tag triggers the `Release` workflow, which runs the full build and publishes to Maven Central; the job completes only after the portal has published the bundle.
+3. Verify the artifacts on [central.sonatype.com](https://central.sonatype.com/) — the released version is immutable; any fix ships as a new version.
 
 ## Notes
 

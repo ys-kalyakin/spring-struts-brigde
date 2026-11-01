@@ -4,18 +4,18 @@ Add the starter (it brings the whole engine) and the tag libraries your JSPs use
 
 ```xml
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-starter</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-taglib</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
 <!-- Only if you use Tiles: -->
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-tiles</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>

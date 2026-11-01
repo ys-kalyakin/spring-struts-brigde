@@ -1,6 +1,6 @@
 # Modules
 
-All artifacts are published under the group `org.springstruts`.
+All artifacts are published under the group `io.github.ys-kalyakin.springstruts`.
 
 | Artifact | Purpose |
 |---|---|

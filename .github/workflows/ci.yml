@@ -117,3 +117,41 @@ jobs:
             spring-struts1-apps/mailreader/target/*.war
           if-no-files-found: error
           retention-days: 7
+
+  publish-snapshots:
+    name: Publish snapshots to Maven Central
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: build
+    # Serializes publications; a deploy must never be cancelled mid-upload
+    concurrency:
+      group: publish-snapshots
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_TOKEN
+
+      - name: Publish snapshots
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+        run: |
+          project_version=$(./mvnw -q -DforceStdout org.apache.maven.plugins:maven-help-plugin:3.5.1:evaluate -Dexpression=project.version)
+          case "$project_version" in
+            *-SNAPSHOT)
+              ./mvnw -B -ntp deploy
+              ;;
+            *)
+              echo "Version ${project_version} is not a snapshot; skipping snapshot publication."
+              ;;
+          esac

@@ -15,7 +15,7 @@ that the demo is reproduced strictly by the steps of this guide.
 ## Step 1. Swap the dependency
 
 Remove the Struts 1 artifacts (weblegacy: `struts1-core`, `struts1-taglib`,
-`struts1-tiles` and companions) and add the `org.springstruts` artifacts:
+`struts1-tiles` and companions) and add the `io.github.ys-kalyakin.springstruts` artifacts:
 
 | Artifact | What it replaces | When required |
 |---|---|---|
@@ -32,11 +32,11 @@ The minimal set for an application with JSPs:
 
 ```xml
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-starter</artifactId>
 </dependency>
 <dependency>
-  <groupId>org.springstruts</groupId>
+  <groupId>io.github.ys-kalyakin.springstruts</groupId>
   <artifactId>spring-struts1-taglib</artifactId>
 </dependency>
 ```
