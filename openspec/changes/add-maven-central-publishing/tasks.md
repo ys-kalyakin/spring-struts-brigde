@@ -22,7 +22,7 @@
 
 - [x] 4.1 Append a `publish-snapshots` job to `ci.yml`: `needs: build`, runs `./mvnw -B -ntp deploy` with `CENTRAL_TOKEN`, guarded so it executes only when the project version ends in `-SNAPSHOT`, with its own concurrency key and timeout. Verify: workflow YAML parses (`actionlint` or `gh workflow view`) and the job is skipped for a non-SNAPSHOT version locally via `mvn deploy -Dskip`-style dry check.
 - [x] 4.2 Add `release.yml` triggered on `push: tags: v*`: full `./mvnw -B -ntp verify` then `deploy` with `CENTRAL_TOKEN`, minimal permissions, timeout. Verify: `actionlint`/`gh workflow view` parses both workflows and the trigger filter matches `v0.1.0` but not `0.1.0`.
-- [ ] 4.3 Configure `maven-release-plugin` in the root pom (`tagNameFormat v@{project.version}`). Verify: `./mvnw -B -q release:prepare -DdryRun=true` completes on a clean tree and proposes tag `v0.1.0`.
+- [x] 4.3 Configure `maven-release-plugin` in the root pom (`tagNameFormat v@{project.version}`). Verify: `./mvnw -B -q release:prepare -DdryRun=true` completes on a clean tree and proposes tag `v0.1.0`.
 
 ## 5. Publishing documentation
 
