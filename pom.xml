@@ -74,6 +74,7 @@
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -245,6 +246,27 @@
             <tagNameFormat>v@{project.version}</tagNameFormat>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${maven-gpg-plugin.version}</version>
+          <configuration>
+            <!-- batch-friendly: the passphrase comes from settings/env, no pinentry prompt -->
+            <gpgArguments>
+              <arg>--pinentry-mode</arg>
+              <arg>loopback</arg>
+            </gpgArguments>
+          </configuration>
+          <executions>
+            <execution>
+              <id>sign-artifacts</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>sign</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -285,10 +307,22 @@
     </plugins>
   </build>
 
-  <!-- Publication goes through the Maven Central Portal: the
-       central-publishing-maven-plugin (see <build><plugins>) routes -SNAPSHOT
-       deploys to the portal snapshot repository and release deploys to the
-       portal for validation and publishing. Credentials live in CI secrets or
-       a local settings.xml server entry with id "central". See README,
-       section "Publishing". -->
+  <!-- Signing: Maven Central requires PGP signatures, and the Central Portal
+       does not offer server-side signing (recorded in design D3), so artifacts
+       are signed with the maintainer's GPG key. Kept behind the "release"
+       profile so everyday builds and release:prepare's verification run do
+       not require GPG; CI passes -Prelease when deploying releases. -->
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

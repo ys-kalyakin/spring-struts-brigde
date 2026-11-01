@@ -91,7 +91,7 @@ Library artifacts are published to [Maven Central](https://central.sonatype.com/
 | `spring-struts1-tiles` | jar |
 | `spring-struts1-starter` | jar |
 
-Each jar is published with `sources` and `javadoc` classifiers and signed by the Central Portal. The demo applications and the benchmarks module are not published.
+Each jar is published with `sources` and `javadoc` classifiers and signed with the maintainer's GPG key. The demo applications and the benchmarks module are not published.
 
 ### Consuming
 
@@ -112,7 +112,10 @@ Every successful build of `main` (the CI `publish-snapshots` job) refreshes the 
 
 ### Release runbook
 
-Prerequisites (one-time): the repository secrets `CENTRAL_USERNAME` and `CENTRAL_TOKEN` (a Central Portal user token), and a portal-generated signing key pair in the Central Portal settings.
+Prerequisites (one-time):
+
+- the repository secrets `CENTRAL_USERNAME` and `CENTRAL_TOKEN` (a Central Portal user token from your [central.sonatype.com](https://central.sonatype.com/) account);
+- a GPG key pair for signing (the Portal does not offer server-side signing): `gpg --full-generate-key`, then publish the public key — `gpg --keyserver keyserver.ubuntu.com --send-keys <keyid>` — and add the repository secrets `GPG_PRIVATE_KEY` (output of `gpg --armor --export-secret-keys <keyid>`) and `GPG_PASSPHRASE`.
 
 Cutting a release:
 

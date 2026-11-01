@@ -17,6 +17,7 @@
 - [x] 3.3 Add `maven-javadoc-plugin` (jar goal, doclint disabled for the ported legacy HTML — see design D7) in root `pluginManagement`, activate it in the same four modules. Verify: the same build produces `*-javadoc.jar` in the four targets and the build does not fail on javadoc warnings.
 - [x] 3.4 Remove the `publication` profile from the root pom. Verify: `./mvnw -B help:effective-pom | grep -c "publication-release"` prints `0`.
 - [x] 3.5 Full build with quality gates on the toolchain change. Verify: `./mvnw -B -ntp verify` passes.
+- [x] 3.6 Add `maven-gpg-plugin` in root `pluginManagement` and a `release` profile activating it (portal-side signing unavailable — fallback per design D3). Verify: `./mvnw -B -N help:effective-pom -Prelease` shows the plugin activation (`sign-artifacts` execution appears twice vs once in pluginManagement-only without the profile), so everyday builds and `release:prepare` need no GPG.
 
 ## 4. CI workflows and release plugin
 
@@ -30,8 +31,8 @@
 
 ## 6. Portal setup, smoke publication and first release
 
-- [ ] 6.1 Generate a Central Portal user token and add it as the `CENTRAL_TOKEN` repository secret. Verify: the secret is listed in repository settings (manual check).
-- [ ] 6.2 Generate the portal signing key pair in the Central Portal settings. Verify: the portal shows an active signing key (manual check).
+- [ ] 6.1 Generate a Central Portal user token and add it as the `CENTRAL_USERNAME`/`CENTRAL_TOKEN` repository secrets. Verify: the secrets are listed in repository settings (manual check).
+- [ ] 6.2 Generate a GPG key pair (per design D3 fallback: the Portal has no server-side signing): `gpg --full-generate-key`, publish the public key to `keyserver.ubuntu.com` / `keys.openpgp.org`, and add the repository secrets `GPG_PRIVATE_KEY` (output of `gpg --armor --export-secret-keys <keyid>`) and `GPG_PASSPHRASE`. Verify: the secrets are listed in repository settings and `gpg --keyserver keyserver.ubuntu.com --recv-keys <keyid>` returns the public key (manual checks).
 - [ ] 6.3 Snapshot smoke test: push to `main`, confirm the `publish-snapshots` job publishes `io.github.ys-kalyakin.springstruts:*:0.1.0-SNAPSHOT`. Verify: the five artifacts are resolvable from the Central Portal snapshot repository.
 - [ ] 6.4 Cut the first release (maintainer confirms timing): `./mvnw -B release:prepare`, confirm the `v0.1.0` CI run publishes. Verify: `io.github.ys-kalyakin.springstruts:spring-struts1-starter:0.1.0` (with sources and javadoc classifiers) is visible on central.sonatype.com and resolves in a fresh local build.
 
