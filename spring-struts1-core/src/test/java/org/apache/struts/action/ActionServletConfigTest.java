@@ -110,6 +110,21 @@ class ActionServletConfigTest {
     }
 
     @Test
+    void unsupportedProcessorClassFailsStartupWithProperty() {
+        MockServletContext sc = servletContextWithConfigs(
+            "struts-config-processor.xml");
+        Exception e = assertThrows(Exception.class,
+            () -> initServlet("/WEB-INF/struts-config-processor.xml", sc));
+        String message = e.getMessage();
+        assertTrue(message.contains("processorClass"),
+            "Error must name the property: " + message);
+        assertTrue(message.contains("com.example.SecureRequestProcessor"),
+            "Error must name the offending value: " + message);
+        assertTrue(message.contains("The default module"),
+            "Error must name the module: " + message);
+    }
+
+    @Test
     void pluginInitializedWithPropertiesAndDestroy() throws Exception {
         MockServletContext sc = servletContextWithConfigs(
             "struts-config-a.xml");

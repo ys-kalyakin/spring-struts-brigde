@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.4//EN"
+          "http://struts.apache.org/dtds/struts-config_1_4.dtd">
+
+<struts-config>
+
+    <controller processorClass="org.apache.struts.tiles.TilesRequestProcessor"/>
+
+    <form-beans>
+        <form-bean name="testForm"
+                   type="org.apache.struts.action.DynaActionForm">
+            <form-property name="name" type="java.lang.String"/>
+        </form-bean>
+    </form-beans>
+
+    <action-mappings>
+        <action path="/welcome"
+                type="org.apache.struts.spring.boot.TestAction"
+                name="testForm"
+                scope="request">
+            <forward name="success" path="/WEB-INF/jsp/welcome.jsp"/>
+        </action>
+    </action-mappings>
+
+    <message-resources parameter="test-messages"/>
+
+</struts-config>

@@ -29,10 +29,12 @@ import org.apache.struts.Globals;
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.DynaActionForm;
+import org.apache.struts.config.ControllerConfigValidator;
 import org.apache.struts.config.MessageResourcesConfig;
 import org.apache.struts.config.ModuleConfig;
 import org.apache.struts.config.ModuleConfigFactory;
 import org.apache.struts.config.StrutsConfigParser;
+import org.apache.struts.config.UnsupportedControllerConfigException;
 
 /**
  * Registers the types declared in <code>struts-config.xml</code> as Spring
@@ -204,6 +206,11 @@ public class StrutsEngineRegistrar
             } catch (ServletException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
+        }
+        try {
+            ControllerConfigValidator.validate(module);
+        } catch (UnsupportedControllerConfigException e) {
+            throw new IllegalStateException(e.getMessage(), e);
         }
         modules.put(prefix, module);
     }

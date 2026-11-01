@@ -145,6 +145,33 @@ make the classes Spring beans, they do not replace the configuration.
   Tomcat may drop out of the assembled WAR. Let Tomcat come from
   `spring-boot-starter-tomcat`.
 
+## Functional limitations
+
+The engine implements the classic `<controller>` configuration partially.
+To keep a migration honest, startup validates every module's `<controller>`
+against what the engine implements: a configuration that relies on an
+unimplemented setting fails the startup with an actionable error instead of
+silently skipping the configured logic.
+
+| `<controller>` setting | Treatment | Why |
+|---|---|---|
+| `processorClass` other than `org.apache.struts.action.RequestProcessor` or `org.apache.struts.tiles.TilesRequestProcessor` | **startup error** | A custom request processor's logic (authentication, audit, output post-processing) would silently not run |
+| `catalog` / `command` other than the classic defaults (`struts` / `servlet-standard`) | **startup error** | commons-chain configuration has no meaning on the engine |
+| `bufferSize` other than the classic default (`4096`) | **warning**, the application starts | a tuning knob with no implemented effect; uploads use the container's multipart settings |
+
+`TilesRequestProcessor` is accepted because the engine implements
+tiles-forward behavior natively. Every other controller setting — the
+multipart limits, `locale`, `contentType`, `nocache`, the forward/page
+patterns — is honored.
+
+**Migrating a custom request processor.** When the startup error names your
+`processorClass`, re-express the processor's `process*` overrides with the
+Spring mechanisms before removing the attribute: request-level logic
+(authentication, headers, audit) as a servlet filter or a Spring MVC
+interceptor, action-level logic in the action bean itself, and the remaining
+processing (populate, validation, exception handling) is already provided by
+the engine.
+
 ## Checking against the demo
 
 The demo

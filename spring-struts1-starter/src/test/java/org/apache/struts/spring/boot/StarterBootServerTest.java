@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -78,6 +79,40 @@ class StarterBootServerTest {
             assertEquals(200, response.statusCode());
             assertTrue(response.body().contains("form-name=PathMapped"),
                 "Path-mapped requests route with the same lifecycle");
+        }
+    }
+
+    @Test
+    void unsupportedProcessorClassFailsApplicationStartup() {
+        Exception failure = assertThrows(Exception.class,
+            () -> new SpringApplication(App.class).run("--server.port=0",
+                "--spring.struts1.config"
+                    + "=classpath:struts-config-unsupported-processor.xml"));
+
+        StringBuilder messages = new StringBuilder();
+        Throwable cause = failure;
+        while (cause != null) {
+            messages.append(cause.getMessage()).append(' ');
+            cause = cause.getCause();
+        }
+        assertTrue(messages.toString().contains("processorClass"),
+            "Startup failure must name the property: " + messages);
+        assertTrue(
+            messages.toString().contains("com.example.SecureRequestProcessor"),
+            "Startup failure must name the offending value: " + messages);
+    }
+
+    @Test
+    void tilesProcessorClassStarts() throws Exception {
+        try (ConfigurableApplicationContext context = new SpringApplication(
+                App.class).run("--server.port=0",
+                "--spring.struts1.config"
+                    + "=classpath:struts-config-tiles-processor.xml")) {
+            String base = baseUrl(context);
+            HttpResponse<String> response = get(base + "/welcome.do?name=Tiles");
+            assertEquals(200, response.statusCode(), response.body());
+            assertTrue(response.body().contains("form-name=Tiles"),
+                "The configured Tiles processor class must start the engine");
         }
     }
 

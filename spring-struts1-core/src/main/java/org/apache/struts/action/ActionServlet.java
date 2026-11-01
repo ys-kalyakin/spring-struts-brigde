@@ -24,10 +24,12 @@ import org.apache.struts.config.FormBeanConfig;
 import org.apache.struts.config.FormPropertyConfig;
 import org.apache.struts.config.ForwardConfig;
 import org.apache.struts.config.MessageResourcesConfig;
+import org.apache.struts.config.ControllerConfigValidator;
 import org.apache.struts.config.ModuleConfig;
 import org.apache.struts.config.ModuleConfigFactory;
 import org.apache.struts.config.PlugInConfig;
 import org.apache.struts.config.StrutsConfigParser;
+import org.apache.struts.config.UnsupportedControllerConfigException;
 import org.apache.struts.spring.EnvironmentServletConfig;
 import org.apache.struts.util.MessageResources;
 import org.apache.struts.util.MessageResourcesFactory;
@@ -262,6 +264,8 @@ public class ActionServlet extends HttpServlet
             parseModuleConfigFile(url, mconfig);
         }
 
+        validateControllerConfig(mconfig);
+
         // Process config inheritance ("extends") before freezing: form
         // beans, then global forwards/exceptions, then actions (whose local
         // forwards/exceptions are processed in cascade).
@@ -289,6 +293,20 @@ public class ActionServlet extends HttpServlet
     protected void parseModuleConfigFile(URL url, ModuleConfig mconfig)
         throws ServletException {
         StrutsConfigParser.parse(url, mconfig, validating);
+    }
+
+    /**
+     * Validate the module's controller configuration against the controller
+     * properties this engine implements, failing startup with an actionable
+     * error for settings that would be silently skipped.
+     */
+    protected void validateControllerConfig(ModuleConfig mconfig)
+        throws ServletException {
+        try {
+            ControllerConfigValidator.validate(mconfig);
+        } catch (UnsupportedControllerConfigException e) {
+            throw new ServletException(e.getMessage(), e);
+        }
     }
 
     // ------------------------------------------------- config inheritance

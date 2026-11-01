@@ -33,6 +33,9 @@ class StrutsEngineRegistrarTest {
     private static final String FIXTURE_CONFIG =
         "src/test/resources/registrar/struts-config.xml";
 
+    private static final String UNSUPPORTED_CONTROLLER_CONFIG =
+        "src/test/resources/registrar/struts-config-unsupported-controller.xml";
+
     private DefaultListableBeanFactory registryWithRegistrar(
         GenericWebApplicationContext context,
         MockServletContext servletContext) {
@@ -190,6 +193,36 @@ class StrutsEngineRegistrarTest {
             () -> registrar.postProcessBeanDefinitionRegistry(
                 (DefaultListableBeanFactory) context.getBeanFactory()),
             "Two explicit registrations of one type must fail the startup");
+        context.close();
+    }
+
+    @Test
+    void unsupportedProcessorClassFailsTheStartup() {
+        GenericWebApplicationContext context =
+            new GenericWebApplicationContext();
+        StrutsEngineRegistrar registrar = new StrutsEngineRegistrar() {
+            @Override
+            protected URL resourceUrl(String path)
+                throws MalformedURLException {
+                return Path.of(UNSUPPORTED_CONTROLLER_CONFIG).toUri().toURL();
+            }
+        };
+        MockServletContext servletContext = new MockServletContext();
+        ServletConfig servletConfig = new MockServletConfig(servletContext);
+        ((MockServletConfig) servletConfig).addInitParameter("config",
+            UNSUPPORTED_CONTROLLER_CONFIG);
+        registrar.setServletConfig(servletConfig);
+
+        IllegalStateException thrown = assertThrows(
+            IllegalStateException.class,
+            () -> registrar.postProcessBeanDefinitionRegistry(
+                (DefaultListableBeanFactory) context.getBeanFactory()),
+            "An unsupported processorClass must fail the startup");
+        assertTrue(thrown.getMessage().contains("processorClass"),
+            "Error must name the property: " + thrown.getMessage());
+        assertTrue(
+            thrown.getMessage().contains("com.example.SecureRequestProcessor"),
+            "Error must name the offending value: " + thrown.getMessage());
         context.close();
     }
 }
