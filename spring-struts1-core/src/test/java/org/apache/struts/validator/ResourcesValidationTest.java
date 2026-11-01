@@ -18,6 +18,7 @@ import org.apache.struts.action.ActionServlet;
 import org.apache.struts.config.FormBeanConfig;
 import org.apache.struts.config.FormPropertyConfig;
 import org.apache.struts.config.impl.ModuleConfigImpl;
+import org.apache.struts.util.RequestUtils;
 
 /**
  * Flow tests of the validator: the shipped validator-rules.xml plus a
@@ -198,6 +199,46 @@ class ResourcesValidationTest {
         full.setConfirm("clone");
         ActionErrors all = validate(full, mapping("testBean", null));
         assertTrue(all.size() > 0, "page 2 field must be validated");
+    }
+
+    @Test
+    void requestSuppliedPageCannotNarrowTheValidationScope() throws Exception {
+        // middleInitial is page="2"; the mapping intends to validate page 2
+        // (acceptPage=2). A request-supplied page=1 must not shrink the
+        // validated scope below the mapping's acceptPage: the page-2 field
+        // keeps being validated (CVE-2016-1182, determinePage clamp).
+        ValidatorFixtureForm form = new ValidatorFixtureForm();
+        form.setFirstName("Ivan");
+        form.setLastName("Petrov");
+        form.setZip("12345");
+        form.setConfirm("clone");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+        request.setParameter("page", "1");
+        RequestUtils.populate(form, request);
+        assertEquals(1, form.getPage(), "page stays populate-able");
+
+        ActionErrors errors = validate(form, mapping("testBean", 2));
+        assertTrue(errors.size() > 0,
+            "the page-2 field is still validated: the request-supplied "
+                + "page cannot narrow the scope");
+
+        // a request-supplied page above acceptPage may only widen the
+        // validated scope (classic behavior): every field is validated
+        ValidatorFixtureForm widened = new ValidatorFixtureForm();
+        widened.setFirstName("Ivan");
+        widened.setLastName("Petrov");
+        widened.setZip("12345");
+        widened.setConfirm("clone");
+        MockHttpServletRequest highPage = new MockHttpServletRequest();
+        highPage.setMethod("POST");
+        highPage.setParameter("page", "99");
+        RequestUtils.populate(widened, highPage);
+
+        ActionErrors widenedErrors = validate(widened, mapping("testBean", 1));
+        assertTrue(widenedErrors.size() > 0,
+            "a high page widens validation to all fields");
     }
 
     @Test

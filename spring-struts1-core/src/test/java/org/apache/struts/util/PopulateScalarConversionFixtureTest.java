@@ -1,6 +1,7 @@
 package org.apache.struts.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
@@ -205,18 +206,39 @@ class PopulateScalarConversionFixtureTest {
     }
 
     @Test
-    void classFileUrlParse() throws Exception {
-        ScalarForm form = populated("type", "java.lang.String", "file",
-            "/tmp/x", "url", "http://example.com/");
-        assertEquals(java.lang.String.class, form.getType());
+    void fileUrlParse() throws Exception {
+        ScalarForm form = populated("file", "/tmp/x", "url",
+            "http://example.com/");
         assertEquals(new java.io.File("/tmp/x"), form.getFile());
         assertEquals("http://example.com/", form.getUrl().toString());
     }
 
     @Test
-    void invalidClassAndUrlFail() {
-        populateFails("type", "no.such.Class");
+    void classPropertyIsNeverConvertedAndNeverLoadsTheClass() {
+        // even a valid class name must not load: request data cannot
+        // trigger class loading through populate. The probe records into a
+        // separate, already-initialized registry, so reading the registry
+        // does not initialize the probe itself.
+        populateFails("type", "java.lang.String");
+        populateFails("type",
+            "org.apache.struts.util.PopulateScalarConversionFixtureTest"
+                + "$LoadProbe");
+        assertFalse(ProbeLog.LOADED.contains("LoadProbe"),
+            "the named class was never loaded or initialized");
         populateFails("url", "::bad");
+    }
+
+    /** Probe class: only its static initializer touches the registry. */
+    public static class LoadProbe {
+        static {
+            ProbeLog.LOADED.add("LoadProbe");
+        }
+    }
+
+    /** Registry for probe side effects, safe to read from tests. */
+    public static class ProbeLog {
+        static final java.util.List<String> LOADED =
+            new java.util.ArrayList<>();
     }
 
     @Test

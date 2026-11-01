@@ -20,6 +20,7 @@ import jakarta.servlet.jsp.JspApplicationContext;
 import jakarta.servlet.jsp.JspFactory;
 
 import org.apache.struts.action.ActionServlet;
+import org.apache.struts.util.SessionFormMutexRegistry;
 
 /**
  * Initializes the {@link ActionServlet} facade with the init-params of the
@@ -35,6 +36,11 @@ public class StrutsEngineInitializer
     /** Servlet context attribute guarding the one-time EL registration. */
     public static final String BEAN_NAME_RESOLVER_KEY =
         "org.apache.struts.spring.beanNameResolver";
+
+    /** Servlet context attribute guarding the one-time mutex listener
+     * registration. */
+    public static final String SESSION_MUTEX_LISTENER_KEY =
+        "org.apache.struts.spring.sessionMutexListener";
 
     private static final Logger log =
         LoggerFactory.getLogger(StrutsEngineInitializer.class);
@@ -63,7 +69,32 @@ public class StrutsEngineInitializer
     public void afterPropertiesSet() throws ServletException {
         actionServlet.init(servletConfig);
         registerRequestContextFilter();
+        registerSessionFormMutexListener();
         registerBeanNameResolver();
+    }
+
+    /**
+     * Register the session form mutex listener programmatically so the
+     * per-session form mutexes (CVE-2016-1181 hardening) are evicted when a
+     * session is destroyed. Containers that forbid registration at this
+     * point are tolerated: entries then accumulate one per session id and a
+     * warning is logged.
+     */
+    private void registerSessionFormMutexListener() {
+        try {
+            ServletContext servletContext =
+                servletConfig.getServletContext();
+            if (servletContext
+                .getAttribute(SESSION_MUTEX_LISTENER_KEY) == null) {
+                servletContext.addListener(SessionFormMutexRegistry.class);
+                servletContext.setAttribute(SESSION_MUTEX_LISTENER_KEY,
+                    Boolean.TRUE);
+                log.debug("Session form mutex listener registered");
+            }
+        } catch (RuntimeException e) {
+            log.warn("Session form mutex listener was not registered: {}",
+                e.toString());
+        }
     }
 
     /**

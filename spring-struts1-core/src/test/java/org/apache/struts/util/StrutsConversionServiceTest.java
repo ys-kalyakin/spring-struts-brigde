@@ -111,13 +111,11 @@ class StrutsConversionServiceTest {
     }
 
     @Test
-    void classFileUrlConvertOrFail() throws Exception {
-        assertSame(String.class, convert("java.lang.String", Class.class));
+    void fileUrlConvertOrFail() throws Exception {
         assertEquals(new java.io.File("/tmp/x"),
             convert("/tmp/x", java.io.File.class));
         assertEquals("http://example.com/",
             convert("http://example.com/", java.net.URL.class).toString());
-        convertFails("no.such.Class", Class.class);
         convertFails("::bad", java.net.URL.class);
     }
 
@@ -127,6 +125,10 @@ class StrutsConversionServiceTest {
         convertFails("MONDAY", ScalarDay.class);
         convertFails("now", Calendar.class);
         convertFails("a", List.class);
+        // Class deliberately has no converter: request data must not be
+        // able to trigger class loading
+        convertFails("java.lang.String", Class.class);
+        convertFails("no.such.Class", Class.class);
     }
 
     enum ScalarDay { MONDAY }

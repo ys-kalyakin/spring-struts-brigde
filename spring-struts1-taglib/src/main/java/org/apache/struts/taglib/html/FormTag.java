@@ -21,7 +21,6 @@
 package org.apache.struts.taglib.html;
 
 import org.apache.struts.Globals;
-import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.config.ActionConfig;
@@ -524,15 +523,12 @@ public class FormTag extends SpringTagSupport {
         Object bean = pageContext.getAttribute(beanName, scope);
 
         if (bean == null) {
-            // New and improved - use the values from the action mapping
+            // New and improved - use the values from the action mapping;
+            // the created instance is reset and stored atomically by the
+            // engine (session-scope renders cannot race a populate)
             bean =
                 RequestUtils.createActionForm((HttpServletRequest) pageContext
                     .getRequest(), mapping, moduleConfig, servlet);
-
-            if (bean != null) {
-                ((ActionForm) bean).reset(mapping,
-                    (HttpServletRequest) pageContext.getRequest());
-            }
 
             if (bean == null) {
                 throw new JspException(messages.getMessage("formTag.create",

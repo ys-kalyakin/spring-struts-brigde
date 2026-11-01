@@ -7,6 +7,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.ServletException;
@@ -60,6 +61,18 @@ public class RequestUtils {
     protected static final Pattern CLASS_ACCESS_PATTERN = Pattern
         .compile("(.*\\.|^|.*|\\[('|\"))class(\\.|('|\")]|\\[).*",
             Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Reserved framework-internal property names that request parameters
+     * may never target (CVE-2006-1547, CVE-2016-1182): overwriting them
+     * through populate would hand framework or form-internal state to the
+     * request. The match is exact and case-sensitive, like the historical
+     * 1.2.9+ refusal; <code>page</code> is deliberately absent — populating
+     * it is how multi-page validation works.
+     */
+    static final Set<String> RESERVED_PROPERTY_NAMES = Set.of(
+        "servlet", "multipartRequestHandler", "resultValueMap",
+        "validatorResults", "dynaClass");
 
     /**
      * Create and return a fully-qualified class instance of the given name,
@@ -213,6 +226,13 @@ public class RequestUtils {
             // CVE-2014-0114 security problem patch
             if (CLASS_ACCESS_PATTERN.matcher(stripped).matches()) {
                 LOG.trace("ignore parameter: paramName={}", stripped);
+                continue;
+            }
+
+            // Reserved framework-internal property names (CVE-2006-1547,
+            // CVE-2016-1182) are never assignable from a request
+            if (RESERVED_PROPERTY_NAMES.contains(stripped)) {
+                LOG.trace("ignore reserved parameter: paramName={}", stripped);
                 continue;
             }
 
@@ -410,9 +430,12 @@ public class RequestUtils {
 
     /**
      * Create and return an <code>ActionForm</code> instance for the form
-     * bean configured on the given mapping, storing it under the mapping's
-     * scope and attribute name (used by the <code>html:form</code> tag to
-     * render form beans that do not exist yet).
+     * bean configured on the given mapping, resetting it and storing it
+     * under the mapping's scope and attribute name (used by the
+     * <code>html:form</code> tag to render form beans that do not exist
+     * yet). For session scope the reset and the store run under the
+     * session's form mutex (CVE-2016-1181), so a render cannot interleave
+     * with a concurrent request populating the stored instance.
      */
     public static ActionForm createActionForm(HttpServletRequest request,
         org.apache.struts.action.ActionMapping mapping,
@@ -429,19 +452,38 @@ public class RequestUtils {
         if (config == null) {
             return null;
         }
-        ActionForm instance;
+        if ("request".equals(mapping.getScope())) {
+            ActionForm instance = newInstance(config);
+            instance.reset(mapping, request);
+            request.setAttribute(attribute, instance);
+            return instance;
+        }
+        // CVE-2016-1181: creating (or finding), resetting and storing the
+        // session instance is atomic under the session's form mutex, so a
+        // render cannot swap the stored instance under a concurrent populate
+        jakarta.servlet.http.HttpSession session = request.getSession();
+        synchronized (SessionFormMutexRegistry.mutexFor(session)) {
+            ActionForm existing = (ActionForm) session.getAttribute(attribute);
+            if (existing != null) {
+                return existing;
+            }
+            ActionForm instance = newInstance(config);
+            instance.reset(mapping, request);
+            session.setAttribute(attribute, instance);
+            return instance;
+        }
+    }
+
+    /**
+     * Create a new form instance from the given configuration, mapping the
+     * configuration failure to the render-time error of the reference.
+     */
+    private static ActionForm newInstance(FormBeanConfig config) {
         try {
-            instance = config.createActionForm();
+            return config.createActionForm();
         } catch (IllegalStateException e) {
             throw new IllegalArgumentException(e.getMessage(), e.getCause());
         }
-        if ("request".equals(mapping.getScope())) {
-            request.setAttribute(attribute, instance);
-        } else {
-            jakarta.servlet.http.HttpSession session = request.getSession();
-            session.setAttribute(attribute, instance);
-        }
-        return instance;
     }
 
     /**

@@ -33,11 +33,13 @@ import org.springframework.core.convert.support.GenericConversionService;
  * <li>Characters take the first character; the empty string yields a
  * space.</li>
  * <li><code>BigDecimal</code>/<code>BigInteger</code>, JDBC-formatted
- * <code>java.sql</code> date/time types, <code>Class</code> and
- * <code>URL</code> throw on unparseable input.</li>
+ * <code>java.sql</code> date/time types and <code>URL</code> throw on
+ * unparseable input.</li>
  * <li>Types without converters in the beanutils registry
  * (<code>java.util.Date</code>, enums, <code>Calendar</code>, collections)
- * have no converter here either and fail to convert.</li>
+ * have no converter here either and fail to convert; <code>Class</code>
+ * deliberately has no converter either, so request data cannot trigger
+ * class loading.</li>
  * <li>An array of parameter values fills a scalar property with its first
  * element and an array property component-wise; a single value fills an
  * array property with a one-element array; anything converts to
@@ -59,7 +61,6 @@ final class StrutsConversionService extends GenericConversionService {
         addConverter(new StringToSqlDateConverter());
         addConverter(new StringToSqlTimeConverter());
         addConverter(new StringToSqlTimestampConverter());
-        addConverter(new StringToClassConverter());
         addConverter(new StringToFileConverter());
         addConverter(new StringToUrlConverter());
         addConverter(new ArrayToArrayConverter());
@@ -302,22 +303,6 @@ final class StrutsConversionService extends GenericConversionService {
                 return java.sql.Timestamp.valueOf(source);
             } catch (RuntimeException e) {
                 throw failed(source, java.sql.Timestamp.class, e);
-            }
-        }
-    }
-
-    /**
-     * <code>Class</code>: load by name, exceptions on unknown classes.
-     */
-    private static class StringToClassConverter
-        implements Converter<String, Class<?>> {
-
-        @Override
-        public Class<?> convert(String source) {
-            try {
-                return Class.forName(source);
-            } catch (RuntimeException | ClassNotFoundException e) {
-                throw failed(source, Class.class, e);
             }
         }
     }

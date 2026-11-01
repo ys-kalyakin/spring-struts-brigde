@@ -15,6 +15,7 @@ import org.springframework.mock.web.MockServletContext;
 import org.springframework.web.context.support.GenericWebApplicationContext;
 
 import org.apache.struts.fixtures.FixtureAction;
+import org.apache.struts.fixtures.FixtureForm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -224,5 +225,61 @@ class StrutsEngineRegistrarTest {
             thrown.getMessage().contains("com.example.SecureRequestProcessor"),
             "Error must name the offending value: " + thrown.getMessage());
         context.close();
+    }
+
+    @Test
+    void failsStartupOnSingletonUserFormBean() {
+        GenericWebApplicationContext context =
+            new GenericWebApplicationContext();
+        context.registerBeanDefinition("userForm", BeanDefinitionBuilder
+            .genericBeanDefinition(FixtureForm.class)
+            .getBeanDefinition());
+        StrutsEngineRegistrar registrar = new StrutsEngineRegistrar() {
+            @Override
+            protected URL resourceUrl(String path)
+                throws MalformedURLException {
+                return Path.of(FIXTURE_CONFIG).toUri().toURL();
+            }
+        };
+        MockServletContext servletContext = new MockServletContext();
+        ServletConfig servletConfig = new MockServletConfig(servletContext);
+        ((MockServletConfig) servletConfig).addInitParameter("config",
+            FIXTURE_CONFIG);
+        registrar.setServletConfig(servletConfig);
+
+        IllegalStateException thrown = assertThrows(
+            IllegalStateException.class,
+            () -> registrar.postProcessBeanDefinitionRegistry(
+                (DefaultListableBeanFactory) context.getBeanFactory()),
+            "A singleton user form bean must fail the startup");
+        assertTrue(thrown.getMessage().contains(FixtureForm.class.getName()),
+            "Error must name the form type: " + thrown.getMessage());
+        assertTrue(thrown.getMessage().contains("userForm"),
+            "Error must name the user bean: " + thrown.getMessage());
+        assertTrue(thrown.getMessage().contains("prototype"),
+            "Error must name the remediation: " + thrown.getMessage());
+        context.close();
+    }
+
+    @Test
+    void acceptsUserFormBeansInNonSingletonScopes() {
+        for (String scope : new String[] {"prototype", "request",
+            "session"}) {
+            GenericWebApplicationContext context =
+                new GenericWebApplicationContext();
+            context.registerBeanDefinition("userForm", BeanDefinitionBuilder
+                .genericBeanDefinition(FixtureForm.class)
+                .setScope(scope)
+                .getBeanDefinition());
+            DefaultListableBeanFactory registry = registryWithRegistrar(
+                context, new MockServletContext());
+
+            assertFalse(registry.containsBeanDefinition(
+                    StrutsEngineRegistrar.FORM_BEAN_PREFIX
+                        + FixtureForm.class.getName()),
+                "The user " + scope + " bean must win, no auto-registration "
+                    + "happens and no startup failure is raised");
+            context.close();
+        }
     }
 }

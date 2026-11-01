@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.boot.webmvc.autoconfigure.DispatcherServletPath;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.spring.StrutsEngineConfiguration;
+import org.apache.struts.util.SessionFormMutexRegistry;
 
 /**
  * Spring Boot auto-configuration of the Struts 1 engine: imports the engine
@@ -72,6 +74,18 @@ public class Struts1AutoConfiguration {
     @ConditionalOnMissingBean(DispatcherServlet.class)
     public DispatcherServlet dispatcherServlet() {
         return new DispatcherServlet();
+    }
+
+    /**
+     * Eviction of the per-session form mutexes (CVE-2016-1181 hardening):
+     * the listener removes the registry entry of a destroyed session, so the
+     * mutex registry does not accumulate entries across session churn.
+     */
+    @Bean
+    public ServletListenerRegistrationBean<SessionFormMutexRegistry>
+        strutsFormMutexListener() {
+        return new ServletListenerRegistrationBean<>(
+            new SessionFormMutexRegistry());
     }
 
     /**

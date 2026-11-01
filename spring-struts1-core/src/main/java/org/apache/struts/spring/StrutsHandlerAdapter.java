@@ -28,6 +28,7 @@ import org.apache.struts.config.ForwardConfig;
 import org.apache.struts.config.ModuleConfig;
 import org.apache.struts.util.ModuleUtils;
 import org.apache.struts.util.RequestUtils;
+import org.apache.struts.util.SessionFormMutexRegistry;
 import org.apache.struts.upload.MultipartRequestWrapper;
 
 import org.springframework.web.multipart.MultipartHttpServletRequest;
@@ -237,13 +238,17 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
             request.setAttribute(attribute, instance);
             return instance;
         }
+        // CVE-2016-1181: acquiring or creating the session instance is part
+        // of the serialized form lifecycle window
         HttpSession session = request.getSession();
-        ActionForm instance = (ActionForm) session.getAttribute(attribute);
-        if (instance == null) {
-            instance = instanceResolver.resolveForm(config);
-            session.setAttribute(attribute, instance);
+        synchronized (SessionFormMutexRegistry.mutexFor(session)) {
+            ActionForm instance = (ActionForm) session.getAttribute(attribute);
+            if (instance == null) {
+                instance = instanceResolver.resolveForm(config);
+                session.setAttribute(attribute, instance);
+            }
+            return instance;
         }
-        return instance;
     }
 
     /**
@@ -258,15 +263,28 @@ public class StrutsHandlerAdapter implements HandlerAdapter,
         }
 
         form.setServlet(actionServlet);
-        form.reset(mapping, request);
 
         if (mapping.getMultipartClass() != null) {
             request.setAttribute(Globals.MULTIPART_KEY,
                 mapping.getMultipartClass());
         }
 
-        RequestUtils.populate(form, mapping.getPrefix(), mapping.getSuffix(),
-            request);
+        if ("request".equals(mapping.getScope())) {
+            form.reset(mapping, request);
+            RequestUtils.populate(form, mapping.getPrefix(),
+                mapping.getSuffix(), request);
+        } else {
+            // CVE-2016-1181: reset and populate (including the multipart
+            // parse and handler attachment) run under the session mutex, so
+            // a concurrent request of the same session cannot interleave
+            // them on the shared instance
+            synchronized (SessionFormMutexRegistry.mutexFor(
+                request.getSession())) {
+                form.reset(mapping, request);
+                RequestUtils.populate(form, mapping.getPrefix(),
+                    mapping.getSuffix(), request);
+            }
+        }
 
         // Set the cancellation request attribute if appropriate
         if ((request.getParameter(Globals.CANCEL_PROPERTY) != null)

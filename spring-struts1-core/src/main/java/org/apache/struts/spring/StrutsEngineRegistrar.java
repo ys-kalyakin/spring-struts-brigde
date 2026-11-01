@@ -295,6 +295,15 @@ public class StrutsEngineRegistrar
                 + "); exactly one explicit registration is allowed");
         }
         if (userBeans.length == 1) {
+            if (beanFactory.isSingleton(userBeans[0])) {
+                throw new IllegalStateException("Form type " + type
+                    + " is registered as the singleton Spring bean '"
+                    + userBeans[0]
+                    + "': a singleton form instance is shared by every "
+                    + "session and user, which the form lifecycle never "
+                    + "assumes. Declare the form bean as prototype, request "
+                    + "or session scoped instead");
+            }
             log.debug("Form type {} is registered as user bean {}", type,
                 userBeans[0]);
             return;

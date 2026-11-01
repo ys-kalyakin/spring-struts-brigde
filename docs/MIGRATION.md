@@ -145,6 +145,27 @@ make the classes Spring beans, they do not replace the configuration.
   Tomcat may drop out of the assembled WAR. Let Tomcat come from
   `spring-boot-starter-tomcat`.
 
+## Form beans must not be singletons
+
+If a form class declared in `struts-config.xml` is registered by the
+application as a plain Spring bean (a `@Component`/`@Bean` without a scope,
+which defaults to singleton), **startup fails** with an error naming the form
+type, the bean, and the fix.
+
+Why: a singleton form instance is shared by every session and every user —
+two requests would read and write the same fields concurrently. The form
+lifecycle assumes fresh state per request (or per session when the mapping
+declares `scope="session"`), so a singleton form was never a valid
+configuration; the engine now refuses it at startup instead of silently
+serving shared mutable state.
+
+How to migrate: scope the form bean as
+`@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)` (a new instance per
+request), or `@RequestScope`/`@SessionScope` when you want Spring to manage
+the lifetime. The auto-registered beans and `@StrutsForm` classes are
+prototype already — the failure can only be caused by an explicit user
+definition.
+
 ## Functional limitations
 
 The engine implements the classic `<controller>` configuration partially.

@@ -36,4 +36,5 @@ nav:
   - Tag libraries: taglibs.md
   - Configuration: configuration.md
   - Modules: modules.md
+  - Security notes: security.md
   - Performance: performance.md
