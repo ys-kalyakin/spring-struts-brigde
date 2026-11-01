@@ -5,7 +5,7 @@
   <parent>
     <groupId>io.github.ys-kalyakin.springstruts</groupId>
     <artifactId>spring-struts1-parent</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>spring-struts1-apps</artifactId>
